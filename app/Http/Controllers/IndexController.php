@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Customer;
+use App\Models\Project;
+use Illuminate\Http\Request;
+
+class IndexController extends Controller
+{
+    public function index(){
+        $last5customers = Customer::orderByDesc('id')->limit(5)->get();
+        $open_projects = Project::whereNot('status_id', '5')->orderByDesc('id')->get();
+
+        return view('index.index', [
+            'last5customers' => $last5customers,
+            'open_projects' => $open_projects,
+        ]);
+    }
+}
