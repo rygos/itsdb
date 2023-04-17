@@ -16,9 +16,6 @@ class ComposeController extends Controller
     public function generate($server_id){
         $comp = ServersComposersRel::whereServerId($server_id)->get();
 
-        //$test = Composer::whereId(1)->first()->orig_compose;
-        //dd(Yaml::parse($test));
-
         $container = [];
         $container_dupe_check = [];
         foreach ($comp as $item){

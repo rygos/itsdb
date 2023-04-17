@@ -32,7 +32,7 @@ class ProjectsController extends Controller
         $p->dynamics_id = $request->get('dynamics_id');
         $p->name = $request->get('name');
         $p->customer_id = $request->get('customer');
-        $p->user_id = 1;
+        $p->user_id = \Auth::id();
         $p->status_id = 1;
         $p->save();
 

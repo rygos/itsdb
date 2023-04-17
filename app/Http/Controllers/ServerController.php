@@ -83,7 +83,7 @@ class ServerController extends Controller
         $s->db_server = $request->get('db_server');
         $s->ext_ip = $request->get('ext_ip');
         $s->int_ip = $request->get('int_ip');
-        $s->user_id = 1;
+        $s->user_id = \Auth::id();
         $s->customer_id = $request->get('customer_id');
         $s->save();
 

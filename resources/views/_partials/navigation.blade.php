@@ -1,3 +1,4 @@
+{{ Form::open(['route' => 'logout']) }}
 <ul>
     <li><a href="{{ route('index') }}">Home</a></li>
     <li><a href="{{ route('calendar.index') }}">Calendar</a></li>
@@ -11,4 +12,11 @@
     <li><a style="background-color: darkgreen" href="{{ route('customers.add') }}">Add Customer</a></li>
     <li><a style="background-color: darkgreen" href="{{ route('projects.add') }}">Add Project</a></li>
     {{-- END:ADDING LINKS --}}
+
+    @if(\Illuminate\Support\Facades\Auth::check())
+        <li>
+            <a href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">Logout</a>
+        </li>
+    @endif
 </ul>
+{{ Form::close() }}
