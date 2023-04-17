@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\LogHelper;
 use App\Models\Composer;
 use App\Models\Customer;
 use App\Models\Env;

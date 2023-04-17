@@ -1,8 +1,7 @@
 <?php
 
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\LogoutController;
-use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CustomersController;
+use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['auth']], function(){
     Route::get('/', 'App\Http\Controllers\IndexController@index')->name('index');
+    Route::get('/test', [TestController::class, 'test'])->name('test.test');
 
     //Compose Routes
     Route::get('/compose', 'App\Http\Controllers\ComposeController@index')->name('compose.index');
@@ -31,13 +31,14 @@ Route::group(['middleware' => ['auth']], function(){
     Route::post('/container/{title}', 'App\Http\Controllers\ContainerController@store')->name('container.store');
 
     //Routes for Customers
-    Route::get('/customers', [App\Http\Controllers\CustomersController::class,'index'])->name('customers.index');
+    Route::get('/customers', [CustomersController::class,'index'])->name('customers.index');
     Route::get('/customers/add', 'App\Http\Controllers\CustomersController@add')->name('customers.add');
     Route::post('/customers/store', 'App\Http\Controllers\CustomersController@store')->name('customers.store');
     Route::get('/customers/{id}', '\App\Http\Controllers\CustomersController@view')->name('customers.view');
     Route::post('/contacts/create', 'App\Http\Controllers\CustomersController@contact_create')->name('contact.create');
     Route::post('/contacts/update', 'App\Http\Controllers\CustomersController@contact_update')->name('contact.update');
     Route::post('/contacts/delete/{id}', 'App\Http\Controllers\CustomersController@contact_delete')->name('contact.delete');
+    Route::post('/city/add', [CustomersController::class, 'store_city'])->name('city.add');
 
     //Routes for Projects
     Route::get('/projects/add', 'App\Http\Controllers\ProjectsController@add')->name('projects.add');

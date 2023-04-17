@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\LogHelper;
 use App\Models\City;
 use App\Models\Customer;
 use App\Models\CustomerContact;
@@ -49,8 +50,15 @@ class CustomersController extends Controller
             $citys_res[$item->id] = strtoupper($item->country_code).' - '.$item->name;
         }
 
+        $country = [
+            'de' => 'Deutschland',
+            'at' => 'Österreich',
+            'ch' => 'Schweiz',
+        ];
+
         return view('customers.add', [
             'citys' => $citys_res,
+            'countrys' => $country,
         ]);
     }
 
@@ -66,6 +74,15 @@ class CustomersController extends Controller
         $c->save();
 
         return redirect()->route('index');
+    }
+
+    public function store_city(Request $request){
+        $c = new City;
+        $c->name = $request->get('name');
+        $c->country_code = $request->get('country_code');
+        $c->save();
+
+        return redirect()->back();
     }
 
     public function contact_create(Request $request){

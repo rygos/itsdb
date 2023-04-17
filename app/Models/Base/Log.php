@@ -10,23 +10,23 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Class Container
+ * Class Log
  * 
  * @property int $id
- * @property string $title
- * @property string|null $content
- * @property string $content_orig
- * @property Carbon $content_orig_date
+ * @property int $user_id
+ * @property string $section
+ * @property string $type
+ * @property string $msg
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
  * @package App\Models\Base
  */
-class Container extends Model
+class Log extends Model
 {
-	protected $table = 'containers';
+	protected $table = 'Logs';
 
 	protected $casts = [
-		'content_orig_date' => 'datetime'
+		'user_id' => 'int'
 	];
 }

@@ -29,9 +29,9 @@ class Calendar extends Model
 	protected $table = 'calendar';
 
 	protected $casts = [
-		'date_start' => 'date',
+		'date_start' => 'datetime',
 		'hours' => 'int',
 		'project_id' => 'int',
-		'date_end' => 'date'
+		'date_end' => 'datetime'
 	];
 }

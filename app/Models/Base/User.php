@@ -8,6 +8,7 @@ namespace App\Models\Base;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class User
@@ -20,14 +21,16 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property string|null $deleted_at
  *
  * @package App\Models\Base
  */
 class User extends Model
 {
+	use SoftDeletes;
 	protected $table = 'users';
 
 	protected $casts = [
-		'email_verified_at' => 'date'
+		'email_verified_at' => 'datetime'
 	];
 }

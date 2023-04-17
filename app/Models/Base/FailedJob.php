@@ -28,6 +28,6 @@ class FailedJob extends Model
 	public $timestamps = false;
 
 	protected $casts = [
-		'failed_at' => 'date'
+		'failed_at' => 'datetime'
 	];
 }

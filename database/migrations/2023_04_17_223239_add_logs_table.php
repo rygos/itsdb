@@ -15,6 +15,10 @@ return new class extends Migration
     {
         Schema::create('Logs', function (Blueprint $table) {
             $table->id();
+            $table->integer('user_id');
+            $table->string('section')->index();
+            $table->string('type')->index();
+            $table->text('msg');
             $table->timestamps();
         });
     }

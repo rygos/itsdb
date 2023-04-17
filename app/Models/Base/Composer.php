@@ -29,6 +29,6 @@ class Composer extends Model
 	protected $table = 'composers';
 
 	protected $casts = [
-		'orig_date' => 'date'
+		'orig_date' => 'datetime'
 	];
 }
