@@ -23,6 +23,7 @@
                         <tr>
                             <th>Dynamics ID</th>
                             <th>Name</th>
+                            <th>User</th>
                             <th>Status</th>
                         </tr>
                         @foreach($customer->projects()->get() as $item)
@@ -55,6 +56,7 @@
                                 @endphp
                                 <td style="text-align: left; background-color: {{ $color }};">{{ $item->dynamics_id }}</td>
                                 <td style="text-align: left;"><a href="{{ route('projects.view', $item->id) }}">{{ $item->name }}</a></td>
+                                <td style="text-align: left;">{{ $item->user->name }}</td>
                                 <td style="text-align: left;">{{ Form::select('status', $status, $item->status->id) }} {{ Form::submit('Submit') }}</td>
                             </tr>
                             {{ Form::close() }}

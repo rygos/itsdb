@@ -11,7 +11,7 @@
             </tr>
             <tr>
                 <td>
-                    asd
+                    Created by: {{ $project->user->name }}
                 </td>
             </tr>
         </table>

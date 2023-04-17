@@ -5,7 +5,7 @@
         <table id="pouetbox_prodmain">
             <thead>
                 <tr>
-                    <th>ITS-DB Dashboard</th>
+                    <th>ITS-DB Dashboard for {{ Auth::user()->name }}</th>
                 </tr>
             </thead>
             <tbody>

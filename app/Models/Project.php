@@ -49,4 +49,8 @@ class Project extends Model
         return $this->hasOne('App\Models\Status', 'id', 'status_id');
     }
 
+    public function user(){
+        return $this->hasOne('App\Models\User', 'id', 'user_id');
+    }
+
 }
