@@ -301,10 +301,12 @@ namespace App\Models\Base{
  * @property string $msg
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property int|null $content_id
  * @package App\Models\Base
  * @method static \Illuminate\Database\Eloquent\Builder|Log newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Log newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Log query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Log whereContentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Log whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Log whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Log whereMsg($value)
@@ -846,9 +848,11 @@ namespace App\Models{
  * @property string $msg
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int|null $content_id
  * @method static \Illuminate\Database\Eloquent\Builder|Log newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Log newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Log query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Log whereContentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Log whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Log whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Log whereMsg($value)

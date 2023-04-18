@@ -10,6 +10,11 @@ class Log extends BaseLog
 		'user_id',
 		'section',
 		'type',
-		'msg'
+		'msg',
+        'content_id',
 	];
+
+    public function user(){
+        return $this->hasOne('App\Models\User','id', 'user_id');
+    }
 }

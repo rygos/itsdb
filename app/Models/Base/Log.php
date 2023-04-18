@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $msg
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property int|null $content_id
  *
  * @package App\Models\Base
  */
@@ -27,6 +28,7 @@ class Log extends Model
 	protected $table = 'Logs';
 
 	protected $casts = [
-		'user_id' => 'int'
+		'user_id' => 'int',
+		'content_id' => 'int'
 	];
 }

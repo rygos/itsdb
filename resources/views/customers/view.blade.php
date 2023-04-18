@@ -289,6 +289,29 @@
                                 </tr>
                             </table>
                         </tr>
+                        <tr>
+                            <th>Logs</th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table width="100%">
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Type</th>
+                                        <th>Log</th>
+                                        <th>Date</th>
+                                    </tr>
+                                    @foreach(\App\Models\Log::whereContentId($customer->id)->where('section', '=', 'customer')->orderBy('created_at')->get() as $item)
+                                        <tr>
+                                            <td>{{ $item->user->name }}</td>
+                                            <td>{{ $item->type }}</td>
+                                            <td>{{ $item->msg }}</td>
+                                            <td>{!! nl2br($item->created_at) !!}</td>
+                                        </tr>
+                                    @endforeach
+                                </table>
+                            </td>
+                        </tr>
                     </table>
                 </td>
             </tr>

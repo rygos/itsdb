@@ -88,6 +88,9 @@ class ServerController extends Controller
         $s->customer_id = $request->get('customer_id');
         $s->save();
 
+        LogHelper::log('customer', $s->customer_id, 'Server', 'Add '.$s->type.' Server: '.$s->servername);
+        LogHelper::log('server', $s->id, 'Server', 'Add '.$s->type.' Server: '.$s->servername);
+
         return \Redirect::back();
     }
 
@@ -102,6 +105,8 @@ class ServerController extends Controller
         $s->int_ip = $request->get('int_ip');
         $s->save();
 
+        LogHelper::log('server', $s->id, 'Update', 'Update Server Informations: '.$s->type.', '.$s->servername.', '.$s->fqdn.', '.$s->db_sid.', '.$s->db_server);
+
         return \Redirect::back();
     }
 
@@ -110,6 +115,8 @@ class ServerController extends Controller
         $s->env_raw = $request->get('env');
         $s->docker_compose_raw = $request->get('docker_compose');
         $s->save();
+
+        LogHelper::log('server', $s->id, 'ENV/Docker', 'Update Docker/ENV custom configuration');
 
         return redirect()->back();
     }

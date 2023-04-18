@@ -37,6 +37,9 @@ class ProjectsController extends Controller
         $p->status_id = 1;
         $p->save();
 
+        LogHelper::log('customer', $p->customer_id, 'Project', 'Add: '.$p->dynamics_id.' - '.$p->name);
+        LogHelper::log('project', $p->id, 'Add', 'Add: '.$p->dynamics_id.' - '.$p->name);
+
         return redirect()->route('index');
     }
 
@@ -44,6 +47,9 @@ class ProjectsController extends Controller
         $project = Project::whereId($request->get('project_id'))->first();
         $project->status_id = $request->get('status');
         $project->save();
+
+        LogHelper::log('customer', $project->customer_id, 'Project', 'Change Status of '.$project->dynamics_id.' - '.$project->name.' to '.$project->status->name);
+        LogHelper::log('project', $project->id, 'Status', 'Change Status of '.$project->dynamics_id.' - '.$project->name.' to '.$project->status->name);
 
         return redirect()->back();
     }

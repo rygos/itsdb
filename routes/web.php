@@ -37,7 +37,7 @@ Route::group(['middleware' => ['auth']], function(){
     Route::get('/customers/{id}', '\App\Http\Controllers\CustomersController@view')->name('customers.view');
     Route::post('/contacts/create', 'App\Http\Controllers\CustomersController@contact_create')->name('contact.create');
     Route::post('/contacts/update', 'App\Http\Controllers\CustomersController@contact_update')->name('contact.update');
-    Route::post('/contacts/delete/{id}', 'App\Http\Controllers\CustomersController@contact_delete')->name('contact.delete');
+    Route::get('/contacts/delete/{id}', 'App\Http\Controllers\CustomersController@contact_delete')->name('contact.delete');
     Route::post('/city/add', [CustomersController::class, 'store_city'])->name('city.add');
 
     //Routes for Projects

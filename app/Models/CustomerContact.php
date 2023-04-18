@@ -16,4 +16,8 @@ class CustomerContact extends BaseCustomerContact
 		'email',
 		'comments'
 	];
+
+    public function customer(){
+        return $this->hasOne('App\Models\Customer', 'id', 'customer_id');
+    }
 }

@@ -73,6 +73,8 @@ class CustomersController extends Controller
         $c->city_id = $request->get('city');
         $c->save();
 
+        LogHelper::log('customer', $c->id, 'Add', 'Create Customer: '.$c->name);
+
         return redirect()->route('index');
     }
 
@@ -97,6 +99,8 @@ class CustomersController extends Controller
         $c->comments = $request->get('comments');
         $c->save();
 
+        LogHelper::log('customer', $c->customer_id, 'Contact', 'Contact Added: '.$c->name.' '.$c->familyname);
+
         return redirect()->route('customers.view', $c->customer_id);
     }
 
@@ -105,12 +109,17 @@ class CustomersController extends Controller
         $c->comments = $request->get('comments');
         $c->save();
 
+        LogHelper::log('customer', $c->customer_id, 'Contact', 'Contact Comment for '.$c->name.' '.$c->familyname.' - '.$c->comments);
+
         return redirect()->back();
 
     }
 
     public function contact_delete($id){
         $contact = CustomerContact::whereId($id)->first();
+
+        LogHelper::log('customer', $contact->customer_id, 'Contact', 'Delete Contact: '.$contact->name.' '.$contact->familyname);
+
         $contact->delete();
 
         return redirect()->back();
