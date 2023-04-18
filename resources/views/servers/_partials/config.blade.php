@@ -53,7 +53,7 @@
                             </tr>
                         @endforeach
                         <tr>
-                            <td colspan="2">{{ Form::submit('Submit') }}</td>
+                            <td colspan="2">{{ Form::submit('Submit') }}<br><br><a href="{{ route('env.generate_raw', $server->id) }}">Generate .env Textfield (Overwrites Content)</a></td>
                         </tr>
                         {{ Form::close() }}
                     </table>
@@ -71,7 +71,7 @@
             </tr>
             <tr>
                 <td><a href="{{ route('compose.generate', $server->id) }}">Generate docker-compose.yml</a></td>
-                <td></td>
+                <td><a href="{{ route('env.generate_from_raw', $server->id) }}">Generate .env config from Textfield (Overwrites Informations)</a></td>
             </tr>
             <tr>
                 <td colspan="2">{{ Form::submit('Submit') }}</td>

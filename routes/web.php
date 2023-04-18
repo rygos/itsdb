@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomersController;
+use App\Http\Controllers\EnvController;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
@@ -70,6 +71,8 @@ Route::group(['middleware' => ['auth']], function(){
     //ENV Routes
     Route::get('/env/generate/server/{server_id}', 'App\Http\Controllers\EnvController@generate')->name('env.generate');
     Route::post('/env/generate/server/{server_id}', 'App\Http\Controllers\EnvController@update')->name('env.update');
+    Route::get('/env/generate_from_raw/server/{server_id}', [EnvController::class, 'generate_from_raw'])->name('env.generate_from_raw');
+    Route::get('/env/generate_raw/server/{server_id}', [EnvController::class, 'generate_raw'])->name('env.generate_raw');
 });
 
 require __DIR__.'/auth.php';

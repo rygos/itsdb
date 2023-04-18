@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Env;
 use App\Models\Server;
+use Dotenv\Dotenv;
 use Illuminate\Http\Request;
 
 class EnvController extends Controller
@@ -50,6 +51,49 @@ class EnvController extends Controller
                 $env->save();
             }
         }
+
+        return redirect()->back();
+    }
+
+    public function generate_from_raw($server_id){
+        $server = Server::whereId($server_id)->first();
+
+        $raw = $server->env_raw;
+        $raw_array = preg_split("/\r\n|\n|\r/", $raw);
+
+        foreach ($raw_array as $item){
+            $tmp['key'] = explode('=', $item)[0];
+            $tmp['value'] = explode('=', $item)[1];
+            $tmp['needed'] = 0;
+
+            $check = Env::whereServerId($server_id)->where('key', $tmp['key'])->first();
+            if(!$check){
+                $env = new Env;
+                $env->server_id = $server_id;
+                $env->key = $tmp['key'];
+                $env->value = $tmp['value'];
+                $env->needed = $tmp['needed'];
+                $env->save();
+            }else{
+                $check->value = $tmp['value'];
+                $check->save;
+            }
+        }
+
+        return redirect()->back();
+    }
+
+    public function generate_raw($server_id){
+        $data = Env::whereServerId($server_id)->orderBy('key')->get();
+
+        $raw = '';
+        foreach($data as $item){
+            $raw .= $item->key.'='.$item->value.PHP_EOL;
+        }
+
+        $server = Server::whereId($server_id)->first();
+        $server->env_raw = $raw;
+        $server->save();
 
         return redirect()->back();
     }
