@@ -1,5 +1,10 @@
 {{ Form::open(['route' => 'logout']) }}
-<ul>
+@if(env('APP_DEV') == true)
+    @php $style = 'background-color: darkred;' @endphp
+@else
+    @php $style = '' @endphp
+@endif
+<ul style="{{$style}}">
     <li><a href="{{ route('index') }}">Home</a></li>
     <li><a href="{{ route('calendar.index') }}">Calendar</a></li>
     <li><a href="{{ route('customers.index') }}">Customers</a></li>
