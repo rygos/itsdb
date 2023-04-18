@@ -193,7 +193,7 @@ nav li a {
 }
 
 .pouettbl h2 {
-    background: #224488;
+    background: #17395c;
     color: #ffffff;
     padding: 3px;
     border: 0px;
@@ -235,7 +235,7 @@ nav li a {
     margin: 0px;
     padding: 2px;
     border: 0px;
-    background: #446688;
+    background: #00001a;
 }
 
 .boxtable th {
@@ -256,11 +256,10 @@ nav li a {
 }
 
 .pouettbl .content {
-    background: #446688;
-    color: #ffffff;
-    border: 1px solid black;
+    background: #00001a;
+    color: #ffffe0;
+    border: 1px solid #17395c;
     padding: 2px;
-    border: 0px;
     margin: 1px;
     vertical-align: middle;
 }

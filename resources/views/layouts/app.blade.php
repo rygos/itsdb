@@ -50,6 +50,9 @@
 <footer>
     <ul>
         <li>Made with Love and Beer</li>
+        <li>{{ config('app.name') }} - <a href="{{ route('changelog.index') }}">
+                {{  @\App\Models\ChangelogVersion::latest()->where('published', '=', 1)->first()->version }}
+            </a></li>
     </ul>
 </footer>
 </body>

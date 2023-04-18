@@ -73,6 +73,12 @@ Route::group(['middleware' => ['auth']], function(){
     Route::post('/env/generate/server/{server_id}', 'App\Http\Controllers\EnvController@update')->name('env.update');
     Route::get('/env/generate_from_raw/server/{server_id}', [EnvController::class, 'generate_from_raw'])->name('env.generate_from_raw');
     Route::get('/env/generate_raw/server/{server_id}', [EnvController::class, 'generate_raw'])->name('env.generate_raw');
+
+    //Changelog Routes
+    Route::get('/changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog.index');
+    Route::post('/changelog/add_changelog', [\App\Http\Controllers\ChangelogController::class, 'add_changelog'])->name('changelog.add_changelog');
+    Route::post('/changelog/add_version', [\App\Http\Controllers\ChangelogController::class, 'add_version'])->name('changelog.add_version');
+    Route::post('/changelog/publish', [\App\Http\Controllers\ChangelogController::class, 'publish_version'])->name('changelog.publish_version');
 });
 
 require __DIR__.'/auth.php';
