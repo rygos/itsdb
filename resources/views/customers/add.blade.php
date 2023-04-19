@@ -57,7 +57,7 @@
             </tr>
             <tr>
                 <td>
-                    {!! Form::open(['route' => 'customers.store']) !!}
+                    {!! Form::open(['route' => 'customers.store_city']) !!}
                     <table id="stattable">
                         <tr>
                             <td>City Name:</td>
