@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $status_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property Carbon|null $start_date
+ * @property Carbon|null $end_date
  *
  * @package App\Models\Base
  */
@@ -30,6 +32,8 @@ class Project extends Model
 	protected $casts = [
 		'customer_id' => 'int',
 		'user_id' => 'int',
-		'status_id' => 'int'
+		'status_id' => 'int',
+		'start_date' => 'datetime',
+		'end_date' => 'datetime'
 	];
 }

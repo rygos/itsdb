@@ -6,6 +6,9 @@
             <th>Customer</th>
             <th>City</th>
             <th>Project</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Hours</th>
             <th>Status</th>
         </tr>
     </thead>
@@ -41,6 +44,9 @@
                 <td style="text-align: left">{{ $i->customer->name }}</td>
                 <td style="text-align: left"><img src="assets/flags/{{ $i->customer->city->country_code }}.png"> {{ $i->customer->city->name }}</td>
                 <td style="text-align: left">{{ $i->name }}</td>
+                <td style="text-align: left;">{{ $i->start_date }}</td>
+                <td style="text-align: left;">{{ $i->end_date }}</td>
+                <td style="text-align: left;">{{ \App\Helpers\MiscHelper::work_hours_diff($i->start_date, $i->end_date) }}</td>
                 <td style="text-align: left;background-color: {{ $color }};">{{ $i->status->name }}</td>
             </tr>
         @endforeach

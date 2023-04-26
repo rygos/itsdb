@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\EnvController;
+use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +48,7 @@ Route::group(['middleware' => ['auth']], function(){
     Route::post('/projects/store', 'App\Http\Controllers\ProjectsController@store')->name('projects.store');
     Route::get('/projects/{id}', 'App\Http\Controllers\ProjectsController@view')->name('projects.view');
     Route::post('/projects/status_change', 'App\Http\Controllers\ProjectsController@change_status')->name('projects.change_status');
+    Route::post('/projects/update', [ProjectsController::class, 'update'])->name('projects.update');
 
     //Server Routes
     Route::post('/servers/store', 'App\Http\Controllers\ServerController@store')->name('servers.store');
@@ -75,10 +78,10 @@ Route::group(['middleware' => ['auth']], function(){
     Route::get('/env/generate_raw/server/{server_id}', [EnvController::class, 'generate_raw'])->name('env.generate_raw');
 
     //Changelog Routes
-    Route::get('/changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog.index');
-    Route::post('/changelog/add_changelog', [\App\Http\Controllers\ChangelogController::class, 'add_changelog'])->name('changelog.add_changelog');
-    Route::post('/changelog/add_version', [\App\Http\Controllers\ChangelogController::class, 'add_version'])->name('changelog.add_version');
-    Route::post('/changelog/publish', [\App\Http\Controllers\ChangelogController::class, 'publish_version'])->name('changelog.publish_version');
+    Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog.index');
+    Route::post('/changelog/add_changelog', [ChangelogController::class, 'add_changelog'])->name('changelog.add_changelog');
+    Route::post('/changelog/add_version', [ChangelogController::class, 'add_version'])->name('changelog.add_version');
+    Route::post('/changelog/publish', [ChangelogController::class, 'publish_version'])->name('changelog.publish_version');
 });
 
 require __DIR__.'/auth.php';

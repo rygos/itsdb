@@ -430,6 +430,8 @@ namespace App\Models\Base{
  * @property int $status_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property Carbon|null $start_date
+ * @property Carbon|null $end_date
  * @package App\Models\Base
  * @method static \Illuminate\Database\Eloquent\Builder|Project newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Project newQuery()
@@ -437,8 +439,10 @@ namespace App\Models\Base{
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereCustomerId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereDynamicsId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Project whereEndDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Project whereStartDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereStatusId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereUserId($value)
@@ -1027,6 +1031,8 @@ namespace App\Models{
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @package App\Models
+ * @property string|null $start_date
+ * @property string|null $end_date
  * @property-read \App\Models\Customer|null $customer
  * @property-read \App\Models\Status|null $status
  * @property-read \App\Models\User|null $user
@@ -1036,8 +1042,10 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereCustomerId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereDynamicsId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Project whereEndDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Project whereStartDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereStatusId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Project whereUserId($value)

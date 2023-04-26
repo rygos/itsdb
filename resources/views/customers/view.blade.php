@@ -24,6 +24,9 @@
                             <th>Dynamics ID</th>
                             <th>Name</th>
                             <th>User</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Hours</th>
                             <th>Status</th>
                         </tr>
                         @foreach($customer->projects()->get() as $item)
@@ -57,6 +60,9 @@
                                 <td style="text-align: left; background-color: {{ $color }};">{{ $item->dynamics_id }}</td>
                                 <td style="text-align: left;"><a href="{{ route('projects.view', $item->id) }}">{{ $item->name }}</a></td>
                                 <td style="text-align: left;">{{ $item->user->name }}</td>
+                                <td style="text-align: left;">{{ $item->start_date }}</td>
+                                <td style="text-align: left;">{{ $item->end_date }}</td>
+                                <td style="text-align: left;">{{ \App\Helpers\MiscHelper::work_hours_diff($item->start_date, $item->end_date) }}</td>
                                 <td style="text-align: left;">{{ Form::select('status', $status, $item->status->id) }} {{ Form::submit('Submit') }}</td>
                             </tr>
                             {{ Form::close() }}

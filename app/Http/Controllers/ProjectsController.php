@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\LogHelper;
 use App\Models\Customer;
 use App\Models\Project;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ProjectsController extends Controller
@@ -35,6 +36,8 @@ class ProjectsController extends Controller
         $p->customer_id = $request->get('customer');
         $p->user_id = \Auth::id();
         $p->status_id = 1;
+        $p->start_date = Carbon::parse($request->get('start_date').' '.$request->get('start_date_time'));
+        $p->end_date = Carbon::parse($request->get('end_date').' '.$request->get('end_date_time'));
         $p->save();
 
         LogHelper::log('customer', $p->customer_id, 'Project', 'Add: '.$p->dynamics_id.' - '.$p->name);
@@ -50,6 +53,17 @@ class ProjectsController extends Controller
 
         LogHelper::log('customer', $project->customer_id, 'Project', 'Change Status of '.$project->dynamics_id.' - '.$project->name.' to '.$project->status->name);
         LogHelper::log('project', $project->id, 'Status', 'Change Status of '.$project->dynamics_id.' - '.$project->name.' to '.$project->status->name);
+
+        return redirect()->back();
+    }
+
+    public function update(Request $request){
+        $p = Project::whereId($request->get('id'))->first();
+        $p->start_date = Carbon::parse($request->get('start_date').' '.$request->get('start_date_time'));
+        $p->end_date = Carbon::parse($request->get('end_date').' '.$request->get('end_date_time'));
+        $p->name = $request->get('name');
+        $p->dynamics_id = $request->get('dynamics_id');
+        $p->save();
 
         return redirect()->back();
     }

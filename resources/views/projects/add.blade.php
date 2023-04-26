@@ -23,8 +23,16 @@
                             <td>{!! Form::text('name') !!}</td>
                         </tr>
                         <tr>
-                            <td>Citys:</td>
+                            <td>City:</td>
                             <td>{!! Form::select('customer', $customers) !!}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Date:</td>
+                            <td>{!! Form::date('start_date', now()->toDateString()) !!} {!! Form::time('start_date_time') !!}</td>
+                        </tr>
+                        <tr>
+                            <td>End Date:</td>
+                            <td>{!! Form::date('end_date', now()) !!}  {!! Form::time('end_date_time') !!}</td>
                         </tr>
                         <tr>
                             <td></td>
