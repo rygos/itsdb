@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
 Route::group(['middleware' => ['auth']], function(){
     Route::get('/', 'App\Http\Controllers\IndexController@index')->name('index');
     Route::get('/test', [TestController::class, 'test'])->name('test.test');

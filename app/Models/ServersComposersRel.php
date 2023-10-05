@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Base\ServersComposersRel as BaseServersComposersRel;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ServersComposersRel extends BaseServersComposersRel
 {

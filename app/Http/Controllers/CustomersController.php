@@ -54,6 +54,7 @@ class CustomersController extends Controller
             'de' => 'Deutschland',
             'at' => 'Österreich',
             'ch' => 'Schweiz',
+            'lu' => 'Luxemburg',
         ];
 
         return view('customers.add', [
