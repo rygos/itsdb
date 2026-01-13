@@ -16,11 +16,7 @@ class HoursController extends Controller
             ->orderByDesc('year')
             ->pluck('year', 'year');
 
-        $currentYear = now()->year;
-        $selectedYear = $request->get('year');
-        if (!$selectedYear) {
-            $selectedYear = $years->has($currentYear) ? $currentYear : $years->first();
-        }
+        $selectedYear = $request->get('year', $years->first());
 
         $projects = collect();
         if ($selectedYear) {
