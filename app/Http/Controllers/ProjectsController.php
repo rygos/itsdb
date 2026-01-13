@@ -38,6 +38,7 @@ class ProjectsController extends Controller
         $p->status_id = 1;
         $p->start_date = Carbon::parse($request->get('start_date').' '.$request->get('start_date_time'));
         $p->end_date = Carbon::parse($request->get('end_date').' '.$request->get('end_date_time'));
+        $p->hours = $request->get('hours');
         $p->save();
 
         LogHelper::log('customer', $p->customer_id, 'Project', 'Add: '.$p->dynamics_id.' - '.$p->name);

@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $customer_id
  * @property int $user_id
  * @property int $status_id
+ * @property int|null $hours
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $start_date
@@ -34,6 +35,7 @@ class Project extends Model
 		'user_id' => 'int',
 		'status_id' => 'int',
 		'start_date' => 'datetime',
-		'end_date' => 'datetime'
+		'end_date' => 'datetime',
+		'hours' => 'int'
 	];
 }
