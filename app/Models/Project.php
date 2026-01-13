@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $customer_id
  * @property int $user_id
  * @property int $status_id
+ * @property int|null $hours
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
@@ -30,7 +31,8 @@ class Project extends Model
 	protected $casts = [
 		'customer_id' => 'int',
 		'user_id' => 'int',
-		'status_id' => 'int'
+		'status_id' => 'int',
+		'hours' => 'int'
 	];
 
 	protected $fillable = [
@@ -38,7 +40,8 @@ class Project extends Model
 		'name',
 		'customer_id',
 		'user_id',
-		'status_id'
+		'status_id',
+		'hours'
 	];
 
     public function customer(){

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\EnvController;
+use App\Http\Controllers\HoursController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,9 @@ Route::group(['middleware' => ['auth']], function(){
     Route::post('/contacts/update', 'App\Http\Controllers\CustomersController@contact_update')->name('contact.update');
     Route::get('/contacts/delete/{id}', 'App\Http\Controllers\CustomersController@contact_delete')->name('contact.delete');
     Route::post('/city/add', [CustomersController::class, 'store_city'])->name('city.add');
+
+    //Routes for Hours
+    Route::get('/hours', [HoursController::class, 'index'])->name('hours.index');
 
     //Routes for Projects
     Route::get('/projects/add', 'App\Http\Controllers\ProjectsController@add')->name('projects.add');
