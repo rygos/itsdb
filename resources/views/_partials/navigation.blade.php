@@ -8,6 +8,7 @@
     <li><a href="{{ route('index') }}">Home</a></li>
     <li><a href="{{ route('calendar.index') }}">Calendar</a></li>
     <li><a href="{{ route('customers.index') }}">Customers</a></li>
+    <li><a href="{{ route('hours.index') }}">Stunden</a></li>
 
     {{-- START:Compose LINKS --}}
     <li><a style="background-color: darkred" href="{{ route('compose.index') }}">Compose</a></li>

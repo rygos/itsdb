@@ -35,6 +35,10 @@
                             <td>{!! Form::date('end_date', now()) !!}  {!! Form::time('end_date_time') !!}</td>
                         </tr>
                         <tr>
+                            <td>Hours:</td>
+                            <td>{!! Form::number('hours', null, ['min' => 0]) !!}</td>
+                        </tr>
+                        <tr>
                             <td></td>
                             <td>{{ Form::submit('Submit') }}</td>
                         </tr>
