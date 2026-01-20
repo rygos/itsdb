@@ -33,7 +33,7 @@
                                 <div class="hours-legend">
                                     Balken: Stunden pro Tag | Rot: Durchschnitt | Grau: 8h Minimum
                                 </div>
-                                <script src="/js/chart.umd.min.js"></script>
+                                <script src="/js/chart.min.js"></script>
                                 <script>
                                     (function () {
                                         var labels = @json($dailyHours->keys()->values());
@@ -44,8 +44,9 @@
                                         var avgLine = labels.map(function () { return average; });
                                         var minLine = labels.map(function () { return minHours; });
 
-                                        var ctx = document.getElementById('hoursChart');
-                                        if (!ctx) return;
+                                        var canvas = document.getElementById('hoursChart');
+                                        if (!canvas) return;
+                                        var ctx = canvas.getContext('2d');
 
                                         new Chart(ctx, {
                                             type: 'bar',
@@ -65,7 +66,8 @@
                                                         borderColor: '#b00020',
                                                         borderWidth: 2,
                                                         pointRadius: 0,
-                                                        tension: 0
+                                                        lineTension: 0,
+                                                        fill: false
                                                     },
                                                     {
                                                         label: '8h Minimum',
@@ -75,33 +77,33 @@
                                                         borderWidth: 2,
                                                         pointRadius: 0,
                                                         borderDash: [6, 4],
-                                                        tension: 0
+                                                        lineTension: 0,
+                                                        fill: false
                                                     }
                                                 ]
                                             },
                                             options: {
                                                 responsive: true,
                                                 maintainAspectRatio: false,
-                                                plugins: {
-                                                    legend: { display: false },
-                                                    tooltip: {
-                                                        callbacks: {
-                                                            label: function (context) {
-                                                                if (context.dataset.type === 'line') {
-                                                                    return context.dataset.label + ': ' + context.parsed.y + 'h';
-                                                                }
-                                                                return 'Stunden: ' + context.parsed.y + 'h';
-                                                            }
-                                                        }
-                                                    }
-                                                },
                                                 scales: {
-                                                    x: {
+                                                    xAxes: [{
                                                         ticks: { maxRotation: 90, minRotation: 90 }
-                                                    },
-                                                    y: {
-                                                        beginAtZero: true,
-                                                        title: { display: true, text: 'Stunden' }
+                                                    }],
+                                                    yAxes: [{
+                                                        ticks: { beginAtZero: true },
+                                                        scaleLabel: { display: true, labelString: 'Stunden' }
+                                                    }]
+                                                },
+                                                legend: { display: false },
+                                                tooltips: {
+                                                    callbacks: {
+                                                        label: function (tooltipItem, data) {
+                                                            var dataset = data.datasets[tooltipItem.datasetIndex];
+                                                            if (dataset.type === 'line') {
+                                                                return dataset.label + ': ' + tooltipItem.yLabel + 'h';
+                                                            }
+                                                            return 'Stunden: ' + tooltipItem.yLabel + 'h';
+                                                        }
                                                     }
                                                 }
                                             }
