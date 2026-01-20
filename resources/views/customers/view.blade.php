@@ -62,7 +62,7 @@
                                 <td style="text-align: left;">{{ $item->user->name }}</td>
                                 <td style="text-align: left;">{{ $item->start_date }}</td>
                                 <td style="text-align: left;">{{ $item->end_date }}</td>
-                                <td style="text-align: left;">{{ \App\Helpers\MiscHelper::work_hours_diff($item->start_date, $item->end_date) }}</td>
+                                <td style="text-align: left;">{{ $item->hours ?? '-' }}</td>
                                 <td style="text-align: left;">{{ Form::select('status', $status, $item->status->id) }} {{ Form::submit('Submit') }}</td>
                             </tr>
                             {{ Form::close() }}

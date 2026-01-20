@@ -32,6 +32,10 @@
                 <td>{!! Form::date('end_date', \Carbon\Carbon::parse($project->end_date)->toDateString()) !!}  {!! Form::time('end_date_time', \Carbon\Carbon::parse($project->end_date)->format('H:i')) !!}</td>
             </tr>
             <tr>
+                <td>Hours:</td>
+                <td>{!! Form::number('hours', $project->hours, ['min' => 0]) !!}</td>
+            </tr>
+            <tr>
                 <td colspan="2">{!! Form::submit('Submit') !!}</td>
             </tr>
             {{ Form::close() }}

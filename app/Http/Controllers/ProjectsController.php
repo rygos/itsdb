@@ -64,6 +64,7 @@ class ProjectsController extends Controller
         $p->end_date = Carbon::parse($request->get('end_date').' '.$request->get('end_date_time'));
         $p->name = $request->get('name');
         $p->dynamics_id = $request->get('dynamics_id');
+        $p->hours = $request->get('hours');
         $p->save();
 
         return redirect()->back();
