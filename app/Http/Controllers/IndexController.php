@@ -10,7 +10,12 @@ class IndexController extends Controller
 {
     public function index(){
         $last5customers = Customer::orderByDesc('id')->limit(5)->get();
-        $open_projects = Project::whereNot('status_id', '5')->where('user_id', \Auth::id())->orderByDesc('id')->get();
+        $open_projects = Project::where('user_id', \Auth::id())
+            ->whereHas('status', function ($query) {
+                $query->where('name', '!=', 'FINISHED');
+            })
+            ->orderByDesc('id')
+            ->get();
 
         return view('index.index', [
             'last5customers' => $last5customers,

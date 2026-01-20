@@ -10,7 +10,9 @@ class HoursController extends Controller
     public function index(Request $request)
     {
         $years = Project::whereNotNull('end_date')
-            ->where('status_id', 5)
+            ->whereHas('status', function ($query) {
+                $query->where('name', 'FINISHED');
+            })
             ->selectRaw('YEAR(end_date) as year')
             ->distinct()
             ->orderByDesc('year')
@@ -21,7 +23,9 @@ class HoursController extends Controller
         $projects = collect();
         if ($selectedYear) {
             $projects = Project::whereNotNull('end_date')
-                ->where('status_id', 5)
+                ->whereHas('status', function ($query) {
+                    $query->where('name', 'FINISHED');
+                })
                 ->whereYear('end_date', $selectedYear)
                 ->orderBy('end_date')
                 ->get();
