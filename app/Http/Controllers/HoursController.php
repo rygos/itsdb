@@ -42,10 +42,23 @@ class HoursController extends Controller
                 $dailyTotals[$dateKey] = ($dailyTotals[$dateKey] ?? 0) + $hours;
             }
 
-            $dailyHours = collect($dailyTotals)->sortKeys();
+            $startDate = Carbon::create($selectedYear, 1, 1)->startOfDay();
+            $endDate = Carbon::create($selectedYear, 12, 31)->endOfDay();
+            if ((int) $selectedYear === (int) Carbon::now()->year) {
+                $endDate = Carbon::now()->endOfDay();
+            }
+
+            $dailyHours = collect();
+            $cursor = $startDate->copy();
+            while ($cursor->lte($endDate)) {
+                $dateKey = $cursor->toDateString();
+                $dailyHours->put($dateKey, (int) ($dailyTotals[$dateKey] ?? 0));
+                $cursor->addDay();
+            }
+
             $totalHours = $dailyHours->sum();
-            $daysWithHours = max(1, $dailyHours->count());
-            $averageHours = $totalHours / $daysWithHours;
+            $daysInRange = max(1, $dailyHours->count());
+            $averageHours = $totalHours / $daysInRange;
             $maxDailyHours = max(1, (int) $dailyHours->max());
         }
 
