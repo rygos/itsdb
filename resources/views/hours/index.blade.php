@@ -24,7 +24,8 @@
                             {!! Form::close() !!}
                             <div class="hours-summary">
                                 <strong>Gesamtstunden {{ $selectedYear }}:</strong> {{ $totalHours }}
-                                <span> | <strong>Durchschnitt pro Tag (mit Eintrag):</strong> {{ number_format($averageHours, 2) }}</span>
+                                <span> | <strong>Dienstleistungstage (8h):</strong> {{ number_format($totalHours / 8, 2) }}</span>
+                                <span> | <strong>Durchschnitt pro Kalendertag:</strong> {{ number_format($averageHours, 2) }}</span>
                             </div>
                             @if($dailyHours->isNotEmpty())
                                 <div class="hours-chart">
@@ -133,8 +134,27 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $currentWeek = null;
+                        $weekIndex = 0;
+                    @endphp
                     @foreach($projects as $project)
-                        <tr style="text-align: left;">
+                        @php
+                            $week = \Carbon\Carbon::parse($project->end_date)->isoWeek();
+                            $showWeekHeader = false;
+                            if ($currentWeek !== $week) {
+                                $currentWeek = $week;
+                                $weekIndex++;
+                                $showWeekHeader = true;
+                            }
+                            $rowBg = ($weekIndex % 2 === 0) ? '#f2f2f2' : '#ffffff';
+                        @endphp
+                        @if($showWeekHeader)
+                            <tr style="background-color: {{ $rowBg }};">
+                                <td colspan="7"><strong>Kalenderwoche {{ $currentWeek }}</strong></td>
+                            </tr>
+                        @endif
+                        <tr style="text-align: left;background-color: {{ $rowBg }};">
                             <td>{{ $project->customer->short_no }}</td>
                             <td><a href="{{ route('projects.view', $project->id) }}">{{ $project->customer->sap_no }}</a></td>
                             <td><a href="{{ route('projects.view', $project->id) }}">{{ $project->name }}</a></td>
