@@ -3,13 +3,7 @@
 @section('content')
     <style>
         .hours-summary { margin: 10px 0 14px; }
-        .hours-chart { position: relative; height: 160px; border: 1px solid #ccc; padding: 8px; overflow-x: auto; }
-        .hours-chart-inner { display: flex; align-items: flex-end; gap: 2px; height: 100%; }
-        .hours-bar { width: 6px; background: #4a7a2a; }
-        .hours-line { position: absolute; left: 0; right: 0; border-top: 1px dashed; }
-        .hours-line-average { border-color: #b00020; }
-        .hours-line-min { border-color: #666; }
-        .hours-line-label { position: absolute; right: 8px; top: -10px; font-size: 10px; background: #fff; padding: 0 4px; }
+        .hours-chart { height: 260px; }
         .hours-legend { font-size: 12px; margin-top: 6px; }
     </style>
     <div id="prodpagecontainer">
@@ -33,32 +27,87 @@
                                 <span> | <strong>Durchschnitt pro Tag (mit Eintrag):</strong> {{ number_format($averageHours, 2) }}</span>
                             </div>
                             @if($dailyHours->isNotEmpty())
-                                @php
-                                    $chartHeight = 160;
-                                @endphp
-                                <div class="hours-chart" aria-label="Stunden pro Tag">
-                                    @php
-                                        $averageLineOffset = $chartHeight - (($averageHours / $maxDailyHours) * $chartHeight);
-                                        $minLineOffset = $chartHeight - ((8 / $maxDailyHours) * $chartHeight);
-                                    @endphp
-                                    <div class="hours-line hours-line-average" style="top: {{ max(0, min($chartHeight, $averageLineOffset)) }}px;">
-                                        <span class="hours-line-label">Durchschnitt</span>
-                                    </div>
-                                    <div class="hours-line hours-line-min" style="top: {{ max(0, min($chartHeight, $minLineOffset)) }}px;">
-                                        <span class="hours-line-label">8h</span>
-                                    </div>
-                                    <div class="hours-chart-inner">
-                                        @foreach($dailyHours as $date => $hours)
-                                            @php
-                                                $barHeight = ($hours / $maxDailyHours) * $chartHeight;
-                                            @endphp
-                                            <div class="hours-bar" style="height: {{ max(1, $barHeight) }}px;" title="{{ $date }}: {{ $hours }}h"></div>
-                                        @endforeach
-                                    </div>
+                                <div class="hours-chart">
+                                    <canvas id="hoursChart" aria-label="Stunden pro Tag"></canvas>
                                 </div>
                                 <div class="hours-legend">
                                     Balken: Stunden pro Tag | Rot: Durchschnitt | Grau: 8h Minimum
                                 </div>
+                                <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+                                <script>
+                                    (function () {
+                                        var labels = @json($dailyHours->keys()->values());
+                                        var hoursData = @json($dailyHours->values()->values());
+                                        var average = {{ number_format($averageHours, 2, '.', '') }};
+                                        var minHours = 8;
+
+                                        var avgLine = labels.map(function () { return average; });
+                                        var minLine = labels.map(function () { return minHours; });
+
+                                        var ctx = document.getElementById('hoursChart');
+                                        if (!ctx) return;
+
+                                        new Chart(ctx, {
+                                            type: 'bar',
+                                            data: {
+                                                labels: labels,
+                                                datasets: [
+                                                    {
+                                                        label: 'Stunden',
+                                                        data: hoursData,
+                                                        backgroundColor: '#4a7a2a',
+                                                        borderWidth: 0
+                                                    },
+                                                    {
+                                                        label: 'Durchschnitt',
+                                                        type: 'line',
+                                                        data: avgLine,
+                                                        borderColor: '#b00020',
+                                                        borderWidth: 2,
+                                                        pointRadius: 0,
+                                                        tension: 0
+                                                    },
+                                                    {
+                                                        label: '8h Minimum',
+                                                        type: 'line',
+                                                        data: minLine,
+                                                        borderColor: '#666',
+                                                        borderWidth: 2,
+                                                        pointRadius: 0,
+                                                        borderDash: [6, 4],
+                                                        tension: 0
+                                                    }
+                                                ]
+                                            },
+                                            options: {
+                                                responsive: true,
+                                                maintainAspectRatio: false,
+                                                plugins: {
+                                                    legend: { display: false },
+                                                    tooltip: {
+                                                        callbacks: {
+                                                            label: function (context) {
+                                                                if (context.dataset.type === 'line') {
+                                                                    return context.dataset.label + ': ' + context.parsed.y + 'h';
+                                                                }
+                                                                return 'Stunden: ' + context.parsed.y + 'h';
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                scales: {
+                                                    x: {
+                                                        ticks: { maxRotation: 90, minRotation: 90 }
+                                                    },
+                                                    y: {
+                                                        beginAtZero: true,
+                                                        title: { display: true, text: 'Stunden' }
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    })();
+                                </script>
                             @endif
                         @else
                             <em>Keine abgeschlossenen Projekte vorhanden.</em>
