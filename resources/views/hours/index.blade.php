@@ -33,7 +33,7 @@
                                 <div class="hours-legend">
                                     Balken: Stunden pro Tag | Rot: Durchschnitt | Grau: 8h Minimum
                                 </div>
-                                <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+                                <script src="/js/chart.umd.min.js"></script>
                                 <script>
                                     (function () {
                                         var labels = @json($dailyHours->keys()->values());
