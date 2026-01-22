@@ -25,7 +25,7 @@ Route::group(['middleware' => ['auth']], function(){
 
     //Compose Routes
     Route::get('/compose', 'App\Http\Controllers\ComposeController@index')->name('compose.index');
-    Route::get('/compose/update', 'App\Http\Controllers\ComposeController@update')->name('compose.update');
+    Route::post('/compose/upload', 'App\Http\Controllers\ComposeController@upload')->name('compose.upload');
     Route::get('/compose/file/{filename}', 'App\Http\Controllers\ComposeController@show')->name('compose.show');
     Route::post('/compose/file/{filename}', 'App\Http\Controllers\ComposeController@store')->name('compose.store');
     Route::get('/compose/generate/server/{server_id}', 'App\Http\Controllers\ComposeController@generate')->name('compose.generate');

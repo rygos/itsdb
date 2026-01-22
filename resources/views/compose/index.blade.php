@@ -4,7 +4,22 @@
     <div id="prodpagecontainer">
         <table id="pouetbox_prodmain">
             <tr>
-                <td><a href="{{ route('compose.update') }}">Update Composer Templates (Dauert ein paar Sekunden)</a></td>
+                <td>
+                    {!! Form::open(['route' => 'compose.upload', 'files' => true]) !!}
+                    <div>
+                        <strong>Upload Compose Files:</strong>
+                    </div>
+                    <div>
+                        ZIP: {!! Form::file('compose_zip', ['accept' => '.zip']) !!}
+                    </div>
+                    <div>
+                        YML: {!! Form::file('compose_files[]', ['multiple' => true, 'accept' => '.yml,.yaml']) !!}
+                    </div>
+                    <div>
+                        {{ Form::submit('Upload') }}
+                    </div>
+                    {!! Form::close() !!}
+                </td>
                 @php($latestComposer = \App\Models\Composer::orderBy('updated_at', 'DESC')->first())
                 <td>
                     Letztes Update:

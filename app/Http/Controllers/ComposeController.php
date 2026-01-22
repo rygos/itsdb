@@ -10,6 +10,7 @@ use App\Models\ServersComposersRel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Symfony\Component\Yaml\Yaml;
+use ZipArchive;
 
 class ComposeController extends Controller
 {
@@ -86,58 +87,112 @@ class ComposeController extends Controller
         return redirect()->route('compose.show', $filename);
     }
 
-    public function update(){
-        $repo_url = env('REPO_URL');
-        $html = file_get_contents($repo_url);
-        $rows = preg_match_all('/<a href="([^"]+)">[^<]*<\/a>[\s*]+([^"]+)...:/i', $html, $files);
+    public function upload(Request $request)
+    {
+        $uploads = [];
 
-        for($i = 0; $i < $rows; ++$i){
-            if(str_ends_with($files[1][$i], ".yml")
-                and $files[1][$i] != 'docker-compose-strimzi.yml'
-                and $files[1][$i] != 'docker-compose-strimzi-crd.yml'
-                and $files[1][$i] != 'docker-compose-orbis-events-4u.yml'
-                and $files[1][$i] != 'docker-compose-oas-collector.yml'
-                and $files[1][$i] != 'docker-compose-ha-service.yml'
-                and $files[1][$i] != 'docker-compose-kafka.yml'
-            ){
-                $this->saveorupdate_compose($files[1][$i], $files[2][$i]);
+        $zipFile = $request->file('compose_zip');
+        if ($zipFile) {
+            $zip = new ZipArchive();
+            if ($zip->open($zipFile->getPathname()) === true) {
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $stat = $zip->statIndex($i);
+                    $name = $stat['name'] ?? '';
+                    $filename = basename($name);
+                    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                    if (!in_array($extension, ['yml', 'yaml'], true)) {
+                        continue;
+                    }
+
+                    $content = $zip->getFromIndex($i);
+                    if ($content === false) {
+                        continue;
+                    }
+
+                    $mtime = $stat['mtime'] ?? null;
+                    $date = $mtime ? Carbon::createFromTimestamp($mtime) : Carbon::now();
+                    $uploads[] = [
+                        'filename' => $filename,
+                        'date' => $date,
+                        'content' => $content,
+                    ];
+                }
+                $zip->close();
             }
+        }
+
+        $files = $request->file('compose_files', []);
+        foreach ((array)$files as $file) {
+            if (!$file) {
+                continue;
+            }
+
+            $filename = $file->getClientOriginalName();
+            $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            if (!in_array($extension, ['yml', 'yaml'], true)) {
+                continue;
+            }
+
+            $content = file_get_contents($file->getPathname());
+            if ($content === false) {
+                continue;
+            }
+
+            $mtime = @filemtime($file->getPathname());
+            $date = $mtime ? Carbon::createFromTimestamp($mtime) : Carbon::now();
+            $uploads[] = [
+                'filename' => $filename,
+                'date' => $date,
+                'content' => $content,
+            ];
+        }
+
+        foreach ($uploads as $upload) {
+            $this->saveorupdate_compose_from_content(
+                $upload['filename'],
+                $upload['date'],
+                $upload['content']
+            );
         }
 
         return redirect()->route('compose.index');
     }
 
-    function saveorupdate_compose($filename, $date){
-        $file_url = env('REPO_URL').$filename;
+    private function saveorupdate_compose_from_content($filename, Carbon $date, $content)
+    {
         $title = str_replace('docker-compose-','',explode('.', $filename)[0]);
+        $file_url = 'upload';
+        $parsed = Yaml::parse($content);
+        $services = $parsed['services'] ?? [];
+        if (!$services) {
+            return;
+        }
 
         $check = Composer::whereComposeFilename($filename)->first();
         if($check){ //Vorhanden
-            if($check->orig_date <= Carbon::parse($date)){ //Älter also Update
-                $check->orig_date = Carbon::parse($date);
-                $check->orig_compose = file_get_contents($file_url);
+            if($check->orig_date <= $date){ //Älter also Update
+                $check->orig_date = $date;
+                $check->orig_compose = $content;
                 $check->title = $title;
                 $check->orig_url = $file_url;
                 $check->compose_filename = $filename;
-                $data = Yaml::parse($check->orig_compose)['services'];
                 $check->save();
 
-                foreach ($data as $item){
+                foreach ($services as $item){
                     $this->saveorupdate_container($item, $date, $check->id);
                 }
 
             }
         }else{ //Nicht vorhanden also anlegen
             $c = new Composer;
-            $c->orig_date = Carbon::parse($date);
-            $c->orig_compose = file_get_contents($file_url);
+            $c->orig_date = $date;
+            $c->orig_compose = $content;
             $c->title = $title;
             $c->orig_url = $file_url;
             $c->compose_filename = $filename;
-            $data = Yaml::parse($c->orig_compose)['services'];
             $c->save();
 
-            foreach ($data as $item){
+            foreach ($services as $item){
                 $this->saveorupdate_container($item, $date, $c->id);
             }
 
