@@ -37,27 +37,34 @@
                                     switch($item->status->name){
                                         case 'NEW':
                                             $color = 'none';
+                                            $textColor = 'inherit';
                                             break;
                                         case 'WIP':
                                             $color = 'orange';
+                                            $textColor = 'black';
                                             break;
                                         case 'CHECK':
                                             $color = 'blue';
+                                            $textColor = 'white';
                                             break;
                                         case 'WAIT FOR INFO':
                                             $color = 'yellow';
+                                            $textColor = 'black';
                                             break;
                                         case 'ON HOLD':
                                             $color = 'red';
+                                            $textColor = 'white';
                                             break;
                                         case 'FINISHED':
                                             $color = 'green';
+                                            $textColor = 'white';
                                             break;
                                         default:
                                             $color = 'none';
+                                            $textColor = 'inherit';
                                     }
                                 @endphp
-                                <td style="text-align: left; background-color: {{ $color }};">{{ $item->dynamics_id }}</td>
+                                <td style="text-align: left; background-color: {{ $color }}; color: {{ $textColor }};">{{ $item->dynamics_id }}</td>
                                 <td style="text-align: left;"><a href="{{ route('projects.view', $item->id) }}">{{ $item->name }}</a></td>
                                 <td style="text-align: left;">{{ $item->user->name }}</td>
                                 <td style="text-align: left;">{{ $item->start_date }}</td>
