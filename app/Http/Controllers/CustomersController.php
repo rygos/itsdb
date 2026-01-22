@@ -64,10 +64,12 @@ class CustomersController extends Controller
     }
 
     public function city($id){
+        $city = City::whereId($id)->first();
         $customers = Customer::where('city_id', $id)->orderBy('short_no')->get();
 
         return view('customers.index', [
-            'customers' => $customers
+            'customers' => $customers,
+            'city' => $city,
         ]);
     }
 

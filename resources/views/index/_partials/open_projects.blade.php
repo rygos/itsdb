@@ -44,7 +44,7 @@
                 <td style="text-align: left">{{ $i->customer->name }}</td>
                 <td style="text-align: left">
                     <a href="{{ route('customers.city', $i->customer->city->id) }}">
-                        <img src="assets/flags/{{ $i->customer->city->country_code }}.png"> {{ $i->customer->city->name }}
+                        <img src="/assets/flags/{{ $i->customer->city->country_code }}.png"> {{ $i->customer->city->name }}
                     </a>
                 </td>
                 <td style="text-align: left">{{ $i->name }}</td>

@@ -10,7 +10,7 @@
             <td style="text-align: left;">{{ $item->name }}</td>
             <td style="text-align: left;">
                 <a href="{{ route('customers.city', $item->city->id) }}">
-                    <img src="assets/flags/{{ $item->city->country_code }}.png">
+                    <img src="/assets/flags/{{ $item->city->country_code }}.png">
                 </a>
             </td>
             <td style="text-align: left;">

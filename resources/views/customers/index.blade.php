@@ -14,6 +14,11 @@
                 </tr>
             </thead>
             <tbody>
+                @if(isset($city) && $city)
+                    <tr>
+                        <td colspan="6"><strong>Stadt: {{ $city->name }}</strong></td>
+                    </tr>
+                @endif
                 @foreach($customers as $c)
                     @php
                         switch(@$c->projects()->orderBy('updated_at', 'DESC')->first()->status->name){
@@ -45,7 +50,7 @@
                         <td style="background-color: {{ $color }};">{{ $c->name }}</td>
                         <td style="background-color: {{ $color }};">
                             <a href="{{ route('customers.city', $c->city->id) }}">
-                                <img src="assets/flags/{{ $c->city->country_code }}.png"> {{ $c->city->name }}
+                                <img src="/assets/flags/{{ $c->city->country_code }}.png"> {{ $c->city->name }}
                             </a>
                         </td>
                         <td style="background-color: {{ $color }};">{{ @$c->projects()->orderBy('updated_at','DESC')->first()->name }}</td>
