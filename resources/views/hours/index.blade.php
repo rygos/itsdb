@@ -23,9 +23,10 @@
                                 {!! Form::select('year', $years, $selectedYear, ['onchange' => 'this.form.submit()']) !!}
                             {!! Form::close() !!}
                             <div class="hours-summary">
-                                <strong>Gesamtstunden {{ $selectedYear }}:</strong> {{ $totalHours }}
-                                <span> | <strong>Dienstleistungstage (8h):</strong> {{ number_format($totalHours / 8, 2) }}</span>
-                                <span> | <strong>Durchschnitt pro Kalendertag:</strong> {{ number_format($averageHours, 2) }}</span>
+                                <div><strong>Gesamtstunden {{ $selectedYear }}:</strong> {{ $totalHours }}</div>
+                                <div><strong>Dienstleistungstage (8h):</strong> {{ number_format($totalHours / 8, 2) }}</div>
+                                <div><strong>Durchschnitt pro Kalendertag:</strong> {{ number_format($averageHours, 2) }}</div>
+                                <div><strong>Forecast Dienstleistungstage bis Jahresende:</strong> {{ number_format($forecastServiceDays, 2) }}</div>
                             </div>
                             @if($dailyHours->isNotEmpty())
                                 <div class="hours-chart">

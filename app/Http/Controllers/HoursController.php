@@ -26,6 +26,7 @@ class HoursController extends Controller
         $totalHours = 0;
         $averageHours = 0;
         $maxDailyHours = 0;
+        $forecastServiceDays = 0;
         if ($selectedYear) {
             $projects = Project::whereNotNull('end_date')
                 ->whereHas('status', function ($query) {
@@ -57,9 +58,19 @@ class HoursController extends Controller
             }
 
             $totalHours = $dailyHours->sum();
-            $daysInRange = max(1, $dailyHours->count());
-            $averageHours = $totalHours / $daysInRange;
+            $workingDays = $this->count_working_days($startDate, $endDate);
+            $averageHours = $workingDays > 0 ? $totalHours / $workingDays : 0;
             $maxDailyHours = max(1, (int) $dailyHours->max());
+            if ((int) $selectedYear === (int) Carbon::now()->year) {
+                $fullYearWorkingDays = $this->count_working_days(
+                    Carbon::create($selectedYear, 1, 1)->startOfDay(),
+                    Carbon::create($selectedYear, 12, 31)->endOfDay()
+                );
+                $forecastHours = $averageHours * $fullYearWorkingDays;
+                $forecastServiceDays = $forecastHours / 8;
+            } else {
+                $forecastServiceDays = $totalHours / 8;
+            }
         }
 
         return view('hours.index', [
@@ -70,6 +81,77 @@ class HoursController extends Controller
             'totalHours' => $totalHours,
             'averageHours' => $averageHours,
             'maxDailyHours' => $maxDailyHours,
+            'forecastServiceDays' => $forecastServiceDays,
         ]);
+    }
+
+    private function count_working_days(Carbon $startDate, Carbon $endDate)
+    {
+        $holidays = $this->nrw_holidays((int)$startDate->year, (int)$endDate->year);
+        $workingDays = 0;
+        $cursor = $startDate->copy()->startOfDay();
+        $end = $endDate->copy()->startOfDay();
+
+        while ($cursor->lte($end)) {
+            $dateKey = $cursor->toDateString();
+            $isWeekend = $cursor->isWeekend();
+            if (!$isWeekend && !in_array($dateKey, $holidays, true)) {
+                $workingDays++;
+            }
+            $cursor->addDay();
+        }
+
+        return $workingDays;
+    }
+
+    private function nrw_holidays(int $startYear, int $endYear)
+    {
+        $dates = [];
+        for ($year = $startYear; $year <= $endYear; $year++) {
+            $easter = $this->easter_sunday($year);
+
+            $fixed = [
+                Carbon::create($year, 1, 1),   // Neujahr
+                Carbon::create($year, 5, 1),   // Tag der Arbeit
+                Carbon::create($year, 10, 3),  // Tag der Deutschen Einheit
+                Carbon::create($year, 11, 1),  // Allerheiligen (NRW)
+                Carbon::create($year, 12, 25), // 1. Weihnachtstag
+                Carbon::create($year, 12, 26), // 2. Weihnachtstag
+            ];
+
+            $moveable = [
+                $easter->copy()->subDays(2),  // Karfreitag
+                $easter->copy()->addDay(),    // Ostermontag
+                $easter->copy()->addDays(39), // Christi Himmelfahrt
+                $easter->copy()->addDays(50), // Pfingstmontag
+                $easter->copy()->addDays(60), // Fronleichnam (NRW)
+            ];
+
+            foreach (array_merge($fixed, $moveable) as $holiday) {
+                $dates[] = $holiday->toDateString();
+            }
+        }
+
+        return array_values(array_unique($dates));
+    }
+
+    private function easter_sunday(int $year)
+    {
+        $a = $year % 19;
+        $b = intdiv($year, 100);
+        $c = $year % 100;
+        $d = intdiv($b, 4);
+        $e = $b % 4;
+        $f = intdiv($b + 8, 25);
+        $g = intdiv($b - $f + 1, 3);
+        $h = (19 * $a + $b - $d - $g + 15) % 30;
+        $i = intdiv($c, 4);
+        $k = $c % 4;
+        $l = (32 + 2 * $e + 2 * $i - $h - $k) % 7;
+        $m = intdiv($a + 11 * $h + 22 * $l, 451);
+        $month = intdiv($h + $l - 7 * $m + 114, 31);
+        $day = (($h + $l - 7 * $m + 114) % 31) + 1;
+
+        return Carbon::create($year, $month, $day);
     }
 }
