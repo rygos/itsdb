@@ -5,7 +5,15 @@
         <table id="pouetbox_prodmain">
             <tr>
                 <td><a href="{{ route('compose.update') }}">Update Composer Templates (Dauert ein paar Sekunden)</a></td>
-                <td>Letztes Update: {{ \App\Models\Composer::orderBy('updated_at', 'DESC')->first()->updated_at->diffForHumans() }}</td>
+                @php($latestComposer = \App\Models\Composer::orderBy('updated_at', 'DESC')->first())
+                <td>
+                    Letztes Update:
+                    @if($latestComposer)
+                        {{ $latestComposer->updated_at->diffForHumans() }}
+                    @else
+                        -
+                    @endif
+                </td>
             </tr>
         </table>
 
