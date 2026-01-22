@@ -160,7 +160,11 @@
                             <td><a href="{{ route('projects.view', $project->id) }}">{{ $project->customer->sap_no }}</a></td>
                             <td><a href="{{ route('projects.view', $project->id) }}">{{ $project->name }}</a></td>
                             <td><a href="{{ route('customers.view', $project->customer_id) }}">{{ $project->customer->name }}</a></td>
-                            <td><img src="assets/flags/{{ $project->customer->city->country_code }}.png"> {{ $project->customer->city->name }}</td>
+                            <td>
+                                <a href="{{ route('customers.city', $project->customer->city->id) }}">
+                                    <img src="assets/flags/{{ $project->customer->city->country_code }}.png"> {{ $project->customer->city->name }}
+                                </a>
+                            </td>
                             <td>{{ \Carbon\Carbon::parse($project->end_date)->toDateString() }}</td>
                             <td>{{ $project->hours ?? '-' }}</td>
                         </tr>

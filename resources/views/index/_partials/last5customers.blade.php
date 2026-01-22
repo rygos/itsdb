@@ -8,8 +8,14 @@
         <tr>
             <td style="text-align: left;">{{ $item->short_no }}</td>
             <td style="text-align: left;">{{ $item->name }}</td>
-            <td style="text-align: left;"><img src="assets/flags/{{ $item->city->country_code }}.png"></td>
-            <td style="text-align: left;">{{ $item->city->name }}</td>
+            <td style="text-align: left;">
+                <a href="{{ route('customers.city', $item->city->id) }}">
+                    <img src="assets/flags/{{ $item->city->country_code }}.png">
+                </a>
+            </td>
+            <td style="text-align: left;">
+                <a href="{{ route('customers.city', $item->city->id) }}">{{ $item->city->name }}</a>
+            </td>
         </tr>
     @endforeach
 </table>

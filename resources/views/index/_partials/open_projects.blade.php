@@ -42,7 +42,11 @@
                 <td style="text-align: left">{{ $i->customer->short_no }}</td>
                 <td style="text-align: left"><a href="{{ route('customers.view', $i->customer->id) }}">{{ $i->customer->sap_no }}</a></td>
                 <td style="text-align: left">{{ $i->customer->name }}</td>
-                <td style="text-align: left"><img src="assets/flags/{{ $i->customer->city->country_code }}.png"> {{ $i->customer->city->name }}</td>
+                <td style="text-align: left">
+                    <a href="{{ route('customers.city', $i->customer->city->id) }}">
+                        <img src="assets/flags/{{ $i->customer->city->country_code }}.png"> {{ $i->customer->city->name }}
+                    </a>
+                </td>
                 <td style="text-align: left">{{ $i->name }}</td>
                 <td style="text-align: left;">{{ $i->start_date }}</td>
                 <td style="text-align: left;">{{ $i->end_date }}</td>

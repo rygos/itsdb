@@ -43,7 +43,11 @@
                         <td style="background-color: {{ $color }};">{{ $c->short_no }}</td>
                         <td style="background-color: {{ $color }};"><a href="{{ route('customers.view', $c->id) }}">{{ $c->sap_no }}</a></td>
                         <td style="background-color: {{ $color }};">{{ $c->name }}</td>
-                        <td style="background-color: {{ $color }};"><img src="assets/flags/{{ $c->city->country_code }}.png"> {{ $c->city->name }}</td>
+                        <td style="background-color: {{ $color }};">
+                            <a href="{{ route('customers.city', $c->city->id) }}">
+                                <img src="assets/flags/{{ $c->city->country_code }}.png"> {{ $c->city->name }}
+                            </a>
+                        </td>
                         <td style="background-color: {{ $color }};">{{ @$c->projects()->orderBy('updated_at','DESC')->first()->name }}</td>
                         <td style="background-color: {{ $color }};">{{ @$c->projects()->orderBy('updated_at', 'DESC')->first()->status->name }}</td>
                     </tr>

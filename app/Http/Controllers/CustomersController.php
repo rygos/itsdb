@@ -63,6 +63,14 @@ class CustomersController extends Controller
         ]);
     }
 
+    public function city($id){
+        $customers = Customer::where('city_id', $id)->orderBy('short_no')->get();
+
+        return view('customers.index', [
+            'customers' => $customers
+        ]);
+    }
+
     public function store(Request $request){
         $c = new Customer;
         $c->user_id = 1;
