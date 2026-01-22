@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChangelogController;
+use App\Http\Controllers\CustomerProjectController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\EnvController;
 use App\Http\Controllers\HoursController;
@@ -42,6 +43,10 @@ Route::group(['middleware' => ['auth']], function(){
     Route::post('/contacts/update', 'App\Http\Controllers\CustomersController@contact_update')->name('contact.update');
     Route::get('/contacts/delete/{id}', 'App\Http\Controllers\CustomersController@contact_delete')->name('contact.delete');
     Route::post('/city/add', [CustomersController::class, 'store_city'])->name('city.add');
+    Route::get('/customers-projects/add', [CustomerProjectController::class, 'add'])->name('customers_projects.add');
+    Route::get('/customers-projects/lookup-customer', [CustomerProjectController::class, 'lookup_customer'])->name('customers_projects.lookup_customer');
+    Route::get('/customers-projects/lookup-city', [CustomerProjectController::class, 'lookup_city'])->name('customers_projects.lookup_city');
+    Route::post('/customers-projects/store', [CustomerProjectController::class, 'store'])->name('customers_projects.store');
 
     //Routes for Hours
     Route::get('/hours', [HoursController::class, 'index'])->name('hours.index');

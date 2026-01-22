@@ -15,8 +15,7 @@
     {{-- END:Compose LINKS --}}
 
     {{-- START:ADDING LINKS --}}
-    <li><a style="background-color: darkgreen" href="{{ route('customers.add') }}">Add Customer</a></li>
-    <li><a style="background-color: darkgreen" href="{{ route('projects.add') }}">Add Project</a></li>
+    <li><a style="background-color: darkgreen" href="{{ route('customers_projects.add') }}">Add Customer + Project</a></li>
     {{-- END:ADDING LINKS --}}
 
     @if(\Illuminate\Support\Facades\Auth::check())
