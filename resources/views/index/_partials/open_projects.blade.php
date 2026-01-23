@@ -54,9 +54,23 @@
                         <img src="/assets/flags/{{ $i->customer->city->country_code }}.png"> {{ $i->customer->city->name }}
                     </a>
                 </td>
+                @php
+                    $endDate = \Carbon\Carbon::parse($i->end_date)->startOfDay();
+                    $today = \Carbon\Carbon::today();
+                    $daysRemaining = $today->diffInDays($endDate, false);
+                    if ($daysRemaining > 0) {
+                        $endBg = 'green';
+                    } elseif ($daysRemaining === 0) {
+                        $endBg = 'orange';
+                    } else {
+                        $endBg = 'red';
+                    }
+                @endphp
                 <td style="text-align: left">{{ $i->name }}</td>
-                <td style="text-align: left;">{{ $i->start_date }}</td>
-                <td style="text-align: left;">{{ $i->end_date }}</td>
+                <td style="text-align: left;">{{ \Carbon\Carbon::parse($i->start_date)->toDateString() }}</td>
+                <td style="text-align: left; background-color: {{ $endBg }};">
+                    {{ \Carbon\Carbon::parse($i->end_date)->toDateString() }} ({{ $daysRemaining }})
+                </td>
                 <td style="text-align: left;">{{ \App\Helpers\MiscHelper::work_hours_diff($i->start_date, $i->end_date) }}</td>
                 <td style="text-align: left;background-color: {{ $color }};color: {{ $textColor }};">{{ $i->status->name }}</td>
             </tr>

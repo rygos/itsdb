@@ -64,11 +64,25 @@
                                             $textColor = 'inherit';
                                     }
                                 @endphp
+                                @php
+                                    $endDate = \Carbon\Carbon::parse($item->end_date)->startOfDay();
+                                    $today = \Carbon\Carbon::today();
+                                    $daysRemaining = $today->diffInDays($endDate, false);
+                                    if ($daysRemaining > 0) {
+                                        $endBg = 'green';
+                                    } elseif ($daysRemaining === 0) {
+                                        $endBg = 'orange';
+                                    } else {
+                                        $endBg = 'red';
+                                    }
+                                @endphp
                                 <td style="text-align: left; background-color: {{ $color }}; color: {{ $textColor }};">{{ $item->dynamics_id }}</td>
                                 <td style="text-align: left;"><a href="{{ route('projects.view', $item->id) }}">{{ $item->name }}</a></td>
                                 <td style="text-align: left;">{{ $item->user->name }}</td>
-                                <td style="text-align: left;">{{ $item->start_date }}</td>
-                                <td style="text-align: left;">{{ $item->end_date }}</td>
+                                <td style="text-align: left;">{{ \Carbon\Carbon::parse($item->start_date)->toDateString() }}</td>
+                                <td style="text-align: left; background-color: {{ $endBg }};">
+                                    {{ \Carbon\Carbon::parse($item->end_date)->toDateString() }} ({{ $daysRemaining }})
+                                </td>
                                 <td style="text-align: left;">{{ $item->hours ?? '-' }}</td>
                                 <td style="text-align: left;">{{ Form::select('status', $status, $item->status->id) }} {{ Form::submit('Submit') }}</td>
                             </tr>

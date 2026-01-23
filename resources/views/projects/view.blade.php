@@ -25,11 +25,11 @@
             </tr>
             <tr>
                 <td>Start Date:</td>
-                <td>{!! Form::date('start_date', \Carbon\Carbon::parse($project->start_date)->toDateString()) !!} {!! Form::time('start_date_time', \Carbon\Carbon::parse($project->start_date)->format('H:i')) !!}</td>
+                <td>{!! Form::date('start_date', \Carbon\Carbon::parse($project->start_date)->toDateString()) !!}</td>
             </tr>
             <tr>
                 <td>End Date:</td>
-                <td>{!! Form::date('end_date', \Carbon\Carbon::parse($project->end_date)->toDateString()) !!}  {!! Form::time('end_date_time', \Carbon\Carbon::parse($project->end_date)->format('H:i')) !!}</td>
+                <td>{!! Form::date('end_date', \Carbon\Carbon::parse($project->end_date)->toDateString()) !!}</td>
             </tr>
             <tr>
                 <td>Hours:</td>

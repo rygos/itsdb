@@ -28,11 +28,11 @@
                         </tr>
                         <tr>
                             <td>Start Date:</td>
-                            <td>{!! Form::date('start_date', now()->toDateString()) !!} {!! Form::time('start_date_time') !!}</td>
+                            <td>{!! Form::date('start_date', now()->toDateString()) !!}</td>
                         </tr>
                         <tr>
                             <td>End Date:</td>
-                            <td>{!! Form::date('end_date', now()) !!}  {!! Form::time('end_date_time') !!}</td>
+                            <td>{!! Form::date('end_date', now()->toDateString()) !!}</td>
                         </tr>
                         <tr>
                             <td>Hours:</td>

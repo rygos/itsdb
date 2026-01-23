@@ -165,7 +165,21 @@
                                     <img src="/assets/flags/{{ $project->customer->city->country_code }}.png"> {{ $project->customer->city->name }}
                                 </a>
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($project->end_date)->toDateString() }}</td>
+                            @php
+                                $endDate = \Carbon\Carbon::parse($project->end_date)->startOfDay();
+                                $today = \Carbon\Carbon::today();
+                                $daysRemaining = $today->diffInDays($endDate, false);
+                                if ($daysRemaining > 0) {
+                                    $endBg = 'green';
+                                } elseif ($daysRemaining === 0) {
+                                    $endBg = 'orange';
+                                } else {
+                                    $endBg = 'red';
+                                }
+                            @endphp
+                            <td style="background-color: {{ $endBg }};">
+                                {{ $endDate->toDateString() }} ({{ $daysRemaining }})
+                            </td>
                             <td>{{ $project->hours ?? '-' }}</td>
                         </tr>
                     @endforeach
