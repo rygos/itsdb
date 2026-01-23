@@ -71,7 +71,7 @@
                 <td style="text-align: left; background-color: {{ $endBg }};">
                     {{ \Carbon\Carbon::parse($i->end_date)->toDateString() }} ({{ $daysRemaining }})
                 </td>
-                <td style="text-align: left;">{{ \App\Helpers\MiscHelper::work_hours_diff($i->start_date, $i->end_date) }}</td>
+                <td style="text-align: left;">{{ $i->hours ?? '-' }}</td>
                 <td style="text-align: left;background-color: {{ $color }};color: {{ $textColor }};">{{ $i->status->name }}</td>
             </tr>
         @endforeach
