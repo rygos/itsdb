@@ -15,35 +15,9 @@
     <tbody>
         @foreach($open_projects as $i)
             @php
-                switch($i->status->name){
-                    case 'NEW':
-                        $color = 'none';
-                        $textColor = 'inherit';
-                        break;
-                    case 'WIP':
-                        $color = 'orange';
-                        $textColor = 'black';
-                        break;
-                    case 'CHECK':
-                        $color = 'blue';
-                        $textColor = 'white';
-                        break;
-                    case 'ON HOLD':
-                        $color = 'red';
-                        $textColor = 'white';
-                        break;
-                    case 'WAIT FOR INFO':
-                        $color = 'yellow';
-                        $textColor = 'black';
-                        break;
-                    case 'FINISHED':
-                        $color = 'green';
-                        $textColor = 'white';
-                        break;
-                    default:
-                        $color = 'none';
-                        $textColor = 'inherit';
-                }
+                $statusName = optional($i->status)->name;
+                $color = \App\Helpers\StatusHelper::color($statusName);
+                $textColor = \App\Helpers\StatusHelper::textColor($statusName);
             @endphp
             <tr>
                 <td style="text-align: left">{{ $i->customer->short_no }}</td>

@@ -9,8 +9,12 @@ use Illuminate\Http\Request;
 class IndexController extends Controller
 {
     public function index(){
-        $last5customers = Customer::orderByDesc('id')->limit(5)->get();
-        $open_projects = Project::where('user_id', \Auth::id())
+        $last5customers = Customer::with('city')
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
+        $open_projects = Project::with(['customer.city', 'status'])
+            ->where('user_id', auth()->id())
             ->whereHas('status', function ($query) {
                 $query->where('name', '!=', 'FINISHED');
             })

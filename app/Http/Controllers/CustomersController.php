@@ -6,15 +6,17 @@ use App\Helpers\LogHelper;
 use App\Models\City;
 use App\Models\Customer;
 use App\Models\CustomerContact;
+use App\Models\Log;
 use App\Models\Remark;
 use App\Models\Status;
 use Illuminate\Http\Request;
-use function PHPUnit\Framework\isNull;
 
 class CustomersController extends Controller
 {
     public function index(){
-        $customers = Customer::orderBy('short_no')->get();
+        $customers = Customer::with(['city', 'latestProject.status'])
+            ->orderBy('short_no')
+            ->get();
 
         return view('customers.index', [
             'customers' => $customers
@@ -22,13 +24,10 @@ class CustomersController extends Controller
     }
 
     public function view($id){
-        $customer = Customer::whereId($id)->first();
+        $customer = Customer::with(['city', 'projects.status', 'projects.user', 'servers', 'credentials', 'contacts'])
+            ->findOrFail($id);
         $remark = Remark::whereType(1)->where('relation_id', $id)->first();
-        $status = Status::get();
-
-        foreach ($status as $item){
-            $st[$item->id] = $item->name;
-        }
+        $st = Status::orderBy('name')->pluck('name', 'id');
 
         if(!$remark){
             $remark_ret = '';
@@ -40,6 +39,11 @@ class CustomersController extends Controller
             'customer' => $customer,
             'remark' => $remark_ret,
             'status' => $st,
+            'projects' => $customer->projects,
+            'servers' => $customer->servers,
+            'credentials' => $customer->credentials,
+            'contacts' => $customer->contacts,
+            'logs' => Log::whereContentId($customer->id)->where('section', 'customer')->orderBy('created_at')->get(),
         ]);
     }
 
@@ -65,7 +69,10 @@ class CustomersController extends Controller
 
     public function city($id){
         $city = City::whereId($id)->first();
-        $customers = Customer::where('city_id', $id)->orderBy('short_no')->get();
+        $customers = Customer::with(['city', 'latestProject.status'])
+            ->where('city_id', $id)
+            ->orderBy('short_no')
+            ->get();
 
         return view('customers.index', [
             'customers' => $customers,

@@ -89,7 +89,7 @@ class CustomerProjectController extends Controller
             }
 
             $customer = new Customer;
-            $customer->user_id = \Auth::id();
+            $customer->user_id = auth()->id();
             $customer->short_no = $shortNo;
             $customer->sap_no = $request->get('sap_no');
             $customer->dynamics_no = $request->get('customer_dynamics_no');
@@ -104,7 +104,7 @@ class CustomerProjectController extends Controller
         $project->dynamics_id = $request->get('project_dynamics_id');
         $project->name = $request->get('project_name');
         $project->customer_id = $customer->id;
-        $project->user_id = \Auth::id();
+        $project->user_id = auth()->id();
         $project->status_id = 1;
         $project->start_date = Carbon::parse($request->get('start_date').' 00:00');
         $project->end_date = Carbon::parse($request->get('end_date').' 00:00');

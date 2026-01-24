@@ -29,41 +29,14 @@
                             <th>Hours</th>
                             <th>Status</th>
                         </tr>
-                        @foreach($customer->projects()->get() as $item)
+                        @foreach($projects as $item)
                             {{ Form::open(['route' => 'projects.change_status']) }}
                             {{ Form::hidden('project_id', $item->id) }}
                             <tr>
                                 @php
-                                    switch($item->status->name){
-                                        case 'NEW':
-                                            $color = 'none';
-                                            $textColor = 'inherit';
-                                            break;
-                                        case 'WIP':
-                                            $color = 'orange';
-                                            $textColor = 'black';
-                                            break;
-                                        case 'CHECK':
-                                            $color = 'blue';
-                                            $textColor = 'white';
-                                            break;
-                                        case 'WAIT FOR INFO':
-                                            $color = 'yellow';
-                                            $textColor = 'black';
-                                            break;
-                                        case 'ON HOLD':
-                                            $color = 'red';
-                                            $textColor = 'white';
-                                            break;
-                                        case 'FINISHED':
-                                            $color = 'green';
-                                            $textColor = 'white';
-                                            break;
-                                        default:
-                                            $color = 'none';
-                                            $textColor = 'inherit';
-                                    }
-                                @endphp
+                                    $statusName = optional($item->status)->name;
+                                    $color = \App\Helpers\StatusHelper::color($statusName);
+                                    $textColor = \App\Helpers\StatusHelper::textColor($statusName
                                 @php
                                     $endDate = \Carbon\Carbon::parse($item->end_date)->startOfDay();
                                     $today = \Carbon\Carbon::today();
@@ -107,7 +80,7 @@
                             <th>Certificate</th>
                             <th>Action</th>
                         </tr>
-                        @foreach($customer->servers()->get() as $item)
+                        @foreach($servers as $item)
                             <tr>
                                 <td>{{ $item->type }}</td>
                                 <td><a href="{{ route('servers.view', $item->id) }}">{{ $item->servername }}</a></td>
@@ -249,7 +222,7 @@
                                         <th>Date</th>
                                         <th>Action</th>
                                     </tr>
-                                    @foreach($customer->credentials()->get() as $item)
+                                    @foreach($credentials as $item)
                                         <tr>
                                             <td>{{ $item->username }}</td>
                                             <td>{{ $item->password }}</td>
@@ -284,7 +257,7 @@
                                     <th>Last Update</th>
                                     <th>Actions</th>
                                 </tr>
-                                @foreach($customer->contacts as $contact)
+                                @foreach($contacts as $contact)
                                     <tr>
                                         {{ Form::open(['route' => 'contact.update']) }}
                                         {{ Form::hidden('id', $contact->id) }}
@@ -328,7 +301,7 @@
                                         <th>Log</th>
                                         <th>Date</th>
                                     </tr>
-                                    @foreach(\App\Models\Log::whereContentId($customer->id)->where('section', '=', 'customer')->orderBy('created_at')->get() as $item)
+                                    @foreach($logs as $item)
                                         <tr>
                                             <td>{{ $item->user->name }}</td>
                                             <td>{{ $item->type }}</td>

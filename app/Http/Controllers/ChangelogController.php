@@ -12,7 +12,7 @@ class ChangelogController extends Controller
     public function index(){
         $editor = 0;
         if(\Auth::check()){
-            if(\Auth::id() == 1){
+            if(auth()->id() == 1){
                 $editor = 1;
             }
         }

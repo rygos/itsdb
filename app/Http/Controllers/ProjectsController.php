@@ -34,7 +34,7 @@ class ProjectsController extends Controller
         $p->dynamics_id = $request->get('dynamics_id');
         $p->name = $request->get('name');
         $p->customer_id = $request->get('customer');
-        $p->user_id = \Auth::id();
+        $p->user_id = auth()->id();
         $p->status_id = 1;
         $p->start_date = Carbon::parse($request->get('start_date').' 00:00');
         $p->end_date = Carbon::parse($request->get('end_date').' 00:00');

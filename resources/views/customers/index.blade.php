@@ -21,35 +21,10 @@
                 @endif
                 @foreach($customers as $c)
                     @php
-                        switch(@$c->projects()->orderBy('updated_at', 'DESC')->first()->status->name){
-                            case 'NEW':
-                                $color = 'none';
-                                $textColor = 'inherit';
-                                break;
-                            case 'WIP':
-                                $color = 'orange';
-                                $textColor = 'black';
-                                break;
-                            case 'CHECK':
-                                $color = 'blue';
-                                $textColor = 'white';
-                                break;
-                            case 'WAIT FOR INFO':
-                                $color = 'yellow';
-                                $textColor = 'black';
-                                break;
-                            case 'ON HOLD':
-                                $color = 'red';
-                                $textColor = 'white';
-                                break;
-                            case 'FINISHED':
-                                $color = 'green';
-                                $textColor = 'white';
-                                break;
-                            default:
-                                $color = 'none';
-                                $textColor = 'inherit';
-                        }
+                        $latestProject = $c->latestProject;
+                        $statusName = $latestProject ? optional($latestProject->status)->name : null;
+                        $color = \App\Helpers\StatusHelper::color($statusName);
+                        $textColor = \App\Helpers\StatusHelper::textColor($statusName);
                     @endphp
                     <tr style="text-align: left;">
                         <td style="background-color: {{ $color }};color: {{ $textColor }};">{{ $c->short_no }}</td>
@@ -60,8 +35,8 @@
                                 <img src="/assets/flags/{{ $c->city->country_code }}.png"> {{ $c->city->name }}
                             </a>
                         </td>
-                        <td style="background-color: {{ $color }};color: {{ $textColor }};">{{ @$c->projects()->orderBy('updated_at','DESC')->first()->name }}</td>
-                        <td style="background-color: {{ $color }};color: {{ $textColor }};">{{ @$c->projects()->orderBy('updated_at', 'DESC')->first()->status->name }}</td>
+                        <td style="background-color: {{ $color }};color: {{ $textColor }};">{{ $latestProject ? $latestProject->name : '-' }}</td>
+                        <td style="background-color: {{ $color }};color: {{ $textColor }};">{{ $statusName ?? '-' }}</td>
                     </tr>
                 @endforeach
             </tbody>

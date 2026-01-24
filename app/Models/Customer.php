@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Project;
 
 /**
  * Class Customer
@@ -46,6 +47,10 @@ class Customer extends Model
 
     public function projects(){
         return $this->hasMany('App\Models\Project', 'customer_id', 'id');
+    }
+
+    public function latestProject(){
+        return $this->hasOne(Project::class, 'customer_id', 'id')->latest('updated_at');
     }
 
     public function servers(){
