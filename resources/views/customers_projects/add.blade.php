@@ -102,6 +102,7 @@
             var lookupCustomerTimer = null;
             var lookupCustomerRequest = null;
             var $shortNo = $('#short_no');
+            var $info = $('#nfo');
             var $existingRow = $('#existing-customer-row');
             var $existingDetails = $('#existing-customer-details');
             var $newCustomerFields = $('.new-customer-field');
@@ -215,6 +216,28 @@
                 if ($cityId.val()) {
                     resetCity();
                 }
+            });
+
+            function describeElement(el) {
+                if (!el) return 'none';
+                if (el === document.body) return 'body';
+                var label = el.tagName ? el.tagName.toLowerCase() : 'unknown';
+                if (el.id) label += '#' + el.id;
+                if (el.name) label += '[name="' + el.name + '"]';
+                return label;
+            }
+
+            function logFocus(eventName, target) {
+                if (!$info.length) return;
+                var active = document.activeElement;
+                $info.text(eventName + ': ' + describeElement(target) + ' -> active: ' + describeElement(active));
+            }
+
+            document.addEventListener('focusin', function(e) {
+                logFocus('focusin', e.target);
+            });
+            document.addEventListener('focusout', function(e) {
+                logFocus('focusout', e.target);
             });
         });
     </script>
