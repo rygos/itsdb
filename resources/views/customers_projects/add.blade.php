@@ -268,6 +268,27 @@
             document.addEventListener('beforeinput', function(e) {
                 logFocus('doc-beforeinput', e.target);
             }, true);
+            window.addEventListener('blur', function() {
+                logFocus('window-blur', document.activeElement);
+            });
+            window.addEventListener('focus', function() {
+                logFocus('window-focus', document.activeElement);
+            });
+            document.addEventListener('visibilitychange', function() {
+                logFocus('visibility-' + document.visibilityState, document.activeElement);
+            });
+
+            $shortNo.on('mouseup', function() {
+                setTimeout(function() {
+                    logFocus('post-mouseup+0', $shortNo[0]);
+                }, 0);
+                setTimeout(function() {
+                    logFocus('post-mouseup+50', $shortNo[0]);
+                }, 50);
+                setTimeout(function() {
+                    logFocus('post-mouseup+200', $shortNo[0]);
+                }, 200);
+            });
         });
     </script>
 @endsection
