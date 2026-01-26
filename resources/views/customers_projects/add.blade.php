@@ -10,7 +10,6 @@
             <tr id="prodheader">
                 <th colspan='1'>
                     <span id='title'><big>Add Customer</big></span>
-                    <div id='nfo'></div>
                 </th>
             </tr>
             <tr>
@@ -59,7 +58,6 @@
             <tr id="prodheader">
                 <th colspan='1'>
                     <span id='title'><big>Add Project</big></span>
-                    <div id='nfo'></div>
                 </th>
             </tr>
             <tr>
@@ -102,7 +100,6 @@
             var lookupCustomerTimer = null;
             var lookupCustomerRequest = null;
             var $shortNo = $('#short_no');
-            var $info = $('#nfo');
             var $existingRow = $('#existing-customer-row');
             var $existingDetails = $('#existing-customer-details');
             var $newCustomerFields = $('.new-customer-field');
@@ -216,78 +213,6 @@
                 if ($cityId.val()) {
                     resetCity();
                 }
-            });
-
-            function describeElement(el) {
-                if (!el) return 'none';
-                if (el === document.body) return 'body';
-                var label = el.tagName ? el.tagName.toLowerCase() : 'unknown';
-                if (el.id) label += '#' + el.id;
-                if (el.name) label += '[name="' + el.name + '"]';
-                return label;
-            }
-
-            function logFocus(eventName, target) {
-                if (!$info.length) return;
-                var active = document.activeElement;
-                var shortNoState = 'short_no{';
-                if ($shortNo.length) {
-                    shortNoState += 'val="' + $shortNo.val() + '",';
-                    shortNoState += 'disabled=' + $shortNo.prop('disabled') + ',';
-                    shortNoState += 'readonly=' + $shortNo.prop('readonly') + ',';
-                    shortNoState += 'visible=' + $shortNo.is(':visible');
-                } else {
-                    shortNoState += 'missing';
-                }
-                shortNoState += '}';
-                $info.text(eventName + ': ' + describeElement(target) + ' -> active: ' + describeElement(active) + ' | ' + shortNoState);
-            }
-
-            document.addEventListener('focusin', function(e) {
-                logFocus('focusin', e.target);
-            });
-            document.addEventListener('focusout', function(e) {
-                logFocus('focusout', e.target);
-            });
-
-            $shortNo.on('keydown', function(e) {
-                logFocus('keydown(' + e.key + ')', e.target);
-            });
-            $shortNo.on('input', function(e) {
-                logFocus('input', e.target);
-            });
-            document.addEventListener('mousedown', function(e) {
-                logFocus('mousedown', e.target);
-            }, true);
-            document.addEventListener('mouseup', function(e) {
-                logFocus('mouseup', e.target);
-            }, true);
-            document.addEventListener('keydown', function(e) {
-                logFocus('doc-keydown(' + e.key + ')', e.target);
-            }, true);
-            document.addEventListener('beforeinput', function(e) {
-                logFocus('doc-beforeinput', e.target);
-            }, true);
-            window.addEventListener('blur', function() {
-                logFocus('window-blur', document.activeElement);
-            });
-            window.addEventListener('focus', function() {
-                logFocus('window-focus', document.activeElement);
-            });
-            document.addEventListener('visibilitychange', function() {
-                logFocus('visibility-' + document.visibilityState, document.activeElement);
-            });
-
-            $shortNo.on('mouseup', function() {
-                setTimeout(function() {
-                    logFocus('post-mouseup+0', $shortNo[0]);
-                }, 0);
-                setTimeout(function() {
-                    logFocus('post-mouseup+50', $shortNo[0]);
-                }, 50);
-                setTimeout(function() {
-                    logFocus('post-mouseup+200', $shortNo[0]);
-                }, 200);
             });
         });
     </script>
