@@ -239,6 +239,19 @@
             document.addEventListener('focusout', function(e) {
                 logFocus('focusout', e.target);
             });
+
+            $shortNo.on('keydown', function(e) {
+                logFocus('keydown(' + e.key + ')', e.target);
+            });
+            $shortNo.on('input', function(e) {
+                logFocus('input', e.target);
+            });
+            document.addEventListener('mousedown', function(e) {
+                logFocus('mousedown', e.target);
+            }, true);
+            document.addEventListener('mouseup', function(e) {
+                logFocus('mouseup', e.target);
+            }, true);
         });
     </script>
 @endsection
