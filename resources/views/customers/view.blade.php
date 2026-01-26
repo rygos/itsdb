@@ -36,7 +36,8 @@
                                 @php
                                     $statusName = optional($item->status)->name;
                                     $color = \App\Helpers\StatusHelper::color($statusName);
-                                    $textColor = \App\Helpers\StatusHelper::textColor($statusName
+                                    $textColor = \App\Helpers\StatusHelper::textColor($statusName);
+                                @endphp
                                 @php
                                     $endDate = \Carbon\Carbon::parse($item->end_date)->startOfDay();
                                     $today = \Carbon\Carbon::today();

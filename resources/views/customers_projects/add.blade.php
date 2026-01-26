@@ -100,6 +100,7 @@
     <script>
         $(document).ready(function() {
             var lookupCustomerTimer = null;
+            var lookupCustomerRequest = null;
             var $shortNo = $('#short_no');
             var $existingRow = $('#existing-customer-row');
             var $existingDetails = $('#existing-customer-details');
@@ -141,8 +142,16 @@
                     return;
                 }
 
-                $.get('{{ route('customers_projects.lookup_customer') }}', { short_no: shortNo })
+                if (lookupCustomerRequest && lookupCustomerRequest.readyState !== 4) {
+                    lookupCustomerRequest.abort();
+                }
+
+                lookupCustomerRequest = $.get('{{ route('customers_projects.lookup_customer') }}', { short_no: shortNo })
                     .done(function(data) {
+                        if ($shortNo.val().trim() !== shortNo) {
+                            return;
+                        }
+
                         if (data && data.found) {
                             showExistingCustomer(data);
                         } else {
@@ -150,7 +159,9 @@
                         }
                     })
                     .fail(function() {
-                        resetCustomer();
+                        if ($shortNo.val().trim() === shortNo) {
+                            resetCustomer();
+                        }
                     });
             }
 
@@ -192,7 +203,7 @@
                     });
             }
 
-            $shortNo.on('keyup', function() {
+            $shortNo.on('input', function() {
                 if (lookupCustomerTimer) {
                     clearTimeout(lookupCustomerTimer);
                 }
