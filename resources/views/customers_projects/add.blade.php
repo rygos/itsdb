@@ -230,7 +230,17 @@
             function logFocus(eventName, target) {
                 if (!$info.length) return;
                 var active = document.activeElement;
-                $info.text(eventName + ': ' + describeElement(target) + ' -> active: ' + describeElement(active));
+                var shortNoState = 'short_no{';
+                if ($shortNo.length) {
+                    shortNoState += 'val="' + $shortNo.val() + '",';
+                    shortNoState += 'disabled=' + $shortNo.prop('disabled') + ',';
+                    shortNoState += 'readonly=' + $shortNo.prop('readonly') + ',';
+                    shortNoState += 'visible=' + $shortNo.is(':visible');
+                } else {
+                    shortNoState += 'missing';
+                }
+                shortNoState += '}';
+                $info.text(eventName + ': ' + describeElement(target) + ' -> active: ' + describeElement(active) + ' | ' + shortNoState);
             }
 
             document.addEventListener('focusin', function(e) {
@@ -251,6 +261,12 @@
             }, true);
             document.addEventListener('mouseup', function(e) {
                 logFocus('mouseup', e.target);
+            }, true);
+            document.addEventListener('keydown', function(e) {
+                logFocus('doc-keydown(' + e.key + ')', e.target);
+            }, true);
+            document.addEventListener('beforeinput', function(e) {
+                logFocus('doc-beforeinput', e.target);
             }, true);
         });
     </script>
