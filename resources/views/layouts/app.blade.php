@@ -16,7 +16,9 @@
         //-->
     </script>
     <script src="/js/app.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js"></script>
+    @unless(request()->routeIs('customers_projects.add'))
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js"></script>
+    @endunless
     <script   src="https://code.jquery.com/jquery-1.9.1.min.js"   integrity="sha256-wS9gmOZBqsqWxgIVgA8Y9WcQOa7PgSIX+rPA0VL2rbQ="   crossorigin="anonymous"></script>
 
     <!--[if lt IE 9]>
@@ -70,93 +72,95 @@
         });
     </script>
 @endif
-<script>
-    (function() {
-        function parseValue(text) {
-            var trimmed = (text || '').trim();
-            if (trimmed === '') return { type: 'text', value: '' };
+@unless(request()->routeIs('customers_projects.add'))
+    <script>
+        (function() {
+            function parseValue(text) {
+                var trimmed = (text || '').trim();
+                if (trimmed === '') return { type: 'text', value: '' };
 
-            var dateMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
-            if (dateMatch) {
-                var dateValue = new Date(dateMatch[1] + 'T00:00:00');
-                if (!isNaN(dateValue.getTime())) {
-                    return { type: 'date', value: dateValue.getTime() };
-                }
-            }
-
-            var numberMatch = trimmed.replace(',', '.').match(/^-?\d+(\.\d+)?$/);
-            if (numberMatch) {
-                return { type: 'number', value: parseFloat(numberMatch[0]) };
-            }
-
-            return { type: 'text', value: trimmed.toLowerCase() };
-        }
-
-        function sortTable(table, columnIndex, direction) {
-            var tbody = table.tBodies[0];
-            if (!tbody) return;
-
-            var rows = Array.prototype.slice.call(tbody.rows);
-            var headerCount = table.tHead ? table.tHead.rows[0].cells.length : (table.rows[0] ? table.rows[0].cells.length : 0);
-            var sortableRows = rows.filter(function(row) {
-                return row.cells.length === headerCount;
-            });
-            var staticRows = rows.filter(function(row) {
-                return row.cells.length !== headerCount;
-            });
-
-            sortableRows.sort(function(a, b) {
-                var aText = a.cells[columnIndex] ? a.cells[columnIndex].innerText : '';
-                var bText = b.cells[columnIndex] ? b.cells[columnIndex].innerText : '';
-                var aParsed = parseValue(aText);
-                var bParsed = parseValue(bText);
-
-                var aVal = aParsed.value;
-                var bVal = bParsed.value;
-                if (aParsed.type !== bParsed.type) {
-                    aVal = (aText || '').toLowerCase();
-                    bVal = (bText || '').toLowerCase();
+                var dateMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch) {
+                    var dateValue = new Date(dateMatch[1] + 'T00:00:00');
+                    if (!isNaN(dateValue.getTime())) {
+                        return { type: 'date', value: dateValue.getTime() };
+                    }
                 }
 
-                if (aVal < bVal) return direction === 'asc' ? -1 : 1;
-                if (aVal > bVal) return direction === 'asc' ? 1 : -1;
-                return 0;
-            });
+                var numberMatch = trimmed.replace(',', '.').match(/^-?\d+(\.\d+)?$/);
+                if (numberMatch) {
+                    return { type: 'number', value: parseFloat(numberMatch[0]) };
+                }
 
-            tbody.innerHTML = '';
-            staticRows.forEach(function(row) { tbody.appendChild(row); });
-            sortableRows.forEach(function(row) { tbody.appendChild(row); });
-        }
+                return { type: 'text', value: trimmed.toLowerCase() };
+            }
 
-        function initSortableTables() {
-            var tables = document.querySelectorAll('table');
-            tables.forEach(function(table) {
-                var header = table.tHead ? table.tHead.rows[0] : table.rows[0];
-                if (!header) return;
-                var cells = Array.prototype.slice.call(header.cells);
-                if (!cells.length) return;
+            function sortTable(table, columnIndex, direction) {
+                var tbody = table.tBodies[0];
+                if (!tbody) return;
 
-                cells.forEach(function(cell, index) {
-                    cell.style.cursor = 'pointer';
-                    cell.addEventListener('click', function() {
-                        var current = cell.getAttribute('data-sort-dir');
-                        var next = current === 'asc' ? 'desc' : 'asc';
-                        cells.forEach(function(other) {
-                            if (other !== cell) other.removeAttribute('data-sort-dir');
+                var rows = Array.prototype.slice.call(tbody.rows);
+                var headerCount = table.tHead ? table.tHead.rows[0].cells.length : (table.rows[0] ? table.rows[0].cells.length : 0);
+                var sortableRows = rows.filter(function(row) {
+                    return row.cells.length === headerCount;
+                });
+                var staticRows = rows.filter(function(row) {
+                    return row.cells.length !== headerCount;
+                });
+
+                sortableRows.sort(function(a, b) {
+                    var aText = a.cells[columnIndex] ? a.cells[columnIndex].innerText : '';
+                    var bText = b.cells[columnIndex] ? b.cells[columnIndex].innerText : '';
+                    var aParsed = parseValue(aText);
+                    var bParsed = parseValue(bText);
+
+                    var aVal = aParsed.value;
+                    var bVal = bParsed.value;
+                    if (aParsed.type !== bParsed.type) {
+                        aVal = (aText || '').toLowerCase();
+                        bVal = (bText || '').toLowerCase();
+                    }
+
+                    if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                tbody.innerHTML = '';
+                staticRows.forEach(function(row) { tbody.appendChild(row); });
+                sortableRows.forEach(function(row) { tbody.appendChild(row); });
+            }
+
+            function initSortableTables() {
+                var tables = document.querySelectorAll('table');
+                tables.forEach(function(table) {
+                    var header = table.tHead ? table.tHead.rows[0] : table.rows[0];
+                    if (!header) return;
+                    var cells = Array.prototype.slice.call(header.cells);
+                    if (!cells.length) return;
+
+                    cells.forEach(function(cell, index) {
+                        cell.style.cursor = 'pointer';
+                        cell.addEventListener('click', function() {
+                            var current = cell.getAttribute('data-sort-dir');
+                            var next = current === 'asc' ? 'desc' : 'asc';
+                            cells.forEach(function(other) {
+                                if (other !== cell) other.removeAttribute('data-sort-dir');
+                            });
+                            cell.setAttribute('data-sort-dir', next);
+                            sortTable(table, index, next);
                         });
-                        cell.setAttribute('data-sort-dir', next);
-                        sortTable(table, index, next);
                     });
                 });
-            });
-        }
+            }
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initSortableTables);
-        } else {
-            initSortableTables();
-        }
-    })();
-</script>
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initSortableTables);
+            } else {
+                initSortableTables();
+            }
+        })();
+    </script>
+@endunless
 </body>
 </html>
