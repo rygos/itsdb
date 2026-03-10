@@ -15,7 +15,7 @@ use Symfony\Component\Yaml\Yaml;
 class ServerController extends Controller
 {
     public function view($id){
-        $s = Server::with(['customer', 'credentials'])->whereId($id)->firstOrFail();
+        $s = Server::with(['customer.servers', 'credentials.servers'])->whereId($id)->firstOrFail();
         $certs['server'] = openssl_x509_parse($s->server_cert_raw);
         $certs['intermediate'] = openssl_x509_parse($s->customer->intermediate_cert_raw);
         $certs['root'] = openssl_x509_parse($s->customer->root_cert_raw);
@@ -54,7 +54,7 @@ class ServerController extends Controller
             'compose_select' => $comp_select,
             'compose' => $compose,
             'env' => $env,
-            'credentials' => $s->credentials()->orderBy('type')->orderBy('username')->get(),
+            'credentials' => $s->credentials()->with('servers')->orderBy('type')->orderBy('username')->get(),
             //'env_needed' => $env_needed,
         ]);
     }

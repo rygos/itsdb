@@ -224,6 +224,11 @@
                                         <th>Date</th>
                                         <th>Action</th>
                                     </tr>
+                                    <tr>
+                                        <td colspan="6">
+                                            <button type="button" data-modal-target="#credential-create-modal">Credential hinzufuegen</button>
+                                        </td>
+                                    </tr>
                                     @foreach($credentials as $item)
                                         <tr>
                                             <td>{{ $item->username }}</td>
@@ -237,22 +242,14 @@
                                                 @endif
                                             </td>
                                             <td>{{ $item->created_at }}</td>
-                                            <td><a href="{{ route('credentials.delete', $item->id) }}">delete</a></td>
+                                            <td>
+                                                <div class="itsdb-actions">
+                                                    <button type="button" data-modal-target="#credential-edit-modal-{{ $item->id }}">bearbeiten</button>
+                                                    <a href="{{ route('credentials.delete', $item->id) }}">delete</a>
+                                                </div>
+                                            </td>
                                         </tr>
                                     @endforeach
-                                    {{ Form::open(['route' => 'credentials.store']) }}
-                                    {{ Form::hidden('customer_id', $customer->id) }}
-                                    <tr>
-                                        <td>{{ Form::text('username') }}</td>
-                                        <td>{{ Form::text('password') }}</td>
-                                        <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'OAS' => 'OAS', 'PTC-Share' => 'PTC-Share']) }}</td>
-                                        <td>
-                                            {{ Form::select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), null, ['multiple' => true, 'size' => max(3, $servers->count())]) }}
-                                        </td>
-                                        <td></td>
-                                        <td>{{ Form::submit('Submit') }}</td>
-                                    </tr>
-                                    {{ Form::close() }}
                                 </table>
                             </td>
                         </tr>
@@ -330,4 +327,80 @@
             </tbody>
         </table>
     </div>
+
+    <div class="itsdb-modal" id="credential-create-modal" aria-hidden="true">
+        <div class="itsdb-modal__dialog">
+            <div class="itsdb-modal__header">
+                <div class="itsdb-modal__title">Credential hinzufuegen</div>
+                <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
+            </div>
+            <div class="itsdb-modal__body">
+                {{ Form::open(['route' => 'credentials.store']) }}
+                {{ Form::hidden('customer_id', $customer->id) }}
+                <table class="itsdb-modal__grid">
+                    <tr>
+                        <td class="itsdb-modal__grid-label">User</td>
+                        <td>{{ Form::text('username') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="itsdb-modal__grid-label">Passwort</td>
+                        <td>{{ Form::text('password') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="itsdb-modal__grid-label">Typ</td>
+                        <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'OAS' => 'OAS', 'PTC-Share' => 'PTC-Share']) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="itsdb-modal__grid-label">Server</td>
+                        <td>
+                            {{ Form::select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), null, ['multiple' => true, 'size' => max(3, $servers->count())]) }}
+                        </td>
+                    </tr>
+                </table>
+                <div class="itsdb-modal__footer">
+                    {{ Form::submit('Speichern') }}
+                </div>
+                {{ Form::close() }}
+            </div>
+        </div>
+    </div>
+
+    @foreach($credentials as $item)
+        <div class="itsdb-modal" id="credential-edit-modal-{{ $item->id }}" aria-hidden="true">
+            <div class="itsdb-modal__dialog">
+                <div class="itsdb-modal__header">
+                    <div class="itsdb-modal__title">Credential bearbeiten</div>
+                    <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
+                </div>
+                <div class="itsdb-modal__body">
+                    {{ Form::open(['route' => 'credentials.update']) }}
+                    {{ Form::hidden('id', $item->id) }}
+                    <table class="itsdb-modal__grid">
+                        <tr>
+                            <td class="itsdb-modal__grid-label">User</td>
+                            <td>{{ Form::text('username', $item->username) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="itsdb-modal__grid-label">Passwort</td>
+                            <td>{{ Form::text('password', $item->password) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="itsdb-modal__grid-label">Typ</td>
+                            <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'OAS' => 'OAS', 'PTC-Share' => 'PTC-Share'], $item->type) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="itsdb-modal__grid-label">Server</td>
+                            <td>
+                                {{ Form::select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->all(), ['multiple' => true, 'size' => max(3, $servers->count())]) }}
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="itsdb-modal__footer">
+                        {{ Form::submit('Aktualisieren') }}
+                    </div>
+                    {{ Form::close() }}
+                </div>
+            </div>
+        </div>
+    @endforeach
 @endsection

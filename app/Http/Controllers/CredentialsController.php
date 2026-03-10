@@ -28,6 +28,24 @@ class CredentialsController extends Controller
         return redirect()->back();
     }
 
+    public function update(Request $request){
+        $c = Credential::whereId($request->get('id'))->firstOrFail();
+        $c->type = $request->get('type');
+        $c->username = $request->get('username');
+        $c->password = $request->get('password');
+        $c->save();
+
+        $serverIds = Server::whereCustomerId($c->customer_id)
+            ->whereIn('id', $request->input('server_ids', []))
+            ->pluck('id')
+            ->all();
+        $c->servers()->sync($serverIds);
+
+        LogHelper::log('customer', $c->customer_id, 'Credential', 'Update '.$c->type.' Credential for User: '.$c->username);
+
+        return redirect()->back();
+    }
+
     public function delete($id){
         $c = Credential::whereId($id)->first();
 

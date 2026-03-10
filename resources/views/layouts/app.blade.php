@@ -162,5 +162,50 @@
         })();
     </script>
 @endunless
+<script>
+    (function() {
+        function setModalState(modal, isOpen) {
+            if (!modal) return;
+            modal.style.display = isOpen ? 'flex' : 'none';
+            modal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        }
+
+        function initModals() {
+            document.querySelectorAll('[data-modal-target]').forEach(function(trigger) {
+                trigger.addEventListener('click', function() {
+                    setModalState(document.querySelector(trigger.getAttribute('data-modal-target')), true);
+                });
+            });
+
+            document.querySelectorAll('[data-modal-close]').forEach(function(trigger) {
+                trigger.addEventListener('click', function() {
+                    setModalState(trigger.closest('.itsdb-modal'), false);
+                });
+            });
+
+            document.querySelectorAll('.itsdb-modal').forEach(function(modal) {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === modal) {
+                        setModalState(modal, false);
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key !== 'Escape') return;
+                document.querySelectorAll('.itsdb-modal[aria-hidden="false"]').forEach(function(modal) {
+                    setModalState(modal, false);
+                });
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initModals);
+        } else {
+            initModals();
+        }
+    })();
+</script>
+@yield('scripts')
 </body>
 </html>

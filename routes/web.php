@@ -72,6 +72,7 @@ Route::group(['middleware' => ['auth']], function(){
 
     //Credentials Route
     Route::post('/credentials/store', 'App\Http\Controllers\CredentialsController@store')->name('credentials.store');
+    Route::post('/credentials/update', 'App\Http\Controllers\CredentialsController@update')->name('credentials.update');
     Route::get('/credentials/{id}/delete', 'App\Http\Controllers\CredentialsController@delete')->name('credentials.delete');
 
     //Certificate Routes

@@ -1066,6 +1066,72 @@ td.date {
 #pouetbox_modalmessage {
     width: 400px;
 }
+.itsdb-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.itsdb-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 26, 0.85);
+    z-index: 9999;
+    padding: 20px;
+}
+
+.itsdb-modal__dialog {
+    width: min(720px, 100%);
+    background: #00001a;
+    border: 1px solid #17395c;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
+}
+
+.itsdb-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #17395c;
+    color: #ffffff;
+}
+
+.itsdb-modal__title {
+    font-weight: bold;
+}
+
+.itsdb-modal__body {
+    padding: 12px;
+}
+
+.itsdb-modal__close {
+    background: transparent;
+    border: 1px solid #ffffe0;
+    color: #ffffe0;
+    cursor: pointer;
+    padding: 2px 8px;
+}
+
+.itsdb-modal__grid {
+    width: 100%;
+}
+
+.itsdb-modal__grid td {
+    padding: 4px;
+    vertical-align: top;
+}
+
+.itsdb-modal__grid-label {
+    width: 140px;
+    white-space: nowrap;
+}
+
+.itsdb-modal__footer {
+    padding-top: 10px;
+}
 tr.sortable th {
     text-align: left;
 }
