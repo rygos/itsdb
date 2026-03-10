@@ -1073,19 +1073,23 @@ td.date {
 }
 
 .itsdb-modal {
-    position: fixed;
-    inset: 0;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     display: none;
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 26, 0.85);
     z-index: 9999;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .itsdb-modal__dialog {
     width: min(720px, 100%);
-    background: #00001a;
+    background: #17395c;
     border: 1px solid #17395c;
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
 }
@@ -1131,6 +1135,10 @@ td.date {
 
 .itsdb-modal__footer {
     padding-top: 10px;
+}
+
+.itsdb-modal[aria-hidden="false"] {
+    display: flex !important;
 }
 tr.sortable th {
     text-align: left;
