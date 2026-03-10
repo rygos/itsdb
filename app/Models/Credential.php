@@ -16,4 +16,8 @@ class Credential extends BaseCredential
 		'password',
 		'type'
 	];
+
+    public function servers(){
+        return $this->belongsToMany('App\Models\Server', 'credential_server', 'credential_id', 'server_id');
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\LogHelper;
 use App\Models\Credential;
+use App\Models\Server;
 use Illuminate\Http\Request;
 
 class CredentialsController extends Controller
@@ -16,6 +17,11 @@ class CredentialsController extends Controller
         $c->username = $request->get('username');
         $c->password = $request->get('password');
         $c->save();
+        $serverIds = Server::whereCustomerId($c->customer_id)
+            ->whereIn('id', $request->input('server_ids', []))
+            ->pluck('id')
+            ->all();
+        $c->servers()->sync($serverIds);
 
         LogHelper::log('customer', $c->customer_id, 'Credential', 'Create '.$c->type.' Credential for User: '.$c->username);
 

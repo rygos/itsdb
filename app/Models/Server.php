@@ -23,4 +23,8 @@ class Server extends BaseServer
     public function composer_rel(){
         return $this->hasMany('App\Models\ServersComposersRel', 'server_id', 'id');
     }
+
+    public function credentials(){
+        return $this->belongsToMany('App\Models\Credential', 'credential_server', 'server_id', 'credential_id');
+    }
 }

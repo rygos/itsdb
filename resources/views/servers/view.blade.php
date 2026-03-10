@@ -49,6 +49,33 @@
                                     {{ Form::close() }}
                                 </td>
                             </tr>
+                            <tr>
+                                <th>Zugeordnete Credentials</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <table style="width: 100%">
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Pass</th>
+                                            <th>Type</th>
+                                            <th>Erstellt</th>
+                                        </tr>
+                                        @forelse($credentials as $item)
+                                            <tr>
+                                                <td>{{ $item->username }}</td>
+                                                <td>{{ $item->password }}</td>
+                                                <td>{{ $item->type }}</td>
+                                                <td>{{ $item->created_at }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4">Keine Credentials mit diesem Server verknuepft.</td>
+                                            </tr>
+                                        @endforelse
+                                    </table>
+                                </td>
+                            </tr>
                             @include('servers._partials.config')
                             @include('servers._partials.certificates')
                         </table>

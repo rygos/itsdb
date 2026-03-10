@@ -220,6 +220,7 @@
                                         <th>User</th>
                                         <th>Pass</th>
                                         <th>Type</th>
+                                        <th>Server</th>
                                         <th>Date</th>
                                         <th>Action</th>
                                     </tr>
@@ -228,6 +229,13 @@
                                             <td>{{ $item->username }}</td>
                                             <td>{{ $item->password }}</td>
                                             <td>{{ $item->type }}</td>
+                                            <td>
+                                                @if($item->servers->isEmpty())
+                                                    Alle / Nicht zugeordnet
+                                                @else
+                                                    {{ $item->servers->pluck('servername')->implode(', ') }}
+                                                @endif
+                                            </td>
                                             <td>{{ $item->created_at }}</td>
                                             <td><a href="{{ route('credentials.delete', $item->id) }}">delete</a></td>
                                         </tr>
@@ -238,6 +246,9 @@
                                         <td>{{ Form::text('username') }}</td>
                                         <td>{{ Form::text('password') }}</td>
                                         <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'OAS' => 'OAS', 'PTC-Share' => 'PTC-Share']) }}</td>
+                                        <td>
+                                            {{ Form::select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), null, ['multiple' => true, 'size' => max(3, $servers->count())]) }}
+                                        </td>
                                         <td></td>
                                         <td>{{ Form::submit('Submit') }}</td>
                                     </tr>

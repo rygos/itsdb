@@ -24,7 +24,7 @@ class CustomersController extends Controller
     }
 
     public function view($id){
-        $customer = Customer::with(['city', 'projects.status', 'projects.user', 'servers', 'credentials', 'contacts'])
+        $customer = Customer::with(['city', 'projects.status', 'projects.user', 'servers', 'credentials.servers', 'contacts'])
             ->findOrFail($id);
         $remark = Remark::whereType(1)->where('relation_id', $id)->first();
         $st = Status::orderBy('name')->pluck('name', 'id');
