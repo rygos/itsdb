@@ -1089,7 +1089,7 @@ td.date {
 
 .itsdb-modal__dialog {
     width: min(720px, 100%);
-    background: #17395c;
+    background: #00001a;
     border: 1px solid #17395c;
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
 }
@@ -1109,6 +1109,7 @@ td.date {
 
 .itsdb-modal__body {
     padding: 12px;
+    background: #00001a;
 }
 
 .itsdb-modal__close {
@@ -1126,6 +1127,7 @@ td.date {
 .itsdb-modal__grid td {
     padding: 4px;
     vertical-align: top;
+    background: #00001a !important;
 }
 
 .itsdb-modal__grid-label {
@@ -1135,6 +1137,7 @@ td.date {
 
 .itsdb-modal__footer {
     padding-top: 10px;
+    background: #00001a;
 }
 
 .itsdb-modal[aria-hidden="false"] {

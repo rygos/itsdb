@@ -132,9 +132,14 @@
             }
 
             function initSortableTables() {
-                var tables = document.querySelectorAll('table');
-                tables.forEach(function(table) {
-                    var header = table.tHead ? table.tHead.rows[0] : table.rows[0];
+                var tables = document.querySelectorAll('table[data-sortable="true"], table thead');
+                var processedTables = [];
+                tables.forEach(function(entry) {
+                    var table = entry.tagName === 'TABLE' ? entry : entry.closest('table');
+                    if (!table || processedTables.indexOf(table) !== -1) return;
+                    processedTables.push(table);
+
+                    var header = table.tHead ? table.tHead.rows[0] : null;
                     if (!header) return;
                     var cells = Array.prototype.slice.call(header.cells);
                     if (!cells.length) return;
