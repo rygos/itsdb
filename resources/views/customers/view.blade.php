@@ -348,7 +348,7 @@
                     </tr>
                     <tr>
                         <td class="itsdb-modal__grid-label">Typ</td>
-                        <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'OAS' => 'OAS', 'PTC-Share' => 'PTC-Share']) }}</td>
+                        <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share']) }}</td>
                     </tr>
                     <tr>
                         <td class="itsdb-modal__grid-label">Server</td>
@@ -386,7 +386,7 @@
                         </tr>
                         <tr>
                             <td class="itsdb-modal__grid-label">Typ</td>
-                            <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'OAS' => 'OAS', 'PTC-Share' => 'PTC-Share'], $item->type) }}</td>
+                            <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share'], $item->type) }}</td>
                         </tr>
                         <tr>
                             <td class="itsdb-modal__grid-label">Server</td>
