@@ -30,13 +30,12 @@
                             <th>Status</th>
                         </tr>
                         @foreach($projects as $item)
-                            {{ Form::open(['route' => 'projects.change_status']) }}
-                            {{ Form::hidden('project_id', $item->id) }}
                             <tr>
                                 @php
                                     $statusName = optional($item->status)->name;
                                     $color = \App\Helpers\StatusHelper::color($statusName);
                                     $textColor = \App\Helpers\StatusHelper::textColor($statusName);
+                                    $canManageProject = $item->user_id === auth()->id();
                                 @endphp
                                 @php
                                     $endDate = \Carbon\Carbon::parse($item->end_date)->startOfDay();
@@ -58,9 +57,18 @@
                                     {{ \Carbon\Carbon::parse($item->end_date)->toDateString() }} ({{ $daysRemaining }})
                                 </td>
                                 <td style="text-align: left;">{{ $item->hours ?? '-' }}</td>
-                                <td style="text-align: left;">{{ Form::select('status', $status, $item->status->id) }} {{ Form::submit('Submit') }}</td>
+                                <td style="text-align: left;">
+                                    @if($canManageProject)
+                                        {{ Form::open(['route' => 'projects.change_status']) }}
+                                        {{ Form::hidden('project_id', $item->id) }}
+                                        {{ Form::select('status', $status, $item->status->id) }}
+                                        {{ Form::submit('Submit') }}
+                                        {{ Form::close() }}
+                                    @else
+                                        {{ $item->status->name }}
+                                    @endif
+                                </td>
                             </tr>
-                            {{ Form::close() }}
                         @endforeach
                     </table>
                 </td>

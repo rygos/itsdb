@@ -10,7 +10,8 @@ class HoursController extends Controller
 {
     public function index(Request $request)
     {
-        $years = Project::whereNotNull('end_date')
+        $years = Project::ownedBy(auth()->id())
+            ->whereNotNull('end_date')
             ->whereHas('status', function ($query) {
                 $query->where('name', 'FINISHED');
             })
@@ -28,7 +29,9 @@ class HoursController extends Controller
         $maxDailyHours = 0;
         $forecastServiceDays = 0;
         if ($selectedYear) {
-            $projects = Project::whereNotNull('end_date')
+            $projects = Project::with(['customer.city', 'status'])
+                ->ownedBy(auth()->id())
+                ->whereNotNull('end_date')
                 ->whereHas('status', function ($query) {
                     $query->where('name', 'FINISHED');
                 })

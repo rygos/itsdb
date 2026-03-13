@@ -11,10 +11,12 @@ use Illuminate\Http\Request;
 class ProjectsController extends Controller
 {
     public function view($id){
-        $project = Project::whereId($id)->first();
+        $project = Project::with(['customer.city', 'status', 'user'])->findOrFail($id);
+        $canManageProject = $project->user_id === auth()->id();
 
         return view('projects.view', [
             'project' => $project,
+            'canManageProject' => $canManageProject,
         ]);
     }
 
@@ -48,7 +50,9 @@ class ProjectsController extends Controller
     }
 
     public function change_status(Request $request){
-        $project = Project::whereId($request->get('project_id'))->first();
+        $project = Project::with('status')->findOrFail($request->get('project_id'));
+        abort_unless($project->user_id === auth()->id(), 403);
+
         $project->status_id = $request->get('status');
         $project->save();
 
@@ -59,7 +63,9 @@ class ProjectsController extends Controller
     }
 
     public function update(Request $request){
-        $p = Project::whereId($request->get('id'))->first();
+        $p = Project::findOrFail($request->get('id'));
+        abort_unless($p->user_id === auth()->id(), 403);
+
         $p->start_date = Carbon::parse($request->get('start_date').' 00:00');
         $p->end_date = Carbon::parse($request->get('end_date').' 00:00');
         $p->name = $request->get('name');

@@ -7,6 +7,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -43,6 +44,11 @@ class Project extends Model
 		'status_id',
 		'hours'
 	];
+
+    public function scopeOwnedBy(Builder $query, ?int $userId): Builder
+    {
+        return $query->where('user_id', $userId);
+    }
 
     public function customer(){
         return $this->hasOne('App\Models\Customer', 'id', 'customer_id');

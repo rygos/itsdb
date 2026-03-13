@@ -19,13 +19,15 @@ class CalendarController extends Controller
         $end_of_calendar = $date->copy()->lastOfMonth()->endOfWeek(Carbon::SUNDAY);
 
         $day_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        $years = Project::whereNotNull('end_date')
+        $years = Project::ownedBy(auth()->id())
+            ->whereNotNull('end_date')
             ->selectRaw('YEAR(end_date) as year')
             ->distinct()
             ->orderByDesc('year')
             ->pluck('year', 'year');
 
-        $projectCounts = Project::whereNotNull('end_date')
+        $projectCounts = Project::ownedBy(auth()->id())
+            ->whereNotNull('end_date')
             ->whereBetween('end_date', [$start_of_calendar->copy()->startOfDay(), $end_of_calendar->copy()->endOfDay()])
             ->selectRaw('DATE(end_date) as day, COUNT(*) as total')
             ->groupBy('day')
@@ -34,7 +36,9 @@ class CalendarController extends Controller
         $selectedDay = $request->query('day');
         $selectedProjects = collect();
         if ($selectedDay) {
-            $selectedProjects = Project::whereNotNull('end_date')
+            $selectedProjects = Project::with(['customer.city', 'status'])
+                ->ownedBy(auth()->id())
+                ->whereNotNull('end_date')
                 ->whereDate('end_date', $selectedDay)
                 ->orderBy('end_date')
                 ->get();
