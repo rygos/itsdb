@@ -58,6 +58,8 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'registration_enabled' => (bool) env('REGISTRATION_ENABLED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

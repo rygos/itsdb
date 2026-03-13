@@ -24,6 +24,11 @@
             <tr>
                 <td colspan="2">{{ Form::submit('Submit') }}</td>
             </tr>
+            @if(config('app.registration_enabled'))
+                <tr>
+                    <td colspan="2"><a href="{{ route('register') }}">Register new user</a></td>
+                </tr>
+            @endif
         </table>
         {{ Form::close() }}
     </div>
