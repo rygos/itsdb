@@ -169,6 +169,85 @@
 @endunless
 <script>
     (function() {
+        function fallbackCopyText(value) {
+            var element = document.createElement('textarea');
+            element.value = value;
+            element.setAttribute('readonly', 'readonly');
+            element.style.position = 'absolute';
+            element.style.left = '-9999px';
+            document.body.appendChild(element);
+            element.select();
+            document.execCommand('copy');
+            document.body.removeChild(element);
+        }
+
+        function copyText(value) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(value);
+            }
+
+            fallbackCopyText(value);
+            return Promise.resolve();
+        }
+
+        function flashCopyState(button) {
+            if (!button) return;
+
+            var originalTitle = button.getAttribute('data-original-title') || button.getAttribute('title') || '';
+            if (!button.getAttribute('data-original-title')) {
+                button.setAttribute('data-original-title', originalTitle);
+            }
+
+            button.setAttribute('title', 'Kopiert');
+            button.classList.add('is-copied');
+            button.classList.add('show-copy-tooltip');
+
+            window.setTimeout(function() {
+                button.setAttribute('title', originalTitle);
+                button.classList.remove('is-copied');
+                button.classList.remove('show-copy-tooltip');
+            }, 1200);
+        }
+
+        function setSecretVisibility(field, isVisible) {
+            if (!field) return;
+
+            var text = field.querySelector('[data-secret-text]');
+            var toggle = field.querySelector('[data-secret-toggle]');
+            var copyButton = field.querySelector('[data-copy-value]');
+            if (!text || !toggle || !copyButton) return;
+
+            var secretValue = copyButton.getAttribute('data-copy-value') || '';
+            var hiddenText = text.getAttribute('data-hidden-text') || '-hidden-';
+
+            text.textContent = isVisible ? secretValue : hiddenText;
+            text.setAttribute('data-visible', isVisible ? 'true' : 'false');
+            toggle.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+            toggle.setAttribute('title', isVisible ? 'Passwort ausblenden' : 'Passwort anzeigen');
+            toggle.classList.toggle('is-visible', isVisible);
+        }
+
+        function initCredentialClipboard() {
+            document.querySelectorAll('[data-copy-value]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    copyText(button.getAttribute('data-copy-value') || '')
+                        .then(function() {
+                            flashCopyState(button);
+                        });
+                });
+            });
+
+            document.querySelectorAll('[data-secret-toggle]').forEach(function(toggle) {
+                var field = toggle.closest('[data-secret-field]');
+                setSecretVisibility(field, false);
+
+                toggle.addEventListener('click', function() {
+                    var isVisible = toggle.getAttribute('aria-pressed') === 'true';
+                    setSecretVisibility(field, !isVisible);
+                });
+            });
+        }
+
         function setModalState(modal, isOpen) {
             if (!modal) return;
             modal.style.display = isOpen ? 'flex' : 'none';
@@ -205,8 +284,12 @@
         }
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initModals);
+            document.addEventListener('DOMContentLoaded', function() {
+                initCredentialClipboard();
+                initModals();
+            });
         } else {
+            initCredentialClipboard();
             initModals();
         }
     })();

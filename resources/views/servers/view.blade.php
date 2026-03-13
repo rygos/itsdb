@@ -70,8 +70,17 @@
                                         </tr>
                                         @forelse($credentials as $item)
                                             <tr>
-                                                <td>{{ $item->username }}</td>
-                                                <td>{{ $item->password }}</td>
+                                                <td>
+                                                    @include('_partials.credential-copy-field', [
+                                                        'copyValue' => $item->username,
+                                                    ])
+                                                </td>
+                                                <td>
+                                                    @include('_partials.credential-copy-field', [
+                                                        'copyValue' => $item->password,
+                                                        'isPassword' => true,
+                                                    ])
+                                                </td>
                                                 <td>{{ $item->type }}</td>
                                                 <td>{{ $item->servers->pluck('servername')->implode(', ') }}</td>
                                                 <td>{{ $item->created_at }}</td>

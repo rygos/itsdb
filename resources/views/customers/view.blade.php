@@ -239,8 +239,17 @@
                                     </tr>
                                     @foreach($credentials as $item)
                                         <tr>
-                                            <td>{{ $item->username }}</td>
-                                            <td>{{ $item->password }}</td>
+                                            <td>
+                                                @include('_partials.credential-copy-field', [
+                                                    'copyValue' => $item->username,
+                                                ])
+                                            </td>
+                                            <td>
+                                                @include('_partials.credential-copy-field', [
+                                                    'copyValue' => $item->password,
+                                                    'isPassword' => true,
+                                                ])
+                                            </td>
                                             <td>{{ $item->type }}</td>
                                             <td>
                                                 @if($item->servers->isEmpty())
