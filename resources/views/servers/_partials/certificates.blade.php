@@ -5,6 +5,29 @@
     <td>
         <table style="width: 100%">
             <tr>
+                <td colspan="4">
+                    @if($errors->has('pfx_file'))
+                        <div style="margin-bottom: 10px; color: #ff8080;">{{ $errors->first('pfx_file') }}</div>
+                    @endif
+                    {{ Form::open(['route' => 'certificate.import_pfx', 'files' => true]) }}
+                    {{ Form::hidden('customer_id', $server->customer->id) }}
+                    {{ Form::hidden('server_id', $server->id) }}
+                    <table style="width: 100%">
+                        <tr>
+                            <th>PFX-Datei</th>
+                            <th>PFX-Passwort</th>
+                            <th>Aktion</th>
+                        </tr>
+                        <tr>
+                            <td>{{ Form::file('pfx_file') }}</td>
+                            <td>{{ Form::text('pfx_password') }}</td>
+                            <td>{{ Form::submit('Upload') }}</td>
+                        </tr>
+                    </table>
+                    {{ Form::close() }}
+                </td>
+            </tr>
+            <tr>
                 <th>Server</th>
                 <th>Intermediate</th>
                 <th>CA/Root</th>
@@ -129,7 +152,18 @@
                 <td>{{ Form::textarea('private_key', $server->private_key_raw) }}</td>
             </tr>
             <tr>
-                <td colspan="4">{{ Form::submit('Submit') }}</td>
+                <td colspan="4">
+                    {{ Form::submit('Submit') }}
+                    <button
+                        type="button"
+                        class="itsdb-copy-button"
+                        data-copy-tooltip="Kopiert"
+                        data-copy-from-fields='["textarea[name=\"server\"]","textarea[name=\"intermediate\"]","textarea[name=\"root\"]","textarea[name=\"private_key\"]"]'
+                        title="Zertifikate im Linux-Format kopieren"
+                    >
+                        Linux PEM kopieren
+                    </button>
+                </td>
             </tr>
             {{ Form::close() }}
         </table>

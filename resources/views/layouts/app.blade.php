@@ -237,6 +237,23 @@
                 });
             });
 
+            document.querySelectorAll('[data-copy-from-fields]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var selectors = JSON.parse(button.getAttribute('data-copy-from-fields') || '[]');
+                    var values = selectors.map(function(selector) {
+                        var field = document.querySelector(selector);
+                        return field ? (field.value || '').trim() : '';
+                    }).filter(function(value) {
+                        return value !== '';
+                    });
+
+                    copyText(values.join("\n"))
+                        .then(function() {
+                            flashCopyState(button);
+                        });
+                });
+            });
+
             document.querySelectorAll('[data-secret-toggle]').forEach(function(toggle) {
                 var field = toggle.closest('[data-secret-field]');
                 setSecretVisibility(field, false);

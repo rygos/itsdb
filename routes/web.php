@@ -81,6 +81,7 @@ Route::group(['middleware' => ['auth']], function(){
 
     //Certificate Routes
     Route::post('/certificate/update', 'App\Http\Controllers\CertificateController@update')->name('certificate.update');
+    Route::post('/certificate/import-pfx', 'App\Http\Controllers\CertificateController@import_pfx')->name('certificate.import_pfx');
 
     //Calendar Routes
     Route::get('/calendar/{year?}/{month?}', 'App\Http\Controllers\CalendarController@index')->name('calendar.index');
