@@ -271,6 +271,54 @@
                             </td>
                         </tr>
                         <tr>
+                            <th>Kundenspezifische Dokumente</th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table style="width: 100%;">
+                                    <tr>
+                                        <th>Dateiname</th>
+                                        <th>Dateibeschreibung</th>
+                                        <th>Dateigroesse</th>
+                                        <th>Aktion</th>
+                                    </tr>
+                                    @forelse($documents as $document)
+                                        <tr>
+                                            <td style="text-align: left;">{{ $document->original_name }}</td>
+                                            <td style="text-align: left;">{{ $document->description ?: '-' }}</td>
+                                            <td style="text-align: left;">{{ $document->formatted_size }}</td>
+                                            <td style="text-align: left;">
+                                                <div class="itsdb-actions">
+                                                    <a href="{{ route('customer_documents.download', $document->id) }}">download</a>
+                                                    <button type="button" data-modal-target="#customer-document-delete-modal-{{ $document->id }}">loeschen</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4">Keine Dokumente vorhanden.</td>
+                                        </tr>
+                                    @endforelse
+                                </table>
+                                <br>
+                                {{ Form::open(['route' => 'customer_documents.store', 'files' => true]) }}
+                                {{ Form::hidden('customer_id', $customer->id) }}
+                                <table style="width: 100%;">
+                                    <tr>
+                                        <th>Datei</th>
+                                        <th>Beschreibung</th>
+                                        <th>Aktion</th>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ Form::file('document') }}</td>
+                                        <td>{{ Form::text('description') }}</td>
+                                        <td>{{ Form::submit('Upload') }}</td>
+                                    </tr>
+                                </table>
+                                {{ Form::close() }}
+                            </td>
+                        </tr>
+                        <tr>
                             <table style="width: 100%;">
                                 <tr>
                                     <th>Prefix</th>
@@ -416,6 +464,24 @@
                         {{ Form::submit('Aktualisieren') }}
                     </div>
                     {{ Form::close() }}
+                </div>
+            </div>
+        </div>
+    @endforeach
+
+    @foreach($documents as $document)
+        <div class="itsdb-modal" id="customer-document-delete-modal-{{ $document->id }}" aria-hidden="true">
+            <div class="itsdb-modal__dialog">
+                <div class="itsdb-modal__header">
+                    <div class="itsdb-modal__title">Dokument loeschen</div>
+                    <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
+                </div>
+                <div class="itsdb-modal__body">
+                    <p style="margin-bottom: 12px;">Soll das Dokument "{{ $document->original_name }}" wirklich geloescht werden?</p>
+                    <div class="itsdb-actions">
+                        <a href="{{ route('customer_documents.delete', $document->id) }}">Ja, loeschen</a>
+                        <button type="button" data-modal-close>Abbrechen</button>
+                    </div>
                 </div>
             </div>
         </div>

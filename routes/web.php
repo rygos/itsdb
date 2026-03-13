@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\CustomerProjectController;
+use App\Http\Controllers\CustomerDocumentController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\EnvController;
 use App\Http\Controllers\HoursController;
@@ -40,6 +41,9 @@ Route::group(['middleware' => ['auth']], function(){
     Route::post('/customers/store', 'App\Http\Controllers\CustomersController@store')->name('customers.store');
     Route::get('/customers/city/{id}', [CustomersController::class,'city'])->name('customers.city');
     Route::get('/customers/{id}', '\App\Http\Controllers\CustomersController@view')->name('customers.view');
+    Route::post('/customer-documents/store', [CustomerDocumentController::class, 'store'])->name('customer_documents.store');
+    Route::get('/customer-documents/{id}/download', [CustomerDocumentController::class, 'download'])->name('customer_documents.download');
+    Route::get('/customer-documents/{id}/delete', [CustomerDocumentController::class, 'delete'])->name('customer_documents.delete');
     Route::post('/contacts/create', 'App\Http\Controllers\CustomersController@contact_create')->name('contact.create');
     Route::post('/contacts/update', 'App\Http\Controllers\CustomersController@contact_update')->name('contact.update');
     Route::get('/contacts/delete/{id}', 'App\Http\Controllers\CustomersController@contact_delete')->name('contact.delete');

@@ -68,4 +68,8 @@ class Customer extends Model
     public function contacts(){
         return $this->hasMany('App\Models\CustomerContact', 'customer_id', 'id');
     }
+
+    public function documents(){
+        return $this->hasMany('App\Models\CustomerDocument', 'customer_id', 'id');
+    }
 }
