@@ -61,11 +61,11 @@
                                     @if($canManageProject)
                                         {{ Form::open(['route' => 'projects.change_status']) }}
                                         {{ Form::hidden('project_id', $item->id) }}
-                                        {{ Form::select('status', $status, $item->status->id) }}
+                                        {{ Form::select('status', $status, $item->status_id) }}
                                         {{ Form::submit('Submit') }}
                                         {{ Form::close() }}
                                     @else
-                                        {{ $item->status->name }}
+                                        {{ optional($item->status)->name ?? '-' }}
                                     @endif
                                 </td>
                             </tr>
