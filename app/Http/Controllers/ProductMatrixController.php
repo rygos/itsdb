@@ -1,0 +1,201 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Container;
+use App\Models\ProductMatrix;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class ProductMatrixController extends Controller
+{
+    public function index(Request $request)
+    {
+        $search = trim((string) $request->get('search', ''));
+
+        $query = ProductMatrix::with('containers')->orderBy('position');
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('product', 'like', '%' . $search . '%')
+                    ->orWhere('category', 'like', '%' . $search . '%')
+                    ->orWhere('function_name', 'like', '%' . $search . '%')
+                    ->orWhere('synonyms', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%');
+            });
+        }
+
+        return view('product_matrix.index', [
+            'entries' => $query->get(),
+            'search' => $search,
+        ]);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'csv_file' => ['required', 'file', 'mimes:csv,txt'],
+        ]);
+
+        [$records, $missingContainers] = $this->parseCsvImport($request->file('csv_file')->getRealPath());
+
+        if (!empty($missingContainers)) {
+            $missingList = implode(', ', array_slice($missingContainers, 0, 12));
+            $suffix = count($missingContainers) > 12 ? ' ...' : '';
+
+            return redirect()
+                ->route('product_matrix.index')
+                ->withInput()
+                ->withErrors([
+                    'csv_file' => 'Import abgebrochen. Fehlende Container in der Datenbank: ' . $missingList . $suffix,
+                ]);
+        }
+
+        DB::transaction(function () use ($records) {
+            ProductMatrix::query()->delete();
+
+            foreach ($records as $record) {
+                $entry = ProductMatrix::create([
+                    'position' => $record['position'],
+                    'category' => $record['category'],
+                    'function_name' => $record['function_name'],
+                    'product' => $record['product'],
+                    'short_description' => $record['short_description'],
+                    'synonyms' => $record['synonyms'],
+                    'description' => $record['description'],
+                ]);
+
+                $entry->containers()->sync($record['container_ids']);
+            }
+        });
+
+        return redirect()
+            ->route('product_matrix.index')
+            ->with('status', count($records) . ' Produkte importiert.');
+    }
+
+    private function parseCsvImport(string $path): array
+    {
+        $contents = file_get_contents($path);
+        if ($contents === false) {
+            return [[], ['CSV-Datei konnte nicht gelesen werden']];
+        }
+
+        $contents = $this->normalizeEncoding($contents);
+
+        $stream = fopen('php://temp', 'r+');
+        fwrite($stream, $contents);
+        rewind($stream);
+
+        $headers = fgetcsv($stream, 0, ';');
+        if ($headers === false) {
+            fclose($stream);
+
+            return [[], ['CSV-Datei ist leer']];
+        }
+
+        $headers = array_map(function ($header) {
+            return trim((string) preg_replace('/^\xEF\xBB\xBF/', '', (string) $header));
+        }, $headers);
+
+        $containersByTitle = [];
+        foreach (Container::query()->get(['id', 'title']) as $container) {
+            $containersByTitle[$this->normalizeContainerTitle($container->title)] = $container;
+        }
+
+        $records = [];
+        $missingContainers = [];
+        $position = 0;
+
+        while (($row = fgetcsv($stream, 0, ';')) !== false) {
+            if ($row === [null] || count(array_filter($row, fn ($value) => trim((string) $value) !== '')) === 0) {
+                continue;
+            }
+
+            $assoc = [];
+            foreach ($headers as $index => $header) {
+                $assoc[$header] = isset($row[$index]) ? trim((string) $row[$index]) : '';
+            }
+
+            $record = [
+                'position' => ++$position,
+                'category' => $assoc['Kategorie'] ?? '',
+                'function_name' => $assoc['Funktion'] ?? '',
+                'product' => $assoc['Produkt'] ?? '',
+                'short_description' => $assoc['Kurzbeschreibung'] ?? '',
+                'synonyms' => $assoc['Synonyme'] ?? '',
+                'description' => $assoc['Beschreibung'] ?? '',
+                'container_ids' => [],
+            ];
+
+            $containerIds = [];
+            foreach ($this->extractContainerTitles($assoc['ORBIS U Spezifkation'] ?? '') as $title) {
+                $normalizedTitle = $this->normalizeContainerTitle($title);
+                $container = $containersByTitle[$normalizedTitle] ?? null;
+
+                if (!$container) {
+                    $missingContainers[$normalizedTitle] = $title;
+                    continue;
+                }
+
+                $containerIds[] = $container->id;
+            }
+
+            $record['container_ids'] = array_values(array_unique($containerIds));
+            $records[] = $record;
+        }
+
+        fclose($stream);
+
+        return [$records, array_values($missingContainers)];
+    }
+
+    private function extractContainerTitles(string $value): array
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return [];
+        }
+
+        $parts = preg_split('/<br\s*\/?>|\R/i', $value) ?: [];
+        $titles = [];
+
+        foreach ($parts as $part) {
+            $part = html_entity_decode(strip_tags(trim($part)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $part = preg_replace('/\s+/', ' ', $part ?? '');
+            $part = trim((string) $part);
+            if ($part === '') {
+                continue;
+            }
+
+            $title = trim(explode('/', $part)[0]);
+            if ($title === '') {
+                continue;
+            }
+
+            $titles[$this->normalizeContainerTitle($title)] = $title;
+        }
+
+        return array_values($titles);
+    }
+
+    private function normalizeContainerTitle(string $title): string
+    {
+        $title = html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $title = str_replace("\xc2\xa0", ' ', $title);
+        $title = preg_replace('/\s+/', ' ', $title ?? '');
+
+        return mb_strtolower(trim((string) $title));
+    }
+
+    private function normalizeEncoding(string $contents): string
+    {
+        $encoding = mb_detect_encoding($contents, ['UTF-8', 'Windows-1252', 'ISO-8859-1'], true);
+
+        if ($encoding === false || $encoding === 'UTF-8') {
+            return $contents;
+        }
+
+        return mb_convert_encoding($contents, 'UTF-8', $encoding);
+    }
+}

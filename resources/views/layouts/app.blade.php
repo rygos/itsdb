@@ -50,10 +50,11 @@
     @include('_partials.navigation')
 </nav>
 <footer>
+    @php($latestPublishedVersion = \App\Models\ChangelogVersion::query()->where('published', 1)->latest()->first())
     <ul>
         <li>Made with Love and Beer</li>
         <li>{{ config('app.name') }} - <a href="{{ route('changelog.index') }}">
-                {{  @\App\Models\ChangelogVersion::latest()->where('published', '=', 1)->first()->version }}
+                {{ $latestPublishedVersion?->version ?? '-' }}
             </a></li>
     </ul>
 </footer>

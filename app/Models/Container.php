@@ -16,4 +16,10 @@ class Container extends BaseContainer
     public function rel(){
         return $this->hasMany('App\Models\ComposerContainerRel', 'container_id', 'id');
     }
+
+    public function productMatrices()
+    {
+        return $this->belongsToMany(ProductMatrix::class, 'container_product_matrix')
+            ->withTimestamps();
+    }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\CustomerDocumentController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\EnvController;
 use App\Http\Controllers\HoursController;
+use App\Http\Controllers\ProductMatrixController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
@@ -55,6 +56,10 @@ Route::group(['middleware' => ['auth']], function(){
 
     //Routes for Hours
     Route::get('/hours', [HoursController::class, 'index'])->name('hours.index');
+
+    //Routes for Product Matrix
+    Route::get('/product-matrix', [ProductMatrixController::class, 'index'])->name('product_matrix.index');
+    Route::post('/product-matrix/import', [ProductMatrixController::class, 'import'])->name('product_matrix.import');
 
     //Routes for Projects
     Route::get('/projects/add', 'App\Http\Controllers\ProjectsController@add')->name('projects.add');
