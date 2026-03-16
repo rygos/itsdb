@@ -91,6 +91,7 @@
                     <th>Synonyme</th>
                     <th>Beschreibung</th>
                     <th>Orbis U Spezifikation</th>
+                    <th>Copy</th>
                 </tr>
             </thead>
             <tbody id="pouetbox_prodlist">
@@ -115,10 +116,25 @@
                                 -
                             @endif
                         </td>
+                        <td>
+                            @if($entry->containers->isNotEmpty())
+                                <button
+                                    type="button"
+                                    class="itsdb-copy-button"
+                                    data-copy-value="{{ $entry->containers->pluck('title')->implode("\n") }}"
+                                    data-copy-tooltip="Kopiert"
+                                    title="Services kopieren"
+                                >
+                                    Copy
+                                </button>
+                            @else
+                                -
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7">Keine Produkte gefunden.</td>
+                        <td colspan="8">Keine Produkte gefunden.</td>
                     </tr>
                 @endforelse
             </tbody>
