@@ -60,6 +60,9 @@ Route::group(['middleware' => ['auth']], function(){
     //Routes for Product Matrix
     Route::get('/product-matrix', [ProductMatrixController::class, 'index'])->name('product_matrix.index');
     Route::post('/product-matrix/import', [ProductMatrixController::class, 'import'])->name('product_matrix.import');
+    Route::post('/product-matrix/aliases', [ProductMatrixController::class, 'storeAlias'])->name('product_matrix.aliases.store');
+    Route::post('/product-matrix/aliases/{id}', [ProductMatrixController::class, 'updateAlias'])->name('product_matrix.aliases.update');
+    Route::get('/product-matrix/aliases/{id}/delete', [ProductMatrixController::class, 'deleteAlias'])->name('product_matrix.aliases.delete');
 
     //Routes for Projects
     Route::get('/projects/add', 'App\Http\Controllers\ProjectsController@add')->name('projects.add');

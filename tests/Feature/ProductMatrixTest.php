@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Container;
+use App\Models\ContainerImportAlias;
 use App\Models\ProductMatrix;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -95,5 +96,62 @@ CSV;
         $response->assertOk();
         $response->assertSee('Alpha Suite');
         $response->assertDontSee('Beta Viewer');
+    }
+
+    public function test_product_matrix_import_uses_alias_mapping_for_containers()
+    {
+        $user = User::factory()->create();
+
+        $target = Container::create([
+            'title' => 'orbis-user-provisioning',
+            'content' => null,
+            'content_orig' => 'services: {}',
+            'content_orig_date' => now(),
+        ]);
+
+        ContainerImportAlias::create([
+            'source_name' => 'user-provisioning',
+            'container_id' => $target->id,
+            'ignore_on_import' => false,
+        ]);
+
+        $csv = <<<'CSV'
+Kategorie;Funktion;Produkt;Kurzbeschreibung;Synonyme;Beschreibung;ORBIS U Technologie?;ORBIS U Spezifkation
+ORBIS;Provisioning;Alias Suite;Kurz;Alias;Beschreibung;Ja;user-provisioning/ CustInst.: Nein
+CSV;
+
+        $response = $this->actingAs($user)->post(route('product_matrix.import'), [
+            'csv_file' => UploadedFile::fake()->createWithContent('produkte.csv', $csv),
+        ]);
+
+        $response->assertRedirect(route('product_matrix.index'));
+
+        $entry = ProductMatrix::with('containers')->first();
+        $this->assertSame([$target->id], $entry->containers->pluck('id')->all());
+    }
+
+    public function test_product_matrix_import_can_ignore_container_aliases()
+    {
+        $user = User::factory()->create();
+
+        ContainerImportAlias::create([
+            'source_name' => 'legacy-service',
+            'container_id' => null,
+            'ignore_on_import' => true,
+        ]);
+
+        $csv = <<<'CSV'
+Kategorie;Funktion;Produkt;Kurzbeschreibung;Synonyme;Beschreibung;ORBIS U Technologie?;ORBIS U Spezifkation
+ORBIS;Provisioning;Ignore Suite;Kurz;Alias;Beschreibung;Ja;legacy-service/ CustInst.: Nein
+CSV;
+
+        $response = $this->actingAs($user)->post(route('product_matrix.import'), [
+            'csv_file' => UploadedFile::fake()->createWithContent('produkte.csv', $csv),
+        ]);
+
+        $response->assertRedirect(route('product_matrix.index'));
+        $response->assertSessionHas('status');
+        $this->assertDatabaseCount('container_product_matrix', 0);
+        $this->assertDatabaseHas('product_matrices', ['product' => 'Ignore Suite']);
     }
 }

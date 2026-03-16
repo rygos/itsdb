@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Container;
+use App\Models\ContainerImportAlias;
 use App\Models\ProductMatrix;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ProductMatrixController extends Controller
 {
@@ -28,6 +30,8 @@ class ProductMatrixController extends Controller
         return view('product_matrix.index', [
             'entries' => $query->get(),
             'search' => $search,
+            'aliases' => ContainerImportAlias::with('container')->orderBy('source_name')->get(),
+            'containers' => Container::orderBy('title')->get(['id', 'title']),
         ]);
     }
 
@@ -86,6 +90,39 @@ class ProductMatrixController extends Controller
             ->with('status', count($records) . ' Produkte importiert.');
     }
 
+    public function storeAlias(Request $request)
+    {
+        $data = $this->validateAlias($request);
+
+        ContainerImportAlias::create($data);
+
+        return redirect()
+            ->route('product_matrix.index')
+            ->with('status', 'Alias gespeichert.');
+    }
+
+    public function updateAlias(Request $request, $id)
+    {
+        $alias = ContainerImportAlias::findOrFail($id);
+        $data = $this->validateAlias($request, $alias->id);
+
+        $alias->update($data);
+
+        return redirect()
+            ->route('product_matrix.index')
+            ->with('status', 'Alias aktualisiert.');
+    }
+
+    public function deleteAlias($id)
+    {
+        $alias = ContainerImportAlias::findOrFail($id);
+        $alias->delete();
+
+        return redirect()
+            ->route('product_matrix.index')
+            ->with('status', 'Alias gelöscht.');
+    }
+
     private function parseCsvImport(string $path): array
     {
         $contents = file_get_contents($path);
@@ -113,6 +150,11 @@ class ProductMatrixController extends Controller
         $containersByTitle = [];
         foreach (Container::query()->get(['id', 'title']) as $container) {
             $containersByTitle[$this->normalizeContainerTitle($container->title)] = $container;
+        }
+
+        $aliasesBySource = [];
+        foreach (ContainerImportAlias::with('container')->get() as $alias) {
+            $aliasesBySource[$this->normalizeContainerTitle($alias->source_name)] = $alias;
         }
 
         $records = [];
@@ -143,6 +185,19 @@ class ProductMatrixController extends Controller
             $containerIds = [];
             foreach ($this->extractContainerTitles($assoc['ORBIS U Spezifkation'] ?? '') as $title) {
                 $normalizedTitle = $this->normalizeContainerTitle($title);
+                $alias = $aliasesBySource[$normalizedTitle] ?? null;
+
+                if ($alias) {
+                    if ($alias->ignore_on_import) {
+                        continue;
+                    }
+
+                    if ($alias->container) {
+                        $containerIds[] = $alias->container->id;
+                        continue;
+                    }
+                }
+
                 $container = $containersByTitle[$normalizedTitle] ?? null;
 
                 if (!$container) {
@@ -209,5 +264,53 @@ class ProductMatrixController extends Controller
         }
 
         return mb_convert_encoding($contents, 'UTF-8', $encoding);
+    }
+
+    private function validateAlias(Request $request, ?int $aliasId = null): array
+    {
+        $validated = $request->validate([
+            'source_name' => ['required', 'string'],
+            'container_id' => ['nullable', 'integer', 'exists:containers,id'],
+            'ignore_on_import' => ['nullable', 'boolean'],
+        ]);
+
+        $sourceName = trim((string) ($validated['source_name'] ?? ''));
+        $ignore = (bool) ($validated['ignore_on_import'] ?? false);
+        $containerId = $validated['container_id'] ?? null;
+        $normalizedSourceName = $this->normalizeContainerTitle($sourceName);
+
+        if ($normalizedSourceName === '') {
+            throw ValidationException::withMessages([
+                'source_name' => 'Aliasname darf nicht leer sein.',
+            ]);
+        }
+
+        $duplicateQuery = ContainerImportAlias::query()
+            ->get()
+            ->first(function (ContainerImportAlias $alias) use ($normalizedSourceName, $aliasId) {
+                if ($aliasId !== null && $alias->id === $aliasId) {
+                    return false;
+                }
+
+                return $this->normalizeContainerTitle($alias->source_name) === $normalizedSourceName;
+            });
+
+        if ($duplicateQuery) {
+            throw ValidationException::withMessages([
+                'source_name' => 'Für diesen Alias existiert bereits ein Eintrag.',
+            ]);
+        }
+
+        if (!$ignore && !$containerId) {
+            throw ValidationException::withMessages([
+                'container_id' => 'Bitte Ziel-Container auswählen oder Import ignorieren aktivieren.',
+            ]);
+        }
+
+        return [
+            'source_name' => $sourceName,
+            'container_id' => $ignore ? null : $containerId,
+            'ignore_on_import' => $ignore,
+        ];
     }
 }

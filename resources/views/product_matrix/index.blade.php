@@ -32,6 +32,16 @@
         .product-matrix-specs ul {
             margin-left: 18px;
         }
+        .product-matrix-alias-table select {
+            min-width: 260px;
+        }
+        .product-matrix-alias-table td,
+        .product-matrix-alias-table th {
+            vertical-align: middle;
+        }
+        .product-matrix-alias-actions {
+            white-space: nowrap;
+        }
     </style>
     <div id="prodpagecontainer">
         <table id="pouetbox_prodmain">
@@ -109,6 +119,61 @@
                 @empty
                     <tr>
                         <td colspan="7">Keine Produkte gefunden.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+
+        <table id="pouetbox_prodmain" class="product-matrix-alias-table">
+            <thead>
+                <tr id="prodheader">
+                    <th colspan="4">Spezifikations-Aliase fuer den Import</th>
+                </tr>
+                <tr id="prodheader">
+                    <th>Alias aus CSV</th>
+                    <th>Ziel-Container</th>
+                    <th>Ignorieren</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    {!! Form::open(['route' => 'product_matrix.aliases.store']) !!}
+                    <td>{!! Form::text('source_name', old('source_name'), ['placeholder' => 'z.B. user-provisioning']) !!}</td>
+                    <td>
+                        <select name="container_id">
+                            <option value="">Bitte waehlen</option>
+                            @foreach($containers as $container)
+                                <option value="{{ $container->id }}" @selected(old('container_id') == $container->id)>{{ $container->title }}</option>
+                            @endforeach
+                        </select>
+                    </td>
+                    <td>{!! Form::checkbox('ignore_on_import', 1, old('ignore_on_import')) !!}</td>
+                    <td class="product-matrix-alias-actions">{{ Form::submit('Alias speichern') }}</td>
+                    {!! Form::close() !!}
+                </tr>
+                @forelse($aliases as $alias)
+                    <tr>
+                        {!! Form::open(['route' => ['product_matrix.aliases.update', $alias->id]]) !!}
+                        <td>{!! Form::text('source_name', $alias->source_name) !!}</td>
+                        <td>
+                            <select name="container_id">
+                                <option value="">Bitte waehlen</option>
+                                @foreach($containers as $container)
+                                    <option value="{{ $container->id }}" @selected((string) $alias->container_id === (string) $container->id)>{{ $container->title }}</option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td>{!! Form::checkbox('ignore_on_import', 1, $alias->ignore_on_import) !!}</td>
+                        <td class="product-matrix-alias-actions">
+                            {{ Form::submit('Speichern') }}
+                            <a href="{{ route('product_matrix.aliases.delete', $alias->id) }}" onclick="return confirm('Alias wirklich loeschen?')">Loeschen</a>
+                        </td>
+                        {!! Form::close() !!}
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4">Noch keine Alias-Regeln vorhanden.</td>
                     </tr>
                 @endforelse
             </tbody>
