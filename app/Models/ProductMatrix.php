@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductMatrix extends Model
 {
     protected $fillable = [
+        'import_key',
         'position',
         'category',
         'function_name',

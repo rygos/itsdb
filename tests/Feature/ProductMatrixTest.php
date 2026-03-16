@@ -77,14 +77,24 @@ CSV;
     {
         $user = User::factory()->create();
 
-        ProductMatrix::create([
+        $alpha = Container::create([
+            'title' => 'alpha-service',
+            'content' => null,
+            'content_orig' => 'services: {}',
+            'content_orig_date' => now(),
+        ]);
+
+        $entry = ProductMatrix::create([
+            'import_key' => sha1('alpha'),
             'position' => 1,
             'category' => 'ORBIS',
             'function_name' => 'Monitoring',
             'product' => 'Alpha Suite',
         ]);
+        $entry->containers()->sync([$alpha->id]);
 
         ProductMatrix::create([
+            'import_key' => sha1('beta'),
             'position' => 2,
             'category' => 'ORBIS',
             'function_name' => 'Archiv',
@@ -152,6 +162,50 @@ CSV;
         $response->assertRedirect(route('product_matrix.index'));
         $response->assertSessionHas('status');
         $this->assertDatabaseCount('container_product_matrix', 0);
-        $this->assertDatabaseHas('product_matrices', ['product' => 'Ignore Suite']);
+        $this->assertDatabaseCount('product_matrices', 0);
+    }
+
+    public function test_product_matrix_reimport_updates_existing_entries_without_duplicates()
+    {
+        $user = User::factory()->create();
+
+        $alpha = Container::create([
+            'title' => 'alpha-service',
+            'content' => null,
+            'content_orig' => 'services: {}',
+            'content_orig_date' => now(),
+        ]);
+
+        $beta = Container::create([
+            'title' => 'beta-service',
+            'content' => null,
+            'content_orig' => 'services: {}',
+            'content_orig_date' => now(),
+        ]);
+
+        $firstCsv = <<<'CSV'
+Kategorie;Funktion;Produkt;Kurzbeschreibung;Synonyme;Beschreibung;ORBIS U Technologie?;ORBIS U Spezifkation
+ORBIS;Monitoring;Alpha Suite;Kurz;Alias;Erste Beschreibung;Ja;alpha-service/ CustInst.: Nein
+CSV;
+
+        $secondCsv = <<<'CSV'
+Kategorie;Funktion;Produkt;Kurzbeschreibung;Synonyme;Beschreibung;ORBIS U Technologie?;ORBIS U Spezifkation
+ORBIS;Monitoring;Alpha Suite;Kurz;Alias;Aktualisierte Beschreibung;Ja;"alpha-service/ CustInst.: Nein<br>beta-service/ CustInst.: Nein"
+CSV;
+
+        $this->actingAs($user)->post(route('product_matrix.import'), [
+            'csv_file' => UploadedFile::fake()->createWithContent('produkte.csv', $firstCsv),
+        ])->assertRedirect(route('product_matrix.index'));
+
+        $this->actingAs($user)->post(route('product_matrix.import'), [
+            'csv_file' => UploadedFile::fake()->createWithContent('produkte.csv', $secondCsv),
+        ])->assertRedirect(route('product_matrix.index'));
+
+        $this->assertDatabaseCount('product_matrices', 1);
+        $this->assertDatabaseHas('product_matrices', [
+            'product' => 'Alpha Suite',
+            'description' => 'Aktualisierte Beschreibung',
+        ]);
+        $this->assertDatabaseCount('container_product_matrix', 2);
     }
 }

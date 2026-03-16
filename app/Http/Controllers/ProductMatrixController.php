@@ -16,6 +16,7 @@ class ProductMatrixController extends Controller
         $search = trim((string) $request->get('search', ''));
 
         $query = ProductMatrix::with('containers')->orderBy('position');
+        $query->whereHas('containers');
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
@@ -68,10 +69,14 @@ class ProductMatrixController extends Controller
         }
 
         DB::transaction(function () use ($records) {
-            ProductMatrix::query()->delete();
+            $seenImportKeys = [];
 
             foreach ($records as $record) {
-                $entry = ProductMatrix::create([
+                $seenImportKeys[] = $record['import_key'];
+
+                $entry = ProductMatrix::updateOrCreate([
+                    'import_key' => $record['import_key'],
+                ], [
                     'position' => $record['position'],
                     'category' => $record['category'],
                     'function_name' => $record['function_name'],
@@ -83,6 +88,10 @@ class ProductMatrixController extends Controller
 
                 $entry->containers()->sync($record['container_ids']);
             }
+
+            ProductMatrix::query()
+                ->whereNotIn('import_key', $seenImportKeys)
+                ->delete();
         });
 
         return redirect()
@@ -172,6 +181,11 @@ class ProductMatrixController extends Controller
             }
 
             $record = [
+                'import_key' => $this->buildImportKey(
+                    $assoc['Kategorie'] ?? '',
+                    $assoc['Funktion'] ?? '',
+                    $assoc['Produkt'] ?? ''
+                ),
                 'position' => ++$position,
                 'category' => $assoc['Kategorie'] ?? '',
                 'function_name' => $assoc['Funktion'] ?? '',
@@ -209,6 +223,11 @@ class ProductMatrixController extends Controller
             }
 
             $record['container_ids'] = array_values(array_unique($containerIds));
+
+            if (count($record['container_ids']) === 0) {
+                continue;
+            }
+
             $records[] = $record;
         }
 
@@ -312,5 +331,14 @@ class ProductMatrixController extends Controller
             'container_id' => $ignore ? null : $containerId,
             'ignore_on_import' => $ignore,
         ];
+    }
+
+    private function buildImportKey(string $category, string $functionName, string $product): string
+    {
+        return sha1(implode('|', [
+            mb_strtolower(trim($category)),
+            mb_strtolower(trim($functionName)),
+            mb_strtolower(trim($product)),
+        ]));
     }
 }
