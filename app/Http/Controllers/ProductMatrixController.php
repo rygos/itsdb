@@ -34,10 +34,22 @@ class ProductMatrixController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'csv_file' => ['required', 'file', 'mimes:csv,txt'],
+            'csv_file' => ['required', 'file'],
         ]);
 
-        [$records, $missingContainers] = $this->parseCsvImport($request->file('csv_file')->getRealPath());
+        $uploadedFile = $request->file('csv_file');
+        $originalExtension = strtolower((string) $uploadedFile->getClientOriginalExtension());
+
+        if (!in_array($originalExtension, ['csv', 'txt'], true)) {
+            return redirect()
+                ->route('product_matrix.index')
+                ->withInput()
+                ->withErrors([
+                    'csv_file' => 'Bitte eine CSV-Datei mit der Endung .csv oder .txt hochladen.',
+                ]);
+        }
+
+        [$records, $missingContainers] = $this->parseCsvImport($uploadedFile->getRealPath());
 
         if (!empty($missingContainers)) {
             $missingList = implode(', ', array_slice($missingContainers, 0, 12));
