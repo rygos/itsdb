@@ -215,13 +215,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            {!! Form::open(['route' => 'administration.cities.store']) !!}
-                            <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neuen Ort anlegen']) !!}</td>
-                            <td>{!! Form::text('country_code', old('country_code', 'de'), ['maxlength' => 2, 'style' => 'width:60px']) !!}</td>
-                            <td>{{ Form::submit('Ort anlegen') }}</td>
-                            {!! Form::close() !!}
-                        </tr>
                         @forelse($cities as $city)
                             <tr>
                                 {!! Form::open(['route' => ['administration.cities.update', $city]]) !!}
@@ -240,6 +233,27 @@
                 <table id="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">
+                            <th colspan="5">Ort fuer fehlende City-Zuordnungen anlegen oder zuweisen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {!! Form::open(['route' => 'administration.cities.store']) !!}
+                            <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neuen Ort anlegen']) !!}</td>
+                            <td>{!! Form::text('country_code', old('country_code', 'de'), ['maxlength' => 2, 'style' => 'width:60px']) !!}</td>
+                            <td colspan="3">{{ Form::submit('Ort anlegen') }}</td>
+                            {!! Form::close() !!}
+                        </tr>
+                    </tbody>
+                </table>
+                <datalist id="administration-city-options">
+                    @foreach($cities as $city)
+                        <option value="{{ $city->name }}" data-city-id="{{ $city->id }}">{{ strtoupper($city->country_code) }} - {{ $city->name }}</option>
+                    @endforeach
+                </datalist>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
                             <th>Short</th>
                             <th>SAP</th>
                             <th>Kunde</th>
@@ -255,12 +269,14 @@
                                 <td>{{ $customer->sap_no }}</td>
                                 <td>{{ $customer->name }}</td>
                                 <td>
-                                    <select name="city_id">
-                                        <option value="">Bitte waehlen</option>
-                                        @foreach($cities as $city)
-                                            <option value="{{ $city->id }}">{{ strtoupper($city->country_code) }} - {{ $city->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <input
+                                        type="text"
+                                        name="city_name"
+                                        list="administration-city-options"
+                                        placeholder="Ort suchen"
+                                        data-city-autocomplete
+                                    >
+                                    <input type="hidden" name="city_id" data-city-id-input>
                                 </td>
                                 <td>{{ Form::submit('Ort speichern') }}</td>
                                 {!! Form::close() !!}
@@ -272,6 +288,44 @@
                         @endforelse
                     </tbody>
                 </table>
+                <script>
+                    (function() {
+                        function syncCitySelection(input) {
+                            var row = input.closest('tr');
+                            if (!row) return;
+
+                            var hidden = row.querySelector('[data-city-id-input]');
+                            var options = document.getElementById('administration-city-options');
+                            if (!hidden || !options) return;
+
+                            var value = (input.value || '').trim().toLowerCase();
+                            hidden.value = '';
+
+                            Array.prototype.slice.call(options.options).forEach(function(option) {
+                                if ((option.value || '').trim().toLowerCase() === value) {
+                                    hidden.value = option.getAttribute('data-city-id') || '';
+                                }
+                            });
+                        }
+
+                        function initCityAutocomplete() {
+                            document.querySelectorAll('[data-city-autocomplete]').forEach(function(input) {
+                                input.addEventListener('input', function() {
+                                    syncCitySelection(input);
+                                });
+                                input.addEventListener('change', function() {
+                                    syncCitySelection(input);
+                                });
+                            });
+                        }
+
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', initCityAutocomplete);
+                        } else {
+                            initCityAutocomplete();
+                        }
+                    })();
+                </script>
             @endif
         @endif
     </div>

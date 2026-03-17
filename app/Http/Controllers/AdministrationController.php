@@ -284,11 +284,22 @@ class AdministrationController extends Controller
         abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
 
         $validated = $request->validate([
-            'city_id' => ['required', 'integer', 'exists:citys,id'],
+            'city_id' => ['nullable', 'integer', 'exists:citys,id'],
+            'city_name' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $cityId = $validated['city_id'] ?? null;
+
+        if (!$cityId && !empty($validated['city_name'])) {
+            $cityId = City::query()
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($validated['city_name']))])
+                ->value('id');
+        }
+
+        abort_unless($cityId, 422, 'Ort nicht gefunden.');
+
         $customer->update([
-            'city_id' => (int) $validated['city_id'],
+            'city_id' => (int) $cityId,
         ]);
 
         return redirect()
