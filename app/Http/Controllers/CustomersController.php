@@ -13,6 +13,18 @@ use Illuminate\Http\Request;
 
 class CustomersController extends Controller
 {
+    private function cityOptions(): array
+    {
+        $cities = City::orderBy('name')->get();
+        $options = ['' => 'Bitte waehlen'];
+
+        foreach ($cities as $item) {
+            $options[$item->id] = strtoupper($item->country_code).' - '.$item->name;
+        }
+
+        return $options;
+    }
+
     public function index(){
         $customers = Customer::with(['city', 'latestProject.status'])
             ->orderBy('short_no')
@@ -49,12 +61,6 @@ class CustomersController extends Controller
     }
 
     public function add(){
-        $citys = City::orderBy('name')->get();
-        $citys_res = array();
-        foreach ($citys as $item){
-            $citys_res[$item->id] = strtoupper($item->country_code).' - '.$item->name;
-        }
-
         $country = [
             'de' => 'Deutschland',
             'at' => 'Österreich',
@@ -63,8 +69,16 @@ class CustomersController extends Controller
         ];
 
         return view('customers.add', [
-            'citys' => $citys_res,
+            'citys' => $this->cityOptions(),
             'countrys' => $country,
+        ]);
+    }
+
+    public function edit(Customer $customer)
+    {
+        return view('customers.edit', [
+            'customer' => $customer->load('city'),
+            'citys' => $this->cityOptions(),
         ]);
     }
 
@@ -95,6 +109,26 @@ class CustomersController extends Controller
         LogHelper::log('customer', $c->id, 'Add', 'Create Customer: '.$c->name);
 
         return redirect()->route('index');
+    }
+
+    public function update(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'short_no' => ['required', 'integer'],
+            'sap_no' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
+            'city' => ['nullable', 'integer', 'exists:citys,id'],
+        ]);
+
+        $customer->short_no = $validated['short_no'];
+        $customer->sap_no = $validated['sap_no'];
+        $customer->name = $validated['name'];
+        $customer->city_id = $validated['city'] ?: null;
+        $customer->save();
+
+        LogHelper::log('customer', $customer->id, 'Update', 'Update Customer Master Data: '.$customer->name);
+
+        return redirect()->route('customers.view', $customer);
     }
 
     public function store_city(Request $request){

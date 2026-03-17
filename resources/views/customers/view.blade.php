@@ -6,13 +6,18 @@
             <tbody>
             <tr id="prodheader">
                 <th colspan='1'>
-                    <span id='title'><big>{{ $customer->short_no }} - {{ $customer->sap_no }} -
-                        @if($customer->city)
-                            <a href="{{ route('customers.city', $customer->city->id) }}">{{ $customer->city->name }}</a>
-                        @else
-                            Kein Ort
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                        <span id='title'><big>{{ $customer->short_no }} - {{ $customer->sap_no }} -
+                            @if($customer->city)
+                                <a href="{{ route('customers.city', $customer->city->id) }}">{{ $customer->city->name }}</a>
+                            @else
+                                Kein Ort
+                            @endif
+                            - {{ $customer->name }}</big></span>
+                        @if(auth()->user()->hasPermission('customers', 'editable'))
+                            <a href="{{ route('customers.edit', $customer) }}">Bearbeiten</a>
                         @endif
-                        - {{ $customer->name }}</big></span>
+                    </div>
                     <div id='nfo'></div>
                 </th>
             </tr>

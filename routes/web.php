@@ -42,6 +42,8 @@ Route::group(['middleware' => ['auth']], function(){
     Route::get('/customers/add', 'App\Http\Controllers\CustomersController@add')->middleware('area:customers,editable')->name('customers.add');
     Route::post('/customers/store', 'App\Http\Controllers\CustomersController@store')->middleware('area:customers,editable')->name('customers.store');
     Route::get('/customers/city/{id}', [CustomersController::class,'city'])->middleware('area:customers,visible')->name('customers.city');
+    Route::get('/customers/{customer}/edit', [CustomersController::class, 'edit'])->middleware('area:customers,editable')->name('customers.edit');
+    Route::post('/customers/{customer}', [CustomersController::class, 'update'])->middleware('area:customers,editable')->name('customers.update');
     Route::get('/customers/{id}', '\App\Http\Controllers\CustomersController@view')->middleware('area:customers,visible')->name('customers.view');
     Route::post('/customer-documents/store', [CustomerDocumentController::class, 'store'])->middleware('area:customers,editable')->name('customer_documents.store');
     Route::get('/customer-documents/{id}/download', [CustomerDocumentController::class, 'download'])->middleware('area:customers,visible')->name('customer_documents.download');
