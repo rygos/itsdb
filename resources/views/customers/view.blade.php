@@ -192,7 +192,7 @@
                             </tr>
                         @endforeach
                         <tr>
-                            <th>{{ Form::select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs']) }}</th>
+                                <th>{{ Form::select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs', 'Integration' => 'Integration', 'Auswerte' => 'Auswerte']) }}</th>
                             <td>{{ Form::text('servername') }}</td>
                             <td>{{ Form::text('fqdn') }}</td>
                             <td>{{ Form::text('db_sid') }}</td>

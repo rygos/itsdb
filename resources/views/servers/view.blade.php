@@ -35,7 +35,7 @@
                                             <th>Action</th>
                                         </tr>
                                         <tr>
-                                            <td>{{ Form::select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs'], $server->type) }}</td>
+                                            <td>{{ Form::select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs', 'Integration' => 'Integration', 'Auswerte' => 'Auswerte'], $server->type) }}</td>
                                             <td>{{ Form::text('servername', $server->servername) }}</td>
                                             <td>{{ Form::text('fqdn', $server->fqdn) }}</td>
                                             <td>{{ Form::text('db_sid', $server->db_sid) }}</td>

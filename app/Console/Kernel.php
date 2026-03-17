@@ -2,11 +2,22 @@
 
 namespace App\Console;
 
+use App\Console\Commands\BackupDatabaseCommand;
+use App\Console\Commands\MakeUserAdminCommand;
+use App\Console\Commands\RestoreDatabaseCommand;
+use App\Console\Commands\ViewUsersCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
+    protected $commands = [
+        ViewUsersCommand::class,
+        MakeUserAdminCommand::class,
+        BackupDatabaseCommand::class,
+        RestoreDatabaseCommand::class,
+    ];
+
     /**
      * Define the application's command schedule.
      *

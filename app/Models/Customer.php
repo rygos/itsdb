@@ -38,7 +38,8 @@ class Customer extends Model
 		'short_no',
 		'sap_no',
 		'dynamics_no',
-		'name'
+		'name',
+        'city_id',
 	];
 
     public function city(){

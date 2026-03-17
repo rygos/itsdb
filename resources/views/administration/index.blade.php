@@ -173,6 +173,58 @@
                             </td>
                             <td>CSV-Import fuer die Produktmatrix.</td>
                         </tr>
+                        <tr>
+                            <td>
+                                {!! Form::open(['route' => 'administration.imports.customers', 'files' => true]) !!}
+                                <div><strong>Kundenimport</strong></div>
+                                <div>{!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}</div>
+                                <div>
+                                    Land-Fallback fuer neue Orte:
+                                    {!! Form::select('fallback_country_code', ['de' => 'DE', 'at' => 'AT', 'ch' => 'CH', 'lu' => 'LU'], 'de') !!}
+                                </div>
+                                @if(auth()->user()->hasPermission('administration', 'editable'))
+                                    <div>{{ Form::submit('Import Kunden') }}</div>
+                                @endif
+                                {!! Form::close() !!}
+                            </td>
+                            <td>Importiert `Kd.Nummer`, `SAP-Nr.` und `Ort` aus der Kundenuebersicht.</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                {!! Form::open(['route' => 'administration.imports.orbisu_servers', 'files' => true]) !!}
+                                <div><strong>OrbisU Server Import</strong></div>
+                                <div>{!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}</div>
+                                @if(auth()->user()->hasPermission('administration', 'editable'))
+                                    <div>{{ Form::submit('Import OrbisU Server') }}</div>
+                                @endif
+                                {!! Form::close() !!}
+                            </td>
+                            <td>Ordnet Server ueber die Short-Nummer dem Kunden zu und aktualisiert nur bei neuerem `Aktualisiert`-Wert.</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th>Ort</th>
+                            <th>Land</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($cities as $city)
+                            <tr>
+                                {!! Form::open(['route' => ['administration.cities.update', $city]]) !!}
+                                <td>{{ $city->name }}</td>
+                                <td>{!! Form::text('country_code', $city->country_code, ['maxlength' => 2, 'style' => 'width:60px']) !!}</td>
+                                <td>{{ Form::submit('Speichern') }}</td>
+                                {!! Form::close() !!}
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3">Noch keine Orte vorhanden.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             @endif

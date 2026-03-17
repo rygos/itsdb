@@ -7,13 +7,15 @@ use App\Models\Base\Server as BaseServer;
 class Server extends BaseServer
 {
 	protected $fillable = [
+        'type',
 		'servername',
 		'fqdn',
 		'ext_ip',
 		'int_ip',
 		'db_sid',
 		'db_server',
-        'customer_id'
+        'customer_id',
+        'user_id',
 	];
 
     public function customer(){
