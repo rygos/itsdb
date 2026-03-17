@@ -15,7 +15,6 @@
                     <td colspan="2">
                         <div class="admin-tabs">
                             <a href="{{ route('administration.index', ['tab' => 'users']) }}" class="{{ $tab === 'users' ? 'active' : '' }}">Benutzerverwaltung</a>
-                            <a href="{{ route('administration.index', ['tab' => 'statuses']) }}" class="{{ $tab === 'statuses' ? 'active' : '' }}">Statis</a>
                             <a href="{{ route('administration.index', ['tab' => 'administration', 'subtab' => 'import']) }}" class="{{ $tab === 'administration' ? 'active' : '' }}">Administration</a>
                         </div>
 
@@ -60,41 +59,6 @@
                     @empty
                         <tr>
                             <td colspan="5">Keine Benutzer vorhanden.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        @elseif($tab === 'statuses')
-            <table id="pouetbox_prodmain">
-                <thead>
-                    <tr id="prodheader">
-                        <th colspan="2">Projektstatis verwalten</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if(auth()->user()->hasPermission('administration', 'editable'))
-                        <tr>
-                            {!! Form::open(['route' => 'administration.statuses.store']) !!}
-                            <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neuen Status anlegen']) !!}</td>
-                            <td>{{ Form::submit('Status anlegen') }}</td>
-                            {!! Form::close() !!}
-                        </tr>
-                    @endif
-
-                    @forelse($statuses as $status)
-                        <tr>
-                            @if(auth()->user()->hasPermission('administration', 'editable'))
-                                {!! Form::open(['route' => ['administration.statuses.update', $status]]) !!}
-                                <td>{!! Form::text('name', $status->name) !!}</td>
-                                <td>{{ Form::submit('Speichern') }}</td>
-                                {!! Form::close() !!}
-                            @else
-                                <td colspan="2">{{ $status->name }}</td>
-                            @endif
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="2">Noch keine Statis vorhanden.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -181,9 +145,55 @@
                             </td>
                             <td>Ordnet Server ueber die Short-Nummer dem Kunden zu und aktualisiert nur bei neuerem `Aktualisiert`-Wert.</td>
                         </tr>
+                        <tr>
+                            <td>
+                                {!! Form::open(['route' => 'administration.imports.oas_servers', 'files' => true]) !!}
+                                <div><strong>OAS-Import</strong></div>
+                                <div>{!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}</div>
+                                @if(auth()->user()->hasPermission('administration', 'editable'))
+                                    <div>{{ Form::submit('Import OAS Server') }}</div>
+                                @endif
+                                {!! Form::close() !!}
+                            </td>
+                            <td>Importiert OAS-Server ueber `Projekt / SAP Nr`, Hostname und IP-Adresse und verknuepft sie mit bestehenden Kunden.</td>
+                        </tr>
                     </tbody>
                 </table>
             @elseif($subtab === 'master-data')
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="2">Projektstatis verwalten</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(auth()->user()->hasPermission('administration', 'editable'))
+                            <tr>
+                                {!! Form::open(['route' => 'administration.statuses.store']) !!}
+                                <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neuen Status anlegen']) !!}</td>
+                                <td>{{ Form::submit('Status anlegen') }}</td>
+                                {!! Form::close() !!}
+                            </tr>
+                        @endif
+
+                        @forelse($statuses as $status)
+                            <tr>
+                                @if(auth()->user()->hasPermission('administration', 'editable'))
+                                    {!! Form::open(['route' => ['administration.statuses.update', $status]]) !!}
+                                    <td>{!! Form::text('name', $status->name) !!}</td>
+                                    <td>{{ Form::submit('Speichern') }}</td>
+                                    {!! Form::close() !!}
+                                @else
+                                    <td colspan="2">{{ $status->name }}</td>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="2">Noch keine Statis vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
                 <table id="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">

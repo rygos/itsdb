@@ -122,6 +122,7 @@ Route::group(['middleware' => ['auth']], function(){
     Route::post('/administration/settings', [AdministrationController::class, 'updateSettings'])->middleware('area:administration,administration')->name('administration.settings.update');
     Route::post('/administration/imports/customers', [AdministrationController::class, 'importCustomers'])->middleware('area:administration,editable')->name('administration.imports.customers');
     Route::post('/administration/imports/orbisu-servers', [AdministrationController::class, 'importOrbisUServers'])->middleware('area:administration,editable')->name('administration.imports.orbisu_servers');
+    Route::post('/administration/imports/oas-servers', [AdministrationController::class, 'importOasServers'])->middleware('area:administration,editable')->name('administration.imports.oas_servers');
     Route::post('/administration/cities', [AdministrationController::class, 'storeCity'])->middleware('area:administration,editable')->name('administration.cities.store');
     Route::post('/administration/cities/{city}', [AdministrationController::class, 'updateCity'])->middleware('area:administration,editable')->name('administration.cities.update');
     Route::post('/administration/customers/{customer}/city', [AdministrationController::class, 'updateCustomerCity'])->middleware('area:administration,editable')->name('administration.customers.city.update');

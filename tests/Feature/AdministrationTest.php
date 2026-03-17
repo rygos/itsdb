@@ -93,7 +93,7 @@ class AdministrationTest extends TestCase
             ->post(route('administration.statuses.store'), [
                 'name' => 'PLANNED',
             ])
-            ->assertRedirect(route('administration.index', ['tab' => 'statuses']));
+            ->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']));
 
         $status = Status::query()->where('name', 'PLANNED')->firstOrFail();
 
@@ -101,7 +101,7 @@ class AdministrationTest extends TestCase
             ->post(route('administration.statuses.update', $status), [
                 'name' => 'IN REVIEW',
             ])
-            ->assertRedirect(route('administration.index', ['tab' => 'statuses']));
+            ->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']));
 
         $this->assertDatabaseHas('status', [
             'id' => $status->id,

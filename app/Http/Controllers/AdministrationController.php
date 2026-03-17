@@ -100,7 +100,7 @@ class AdministrationController extends Controller
         Status::create($validated);
 
         return redirect()
-            ->route('administration.index', ['tab' => 'statuses'])
+            ->to($this->administrationRoute('master-data'))
             ->with('status', 'Status angelegt.');
     }
 
@@ -115,7 +115,7 @@ class AdministrationController extends Controller
         $status->update($validated);
 
         return redirect()
-            ->route('administration.index', ['tab' => 'statuses'])
+            ->to($this->administrationRoute('master-data'))
             ->with('status', 'Status aktualisiert.');
     }
 
@@ -324,6 +324,66 @@ class AdministrationController extends Controller
             ->with('status', $importedCount . ' Server importiert, ' . $skippedCount . ' uebersprungen.');
     }
 
+    public function importOasServers(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
+
+        $validated = $request->validate([
+            'csv_file' => ['required', 'file'],
+        ]);
+
+        [$header, $rows] = $this->readCsvRows($validated['csv_file']);
+        $headerMap = $this->buildHeaderMap($header);
+        $importedCount = 0;
+        $skippedCount = 0;
+
+        DB::transaction(function () use ($rows, $headerMap, $request, &$importedCount, &$skippedCount) {
+            foreach ($rows as $row) {
+                $hostname = trim((string) $this->csvValue($row, $headerMap, 'Hostname'));
+                $ipAddress = trim((string) $this->csvValue($row, $headerMap, 'IP-Adresse'));
+                $shortNo = $this->extractProjectShortNumber((string) $this->csvValue($row, $headerMap, 'Projekt / SAP Nr'));
+
+                if ($hostname === '' || $ipAddress === '' || !$shortNo) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $customer = Customer::query()->where('short_no', $shortNo)->first();
+
+                if (!$customer) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $payload = [
+                    'type' => $this->mapOasServerType((string) $this->csvValue($row, $headerMap, 'Typ')),
+                    'server_kind_id' => $this->resolveOasServerKindId((string) $this->csvValue($row, $headerMap, 'OAS-Modul')),
+                    'operating_system_id' => null,
+                    'servername' => $hostname,
+                    'int_ip' => $ipAddress,
+                    'db_sid' => trim((string) $this->csvValue($row, $headerMap, 'Datenbank')),
+                    'customer_id' => $customer->id,
+                    'user_id' => $request->user()->id,
+                ];
+
+                $server = Server::query()->where('servername', $hostname)->first();
+
+                if ($server) {
+                    $server->fill($payload);
+                    $server->save();
+                } else {
+                    Server::query()->create($payload);
+                }
+
+                $importedCount++;
+            }
+        });
+
+        return redirect()
+            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+            ->with('status', $importedCount . ' OAS-Server importiert, ' . $skippedCount . ' uebersprungen.');
+    }
+
     public function updateCity(Request $request, City $city): RedirectResponse
     {
         abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
@@ -459,6 +519,17 @@ class AdministrationController extends Controller
         return null;
     }
 
+    private function extractProjectShortNumber(string $value): ?int
+    {
+        $value = trim($value);
+
+        if (preg_match('/^\s*(\d+)\s*\//', $value, $matches)) {
+            return (int) $matches[1];
+        }
+
+        return null;
+    }
+
     private function findOrCreateCustomerForServerImport(int $userId, int $shortNo, string $customerLabel): Customer
     {
         [$name, $sapNo] = $this->parseCustomerLabel($customerLabel);
@@ -511,5 +582,52 @@ class AdministrationController extends Controller
             str_contains($value, 'auswert') => 'Auswerte',
             default => '',
         };
+    }
+
+    private function mapOasServerType(string $value): string
+    {
+        return match (mb_strtolower(trim($value))) {
+            'education' => 'Schulungs',
+            'produktion' => 'Produktiv',
+            'test' => 'Test',
+            default => '',
+        };
+    }
+
+    private function resolveOasServerKindId(string $value): ?int
+    {
+        $normalized = $this->normalizeOasModuleKey($value);
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        $serverKindName = [
+            'costaccounting' => 'OAS CostAccounting',
+            'ehealthxds' => 'OAS EHealth-XDS',
+            'fhir' => 'OAS FHIR',
+            'fhirbackend' => 'OAS FHIR-Backend',
+            'fluidmanagement' => 'OAS Fluidmanagement',
+            'medicationbatch' => 'OAS Medication Batch',
+            'orbisconnectivityserver' => 'OAS Orbis Connectivity Server',
+            'sap' => 'OAS SAP',
+            'speech' => 'OAS Speech',
+            'singlewithoutmedicationbatch' => 'OAS Std. Single WO Med.',
+            'orbisu' => 'Orbis U',
+        ][$normalized] ?? null;
+
+        if (!$serverKindName) {
+            return null;
+        }
+
+        return ServerKind::query()->where('name', $serverKindName)->value('id');
+    }
+
+    private function normalizeOasModuleKey(string $value): string
+    {
+        $value = mb_strtolower(trim($value));
+        $value = preg_replace('/[^a-z0-9]+/', '', $value) ?? '';
+
+        return $value;
     }
 }
