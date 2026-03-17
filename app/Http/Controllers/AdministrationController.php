@@ -33,7 +33,7 @@ class AdministrationController extends Controller
             'subtab' => $subtab,
             'users' => User::query()->orderBy('name')->get(),
             'statuses' => Status::query()->orderBy('name')->get(),
-            'cities' => City::query()->orderBy('name')->get(),
+            'cities' => City::query()->withCount('customers')->orderBy('name')->get(),
             'customersWithoutCity' => Customer::query()->whereNull('city_id')->orderBy('short_no')->get(),
             'registrationEnabled' => AppSetting::getBoolean('registration_enabled', config('app.registration_enabled')),
             'permissionAreas' => User::permissionAreas(),

@@ -211,6 +211,7 @@
                         <tr id="prodheader">
                             <th>Ort</th>
                             <th>Land</th>
+                            <th>Kunden</th>
                             <th>Aktion</th>
                         </tr>
                     </thead>
@@ -220,12 +221,13 @@
                                 {!! Form::open(['route' => ['administration.cities.update', $city]]) !!}
                                 <td>{{ $city->name }}</td>
                                 <td>{!! Form::text('country_code', $city->country_code, ['maxlength' => 2, 'style' => 'width:60px']) !!}</td>
+                                <td>{{ $city->customers_count }}</td>
                                 <td>{{ Form::submit('Speichern') }}</td>
                                 {!! Form::close() !!}
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3">Noch keine Orte vorhanden.</td>
+                                <td colspan="4">Noch keine Orte vorhanden.</td>
                             </tr>
                         @endforelse
                     </tbody>

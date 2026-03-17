@@ -10,4 +10,9 @@ class City extends BaseCity
 		'name',
 		'country_code'
 	];
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class, 'city_id', 'id');
+    }
 }
