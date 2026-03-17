@@ -56,11 +56,13 @@
                 <tr>
                     <td colspan="2">
                         <div class="product-matrix-toolbar">
-                            {!! Form::open(['route' => 'product_matrix.import', 'files' => true]) !!}
-                                <strong>Import:</strong>
-                                {!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}
-                                {{ Form::submit('Import') }}
-                            {!! Form::close() !!}
+                            @if(auth()->user()->hasPermission('product_matrix', 'editable'))
+                                {!! Form::open(['route' => 'product_matrix.import', 'files' => true]) !!}
+                                    <strong>Import:</strong>
+                                    {!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}
+                                    {{ Form::submit('Import') }}
+                                {!! Form::close() !!}
+                            @endif
 
                             {!! Form::open(['route' => 'product_matrix.index', 'method' => 'get']) !!}
                                 <strong>Suche:</strong>
@@ -153,39 +155,48 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    {!! Form::open(['route' => 'product_matrix.aliases.store']) !!}
-                    <td>{!! Form::text('source_name', old('source_name'), ['placeholder' => 'z.B. user-provisioning']) !!}</td>
-                    <td>
-                        <select name="container_id">
-                            <option value="">Bitte waehlen</option>
-                            @foreach($containers as $container)
-                                <option value="{{ $container->id }}" @selected(old('container_id') == $container->id)>{{ $container->title }}</option>
-                            @endforeach
-                        </select>
-                    </td>
-                    <td>{!! Form::checkbox('ignore_on_import', 1, old('ignore_on_import')) !!}</td>
-                    <td class="product-matrix-alias-actions">{{ Form::submit('Alias speichern') }}</td>
-                    {!! Form::close() !!}
-                </tr>
-                @forelse($aliases as $alias)
+                @if(auth()->user()->hasPermission('product_matrix', 'editable'))
                     <tr>
-                        {!! Form::open(['route' => ['product_matrix.aliases.update', $alias->id]]) !!}
-                        <td>{!! Form::text('source_name', $alias->source_name) !!}</td>
+                        {!! Form::open(['route' => 'product_matrix.aliases.store']) !!}
+                        <td>{!! Form::text('source_name', old('source_name'), ['placeholder' => 'z.B. user-provisioning']) !!}</td>
                         <td>
                             <select name="container_id">
                                 <option value="">Bitte waehlen</option>
                                 @foreach($containers as $container)
-                                    <option value="{{ $container->id }}" @selected((string) $alias->container_id === (string) $container->id)>{{ $container->title }}</option>
+                                    <option value="{{ $container->id }}" @selected(old('container_id') == $container->id)>{{ $container->title }}</option>
                                 @endforeach
                             </select>
                         </td>
-                        <td>{!! Form::checkbox('ignore_on_import', 1, $alias->ignore_on_import) !!}</td>
-                        <td class="product-matrix-alias-actions">
-                            {{ Form::submit('Speichern') }}
-                            <a href="{{ route('product_matrix.aliases.delete', $alias->id) }}" onclick="return confirm('Alias wirklich loeschen?')">Loeschen</a>
-                        </td>
+                        <td>{!! Form::checkbox('ignore_on_import', 1, old('ignore_on_import')) !!}</td>
+                        <td class="product-matrix-alias-actions">{{ Form::submit('Alias speichern') }}</td>
                         {!! Form::close() !!}
+                    </tr>
+                @endif
+                @forelse($aliases as $alias)
+                    <tr>
+                        @if(auth()->user()->hasPermission('product_matrix', 'editable'))
+                            {!! Form::open(['route' => ['product_matrix.aliases.update', $alias->id]]) !!}
+                            <td>{!! Form::text('source_name', $alias->source_name) !!}</td>
+                            <td>
+                                <select name="container_id">
+                                    <option value="">Bitte waehlen</option>
+                                    @foreach($containers as $container)
+                                        <option value="{{ $container->id }}" @selected((string) $alias->container_id === (string) $container->id)>{{ $container->title }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td>{!! Form::checkbox('ignore_on_import', 1, $alias->ignore_on_import) !!}</td>
+                            <td class="product-matrix-alias-actions">
+                                {{ Form::submit('Speichern') }}
+                                <a href="{{ route('product_matrix.aliases.delete', $alias->id) }}" onclick="return confirm('Alias wirklich loeschen?')">Loeschen</a>
+                            </td>
+                            {!! Form::close() !!}
+                        @else
+                            <td>{{ $alias->source_name }}</td>
+                            <td>{{ optional($containers->firstWhere('id', $alias->container_id))->title ?? '-' }}</td>
+                            <td>{{ $alias->ignore_on_import ? 'Ja' : 'Nein' }}</td>
+                            <td>-</td>
+                        @endif
                     </tr>
                 @empty
                     <tr>

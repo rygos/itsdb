@@ -32,6 +32,11 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
+    public const PERMISSION_NONE = 0;
+    public const PERMISSION_VISIBLE = 1;
+    public const PERMISSION_EDITABLE = 2;
+    public const PERMISSION_ADMINISTRATION = 3;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -41,6 +46,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'last_login_at',
+        'permission_administration',
+        'permission_product_matrix',
+        'permission_compose',
+        'permission_hours',
+        'permission_customers',
+        'permission_projects',
+        'permission_calendar',
     ];
 
     /**
@@ -60,5 +73,62 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
     ];
+
+    public static function permissionAreas(): array
+    {
+        return [
+            'administration' => 'Administration',
+            'product_matrix' => 'Produktematrix',
+            'compose' => 'Compose',
+            'hours' => 'Stunden',
+            'customers' => 'Customers',
+            'projects' => 'Projekte',
+            'calendar' => 'Calender',
+        ];
+    }
+
+    public static function permissionLevels(): array
+    {
+        return [
+            static::PERMISSION_VISIBLE => 'Sichtbar',
+            static::PERMISSION_EDITABLE => 'Editierbar',
+            static::PERMISSION_ADMINISTRATION => 'Administration',
+        ];
+    }
+
+    public static function permissionColumn(string $area): string
+    {
+        return 'permission_' . $area;
+    }
+
+    public function permissionLevel(string $area): int
+    {
+        return (int) ($this->{static::permissionColumn($area)} ?? static::PERMISSION_NONE);
+    }
+
+    public function hasPermission(string $area, string|int $level = self::PERMISSION_VISIBLE): bool
+    {
+        $requiredLevel = is_string($level)
+            ? [
+                'visible' => static::PERMISSION_VISIBLE,
+                'editable' => static::PERMISSION_EDITABLE,
+                'administration' => static::PERMISSION_ADMINISTRATION,
+            ][$level] ?? static::PERMISSION_VISIBLE
+            : (int) $level;
+
+        return $this->permissionLevel($area) >= $requiredLevel;
+    }
+
+    public static function resolvePermissionLevel(array|string|null $values): int
+    {
+        $values = array_filter((array) $values, static fn ($value) => is_numeric($value));
+
+        if (empty($values)) {
+            return static::PERMISSION_NONE;
+        }
+
+        return max(array_map('intval', $values));
+    }
 }

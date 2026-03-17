@@ -266,6 +266,47 @@ nav li a {
     opacity: 1;
 }
 
+.admin-page .admin-table-shell {
+    margin-bottom: 12px;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+}
+
+.admin-tabs a {
+    border: 1px solid #17395c;
+    padding: 4px 8px;
+    color: #ffffe0;
+}
+
+.admin-tabs a.active {
+    background-color: #17395c;
+}
+
+.admin-subtabs {
+    margin-bottom: 0;
+}
+
+.admin-status-message,
+.admin-error-message {
+    text-align: left;
+    padding: 6px 8px;
+    margin-top: 8px;
+}
+
+.admin-status-message {
+    background-color: #214d21;
+}
+
+.admin-error-message {
+    background-color: #6b1d1d;
+}
+
 .itsdb-secret-toggle {
     position: relative;
     padding: 2px 6px;

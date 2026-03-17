@@ -6,18 +6,34 @@
 @endif
 <ul style="{{$style}}">
     <li><a href="{{ route('index') }}">Home</a></li>
-    <li><a href="{{ route('calendar.index') }}">Calendar</a></li>
-    <li><a href="{{ route('customers.index') }}">Customers</a></li>
-    <li><a href="{{ route('hours.index') }}">Stunden</a></li>
-    <li><a href="{{ route('product_matrix.index') }}">Produkte Matrix</a></li>
+    @if(auth()->user()?->hasPermission('calendar', 'visible'))
+        <li><a href="{{ route('calendar.index') }}">Calendar</a></li>
+    @endif
+    @if(auth()->user()?->hasPermission('customers', 'visible'))
+        <li><a href="{{ route('customers.index') }}">Customers</a></li>
+    @endif
+    @if(auth()->user()?->hasPermission('hours', 'visible'))
+        <li><a href="{{ route('hours.index') }}">Stunden</a></li>
+    @endif
+    @if(auth()->user()?->hasPermission('product_matrix', 'visible'))
+        <li><a href="{{ route('product_matrix.index') }}">Produkte Matrix</a></li>
+    @endif
 
     {{-- START:Compose LINKS --}}
-    <li><a style="background-color: darkred" href="{{ route('compose.index') }}">Compose</a></li>
+    @if(auth()->user()?->hasPermission('compose', 'visible'))
+        <li><a style="background-color: darkred" href="{{ route('compose.index') }}">Compose</a></li>
+    @endif
     {{-- END:Compose LINKS --}}
 
     {{-- START:ADDING LINKS --}}
-    <li><a style="background-color: darkgreen" href="{{ route('customers_projects.add') }}">Add Customer + Project</a></li>
+    @if(auth()->user()?->hasPermission('projects', 'editable'))
+        <li><a style="background-color: darkgreen" href="{{ route('customers_projects.add') }}">Add Customer + Project</a></li>
+    @endif
     {{-- END:ADDING LINKS --}}
+
+    @if(auth()->user()?->hasPermission('administration', 'visible'))
+        <li><a class="adminlink" href="{{ route('administration.index') }}">Administration</a></li>
+    @endif
 
     @if(\Illuminate\Support\Facades\Auth::check())
         <li>

@@ -5,20 +5,25 @@
         <table id="pouetbox_prodmain">
             <tr>
                 <td>
-                    {!! Form::open(['route' => 'compose.upload', 'files' => true]) !!}
-                    <div>
-                        <strong>Upload Compose Files:</strong>
-                    </div>
-                    <div>
-                        ZIP: {!! Form::file('compose_zip', ['accept' => '.zip']) !!}
-                    </div>
-                    <div>
-                        YML: {!! Form::file('compose_files[]', ['multiple' => true, 'accept' => '.yml,.yaml']) !!}
-                    </div>
-                    <div>
-                        {{ Form::submit('Upload') }}
-                    </div>
-                    {!! Form::close() !!}
+                    @if(auth()->user()->hasPermission('compose', 'editable'))
+                        {!! Form::open(['route' => 'compose.upload', 'files' => true]) !!}
+                        <div>
+                            <strong>Upload Compose Files:</strong>
+                        </div>
+                        <div>
+                            ZIP: {!! Form::file('compose_zip', ['accept' => '.zip']) !!}
+                        </div>
+                        <div>
+                            YML: {!! Form::file('compose_files[]', ['multiple' => true, 'accept' => '.yml,.yaml']) !!}
+                        </div>
+                        <div>
+                            {{ Form::submit('Upload') }}
+                        </div>
+                        {!! Form::close() !!}
+                    @else
+                        <strong>Upload Compose Files:</strong><br>
+                        Keine Bearbeitungsberechtigung vorhanden.
+                    @endif
                 </td>
                 @php($latestComposer = \App\Models\Composer::orderBy('updated_at', 'DESC')->first())
                 <td>

@@ -54,6 +54,13 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'permission_administration' => User::PERMISSION_NONE,
+            'permission_product_matrix' => User::PERMISSION_NONE,
+            'permission_compose' => User::PERMISSION_NONE,
+            'permission_hours' => User::PERMISSION_NONE,
+            'permission_customers' => User::PERMISSION_NONE,
+            'permission_projects' => User::PERMISSION_NONE,
+            'permission_calendar' => User::PERMISSION_NONE,
         ]);
 
         event(new Registered($user));
