@@ -117,6 +117,7 @@ Route::group(['middleware' => ['auth']], function(){
     Route::post('/administration/imports/customers', [AdministrationController::class, 'importCustomers'])->middleware('area:administration,editable')->name('administration.imports.customers');
     Route::post('/administration/imports/orbisu-servers', [AdministrationController::class, 'importOrbisUServers'])->middleware('area:administration,editable')->name('administration.imports.orbisu_servers');
     Route::post('/administration/cities/{city}', [AdministrationController::class, 'updateCity'])->middleware('area:administration,editable')->name('administration.cities.update');
+    Route::post('/administration/customers/{customer}/city', [AdministrationController::class, 'updateCustomerCity'])->middleware('area:administration,editable')->name('administration.customers.city.update');
 });
 
 require __DIR__.'/auth.php';

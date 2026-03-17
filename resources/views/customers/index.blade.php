@@ -31,9 +31,13 @@
                         <td style="background-color: {{ $color }};color: {{ $textColor }};"><a style="color: inherit;" href="{{ route('customers.view', $c->id) }}">{{ $c->sap_no }}</a></td>
                         <td style="background-color: {{ $color }};color: {{ $textColor }};">{{ $c->name }}</td>
                         <td style="background-color: {{ $color }};color: {{ $textColor }};">
-                            <a style="color: inherit;" href="{{ route('customers.city', $c->city->id) }}">
-                                <img src="/assets/flags/{{ $c->city->country_code }}.png"> {{ $c->city->name }}
-                            </a>
+                            @if($c->city)
+                                <a style="color: inherit;" href="{{ route('customers.city', $c->city->id) }}">
+                                    <img src="/assets/flags/{{ $c->city->country_code }}.png"> {{ $c->city->name }}
+                                </a>
+                            @else
+                                Kein Ort
+                            @endif
                         </td>
                         <td style="background-color: {{ $color }};color: {{ $textColor }};">{{ $latestProject ? $latestProject->name : '-' }}</td>
                         <td style="background-color: {{ $color }};color: {{ $textColor }};">{{ $statusName ?? '-' }}</td>

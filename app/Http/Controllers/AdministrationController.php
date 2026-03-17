@@ -32,6 +32,7 @@ class AdministrationController extends Controller
             'users' => User::query()->orderBy('name')->get(),
             'statuses' => Status::query()->orderBy('name')->get(),
             'cities' => City::query()->orderBy('name')->get(),
+            'customersWithoutCity' => Customer::query()->whereNull('city_id')->orderBy('short_no')->get(),
             'registrationEnabled' => AppSetting::getBoolean('registration_enabled', config('app.registration_enabled')),
             'permissionAreas' => User::permissionAreas(),
             'permissionLevels' => User::permissionLevels(),
@@ -257,6 +258,23 @@ class AdministrationController extends Controller
         return redirect()
             ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
             ->with('status', 'Land fuer Ort aktualisiert.');
+    }
+
+    public function updateCustomerCity(Request $request, Customer $customer): RedirectResponse
+    {
+        abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
+
+        $validated = $request->validate([
+            'city_id' => ['required', 'integer', 'exists:citys,id'],
+        ]);
+
+        $customer->update([
+            'city_id' => (int) $validated['city_id'],
+        ]);
+
+        return redirect()
+            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+            ->with('status', 'Ort fuer Kunden aktualisiert.');
     }
 
     private function readCsvRows(UploadedFile $file): array

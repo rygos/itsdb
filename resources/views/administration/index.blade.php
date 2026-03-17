@@ -227,6 +227,41 @@
                         @endforelse
                     </tbody>
                 </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th>Short</th>
+                            <th>SAP</th>
+                            <th>Kunde</th>
+                            <th>Ort zuweisen</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($customersWithoutCity as $customer)
+                            <tr>
+                                {!! Form::open(['route' => ['administration.customers.city.update', $customer]]) !!}
+                                <td>{{ $customer->short_no }}</td>
+                                <td>{{ $customer->sap_no }}</td>
+                                <td>{{ $customer->name }}</td>
+                                <td>
+                                    <select name="city_id">
+                                        <option value="">Bitte waehlen</option>
+                                        @foreach($cities as $city)
+                                            <option value="{{ $city->id }}">{{ strtoupper($city->country_code) }} - {{ $city->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>{{ Form::submit('Ort speichern') }}</td>
+                                {!! Form::close() !!}
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5">Keine Kunden ohne City-Zuordnung vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             @endif
         @endif
     </div>

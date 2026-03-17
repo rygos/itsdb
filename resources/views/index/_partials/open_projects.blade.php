@@ -24,9 +24,13 @@
                 <td style="text-align: left"><a href="{{ route('customers.view', $i->customer->id) }}">{{ $i->customer->sap_no }}</a></td>
                 <td style="text-align: left">{{ $i->customer->name }}</td>
                 <td style="text-align: left">
-                    <a href="{{ route('customers.city', $i->customer->city->id) }}">
-                        <img src="/assets/flags/{{ $i->customer->city->country_code }}.png"> {{ $i->customer->city->name }}
-                    </a>
+                    @if($i->customer->city)
+                        <a href="{{ route('customers.city', $i->customer->city->id) }}">
+                            <img src="/assets/flags/{{ $i->customer->city->country_code }}.png"> {{ $i->customer->city->name }}
+                        </a>
+                    @else
+                        Kein Ort
+                    @endif
                 </td>
                 @php
                     $endDate = \Carbon\Carbon::parse($i->end_date)->startOfDay();

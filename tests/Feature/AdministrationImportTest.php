@@ -171,4 +171,30 @@ CSV;
             'db_sid' => 'OLD',
         ]);
     }
+
+    public function test_admin_can_assign_city_to_customer_without_city(): void
+    {
+        $admin = User::factory()->create();
+        $city = City::query()->create([
+            'name' => 'Berlin',
+            'country_code' => 'de',
+        ]);
+        $customer = Customer::query()->create([
+            'user_id' => $admin->id,
+            'short_no' => 1234,
+            'sap_no' => '55555',
+            'dynamics_no' => 'x',
+            'name' => 'Ohne Ort',
+            'city_id' => null,
+        ]);
+
+        $this->actingAs($admin)->post(route('administration.customers.city.update', $customer), [
+            'city_id' => $city->id,
+        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'import']));
+
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'city_id' => $city->id,
+        ]);
+    }
 }
