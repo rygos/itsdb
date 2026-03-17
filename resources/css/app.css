@@ -307,6 +307,55 @@ nav li a {
     background-color: #6b1d1d;
 }
 
+.admin-city-autocomplete {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    min-width: 260px;
+}
+
+.admin-city-autocomplete input[data-city-input] {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.admin-city-autocomplete__toggle {
+    min-width: 28px;
+    padding: 2px 6px;
+    border: 1px solid #17395c;
+    border-left: 0;
+    background: #17395c;
+    color: #ffffe0;
+    cursor: pointer;
+}
+
+.admin-city-autocomplete__menu {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #17395c;
+    background: #00001a;
+    z-index: 20;
+}
+
+.admin-city-autocomplete__option {
+    display: block;
+    width: 100%;
+    padding: 4px 6px;
+    border: 0;
+    background: transparent;
+    color: #ffffe0;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-city-autocomplete__option:hover {
+    background: #17395c;
+}
+
 .itsdb-secret-toggle {
     position: relative;
     padding: 2px 6px;

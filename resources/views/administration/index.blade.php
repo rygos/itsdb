@@ -246,11 +246,6 @@
                         </tr>
                     </tbody>
                 </table>
-                <datalist id="administration-city-options">
-                    @foreach($cities as $city)
-                        <option value="{{ $city->name }}" data-city-id="{{ $city->id }}">{{ strtoupper($city->country_code) }} - {{ $city->name }}</option>
-                    @endforeach
-                </datalist>
                 <table id="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">
@@ -269,13 +264,29 @@
                                 <td>{{ $customer->sap_no }}</td>
                                 <td>{{ $customer->name }}</td>
                                 <td>
-                                    <input
-                                        type="text"
-                                        name="city_name"
-                                        list="administration-city-options"
-                                        placeholder="Ort suchen"
-                                        data-city-autocomplete
-                                    >
+                                    <div class="admin-city-autocomplete" data-city-autocomplete>
+                                        <input
+                                            type="text"
+                                            name="city_name"
+                                            placeholder="Ort suchen"
+                                            autocomplete="off"
+                                            data-city-input
+                                        >
+                                        <button type="button" class="admin-city-autocomplete__toggle" data-city-toggle aria-label="Ort auswaehlen">v</button>
+                                        <div class="admin-city-autocomplete__menu" data-city-menu hidden>
+                                            @foreach($cities as $city)
+                                                <button
+                                                    type="button"
+                                                    class="admin-city-autocomplete__option"
+                                                    data-city-option
+                                                    data-city-id="{{ $city->id }}"
+                                                    data-city-name="{{ $city->name }}"
+                                                >
+                                                    {{ strtoupper($city->country_code) }} - {{ $city->name }}
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                     <input type="hidden" name="city_id" data-city-id-input>
                                 </td>
                                 <td>{{ Form::submit('Ort speichern') }}</td>
@@ -290,31 +301,88 @@
                 </table>
                 <script>
                     (function() {
-                        function syncCitySelection(input) {
-                            var row = input.closest('tr');
-                            if (!row) return;
+                        function closeMenu(wrapper) {
+                            var menu = wrapper.querySelector('[data-city-menu]');
+                            if (!menu) return;
+                            menu.hidden = true;
+                        }
 
-                            var hidden = row.querySelector('[data-city-id-input]');
-                            var options = document.getElementById('administration-city-options');
-                            if (!hidden || !options) return;
+                        function openMenu(wrapper) {
+                            var menu = wrapper.querySelector('[data-city-menu]');
+                            if (!menu) return;
+                            menu.hidden = false;
+                        }
 
-                            var value = (input.value || '').trim().toLowerCase();
-                            hidden.value = '';
+                        function filterOptions(wrapper) {
+                            var input = wrapper.querySelector('[data-city-input]');
+                            var hidden = wrapper.parentElement.querySelector('[data-city-id-input]');
+                            var term = ((input && input.value) || '').trim().toLowerCase();
 
-                            Array.prototype.slice.call(options.options).forEach(function(option) {
-                                if ((option.value || '').trim().toLowerCase() === value) {
-                                    hidden.value = option.getAttribute('data-city-id') || '';
-                                }
+                            if (hidden) {
+                                hidden.value = '';
+                            }
+
+                            wrapper.querySelectorAll('[data-city-option]').forEach(function(option) {
+                                var cityName = (option.getAttribute('data-city-name') || '').toLowerCase();
+                                option.hidden = term !== '' && cityName.indexOf(term) === -1;
                             });
                         }
 
+                        function selectOption(wrapper, option) {
+                            var input = wrapper.querySelector('[data-city-input]');
+                            var hidden = wrapper.parentElement.querySelector('[data-city-id-input]');
+
+                            if (input) {
+                                input.value = option.getAttribute('data-city-name') || '';
+                            }
+                            if (hidden) {
+                                hidden.value = option.getAttribute('data-city-id') || '';
+                            }
+
+                            closeMenu(wrapper);
+                        }
+
                         function initCityAutocomplete() {
-                            document.querySelectorAll('[data-city-autocomplete]').forEach(function(input) {
-                                input.addEventListener('input', function() {
-                                    syncCitySelection(input);
+                            document.querySelectorAll('[data-city-autocomplete]').forEach(function(wrapper) {
+                                var input = wrapper.querySelector('[data-city-input]');
+                                var toggle = wrapper.querySelector('[data-city-toggle]');
+                                var menu = wrapper.querySelector('[data-city-menu]');
+
+                                if (!input || !toggle || !menu) {
+                                    return;
+                                }
+
+                                input.addEventListener('focus', function() {
+                                    filterOptions(wrapper);
+                                    openMenu(wrapper);
                                 });
-                                input.addEventListener('change', function() {
-                                    syncCitySelection(input);
+
+                                input.addEventListener('input', function() {
+                                    filterOptions(wrapper);
+                                    openMenu(wrapper);
+                                });
+
+                                toggle.addEventListener('click', function() {
+                                    if (menu.hidden) {
+                                        filterOptions(wrapper);
+                                        openMenu(wrapper);
+                                    } else {
+                                        closeMenu(wrapper);
+                                    }
+                                });
+
+                                wrapper.querySelectorAll('[data-city-option]').forEach(function(option) {
+                                    option.addEventListener('click', function() {
+                                        selectOption(wrapper, option);
+                                    });
+                                });
+                            });
+
+                            document.addEventListener('click', function(event) {
+                                document.querySelectorAll('[data-city-autocomplete]').forEach(function(wrapper) {
+                                    if (!wrapper.contains(event.target)) {
+                                        closeMenu(wrapper);
+                                    }
                                 });
                             });
                         }
