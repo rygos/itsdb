@@ -133,11 +133,27 @@ class AdministrationController extends Controller
         [$header, $rows] = $this->readCsvRows($validated['csv_file']);
         $headerMap = $this->buildHeaderMap($header);
         $importedCount = 0;
+        $skippedCount = 0;
 
-        DB::transaction(function () use ($rows, $headerMap, $request, &$importedCount) {
+        DB::transaction(function () use ($rows, $headerMap, $request, &$importedCount, &$skippedCount) {
+            $seenShortNumbers = [];
+
             foreach ($rows as $row) {
                 $shortNo = trim((string) $this->csvValue($row, $headerMap, 'Kd.Nummer'));
                 if ($shortNo === '' || !is_numeric($shortNo)) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $shortNo = (int) $shortNo;
+                if (isset($seenShortNumbers[$shortNo])) {
+                    $skippedCount++;
+                    continue;
+                }
+                $seenShortNumbers[$shortNo] = true;
+
+                if (Customer::query()->where('short_no', $shortNo)->exists()) {
+                    $skippedCount++;
                     continue;
                 }
 
@@ -146,11 +162,12 @@ class AdministrationController extends Controller
                     strtolower((string) $request->input('fallback_country_code', 'de'))
                 );
 
-                $customer = Customer::query()->firstOrNew(['short_no' => (int) $shortNo]);
-                $customer->user_id = $customer->user_id ?: $request->user()->id;
+                $customer = new Customer();
+                $customer->short_no = $shortNo;
+                $customer->user_id = $request->user()->id;
                 $customer->sap_no = trim((string) $this->csvValue($row, $headerMap, 'SAP-Nr.'));
-                $customer->dynamics_no = $customer->dynamics_no ?: 'x';
-                $customer->name = $customer->name ?: 'Unbekannt';
+                $customer->dynamics_no = 'x';
+                $customer->name = 'Unbekannt';
                 $customer->city_id = $cityId;
                 $customer->save();
 
@@ -160,7 +177,7 @@ class AdministrationController extends Controller
 
         return redirect()
             ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
-            ->with('status', $importedCount . ' Kunden importiert.');
+            ->with('status', $importedCount . ' Kunden importiert, ' . $skippedCount . ' uebersprungen.');
     }
 
     public function importOrbisUServers(Request $request): RedirectResponse

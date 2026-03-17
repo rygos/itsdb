@@ -50,6 +50,42 @@ CSV;
         ]);
     }
 
+    public function test_customer_import_does_not_change_existing_customers_and_creates_no_duplicates(): void
+    {
+        $admin = User::factory()->create();
+        $existing = Customer::query()->create([
+            'user_id' => $admin->id,
+            'short_no' => 2140,
+            'sap_no' => 'OLD-SAP',
+            'dynamics_no' => 'old',
+            'name' => 'Bestehend',
+        ]);
+
+        $csv = <<<'CSV'
+Kd.Nummer;SAP-Nr.;Ort;AMS
+2140;3022664;Berlin;ja
+2140;9999999;Hamburg;ja
+2161;2002680;Kaiserslautern;ja
+2161;2002681;Koeln;ja
+CSV;
+
+        $this->actingAs($admin)->post(route('administration.imports.customers'), [
+            'fallback_country_code' => 'de',
+            'csv_file' => UploadedFile::fake()->createWithContent('kunden.csv', $csv),
+        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'import']));
+
+        $this->assertDatabaseHas('customers', [
+            'id' => $existing->id,
+            'short_no' => 2140,
+            'sap_no' => 'OLD-SAP',
+            'dynamics_no' => 'old',
+            'name' => 'Bestehend',
+        ]);
+
+        $this->assertSame(2, Customer::query()->count());
+        $this->assertSame(1, Customer::query()->where('short_no', 2161)->count());
+    }
+
     public function test_orbisu_server_import_updates_customer_and_server_data(): void
     {
         $admin = User::factory()->create();
