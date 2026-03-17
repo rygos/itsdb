@@ -25,6 +25,8 @@
                                     <table style="width: 100%">
                                         <tr>
                                             <th>Type</th>
+                                            <th>Serverart</th>
+                                            <th>OS</th>
                                             <th>Servername</th>
                                             <th>FQDN</th>
                                             <th>DB-SID</th>
@@ -36,6 +38,8 @@
                                         </tr>
                                         <tr>
                                             <td>{{ Form::select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs', 'Integration' => 'Integration', 'Auswerte' => 'Auswerte'], $server->type) }}</td>
+                                            <td>{{ Form::select('server_kind_id', $serverKindOptions, $server->server_kind_id) }}</td>
+                                            <td>{{ Form::select('operating_system_id', $operatingSystemOptions, $server->operating_system_id) }}</td>
                                             <td>{{ Form::text('servername', $server->servername) }}</td>
                                             <td>{{ Form::text('fqdn', $server->fqdn) }}</td>
                                             <td>{{ Form::text('db_sid', $server->db_sid) }}</td>

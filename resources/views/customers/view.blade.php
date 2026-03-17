@@ -91,6 +91,8 @@
                     <table style="width: 100%">
                         <tr>
                             <th>Type</th>
+                            <th>Serverart</th>
+                            <th>OS</th>
                             <th>Servername</th>
                             <th>FQDN</th>
                             <th>DB-SID</th>
@@ -103,6 +105,8 @@
                         @foreach($servers as $item)
                             <tr>
                                 <td>{{ $item->type }}</td>
+                                <td>{{ optional($item->serverKind)->name ?? '-' }}</td>
+                                <td>{{ optional($item->operatingSystem)->name ?? '-' }}</td>
                                 <td><a href="{{ route('servers.view', $item->id) }}">{{ $item->servername }}</a></td>
                                 <td>{{ $item->fqdn }}</td>
                                 <td>{{ $item->db_sid }}</td>
@@ -204,6 +208,8 @@
                         @endforeach
                         <tr>
                                 <th>{{ Form::select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs', 'Integration' => 'Integration', 'Auswerte' => 'Auswerte']) }}</th>
+                            <td>{{ Form::select('server_kind_id', $serverKindOptions) }}</td>
+                            <td>{{ Form::select('operating_system_id', $operatingSystemOptions) }}</td>
                             <td>{{ Form::text('servername') }}</td>
                             <td>{{ Form::text('fqdn') }}</td>
                             <td>{{ Form::text('db_sid') }}</td>

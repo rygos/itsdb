@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Helpers\LogHelper;
 use App\Models\Composer;
-use App\Models\Customer;
 use App\Models\Env;
+use App\Models\OperatingSystem;
 use App\Models\Server;
+use App\Models\ServerKind;
 use App\Models\ServersComposersRel;
 use Dotenv\Dotenv;
 use Illuminate\Http\Request;
@@ -14,8 +15,18 @@ use Symfony\Component\Yaml\Yaml;
 
 class ServerController extends Controller
 {
+    private function serverKindOptions(): array
+    {
+        return ['' => ''] + ServerKind::query()->orderBy('name')->pluck('name', 'id')->toArray();
+    }
+
+    private function operatingSystemOptions(): array
+    {
+        return ['' => ''] + OperatingSystem::query()->orderBy('name')->pluck('name', 'id')->toArray();
+    }
+
     public function view($id){
-        $s = Server::with(['customer.servers', 'credentials.servers'])->whereId($id)->firstOrFail();
+        $s = Server::with(['customer.servers.serverKind', 'customer.servers.operatingSystem', 'credentials.servers', 'serverKind', 'operatingSystem'])->whereId($id)->firstOrFail();
         $certs['server'] = openssl_x509_parse($s->server_cert_raw);
         $certs['intermediate'] = openssl_x509_parse($s->customer->intermediate_cert_raw);
         $certs['root'] = openssl_x509_parse($s->customer->root_cert_raw);
@@ -55,6 +66,8 @@ class ServerController extends Controller
             'compose' => $compose,
             'env' => $env,
             'credentials' => $s->credentials()->with('servers')->orderBy('type')->orderBy('username')->get(),
+            'serverKindOptions' => $this->serverKindOptions(),
+            'operatingSystemOptions' => $this->operatingSystemOptions(),
             //'env_needed' => $env_needed,
         ]);
     }
@@ -77,8 +90,15 @@ class ServerController extends Controller
     }
 
     public function store(Request $request){
+        $validated = $request->validate([
+            'server_kind_id' => ['nullable', 'integer', 'exists:server_kinds,id'],
+            'operating_system_id' => ['nullable', 'integer', 'exists:operating_systems,id'],
+        ]);
+
         $s = new Server;
         $s->type = $request->get('type');
+        $s->server_kind_id = $validated['server_kind_id'] ?? null;
+        $s->operating_system_id = $validated['operating_system_id'] ?? null;
         $s->servername = $request->get('servername');
         $s->fqdn = $request->get('fqdn');
         $s->db_sid = $request->get('db_sid');
@@ -96,8 +116,15 @@ class ServerController extends Controller
     }
 
     public function update(Request $request){
+        $validated = $request->validate([
+            'server_kind_id' => ['nullable', 'integer', 'exists:server_kinds,id'],
+            'operating_system_id' => ['nullable', 'integer', 'exists:operating_systems,id'],
+        ]);
+
         $s = Server::whereId($request->get('server_id'))->first();
         $s->type = $request->get('type');
+        $s->server_kind_id = $validated['server_kind_id'] ?? null;
+        $s->operating_system_id = $validated['operating_system_id'] ?? null;
         $s->servername = $request->get('servername');
         $s->fqdn = $request->get('fqdn');
         $s->db_sid = $request->get('db_sid');

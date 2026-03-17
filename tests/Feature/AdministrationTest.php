@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\AppSetting;
+use App\Models\OperatingSystem;
+use App\Models\ServerKind;
 use App\Models\Status;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -104,6 +106,49 @@ class AdministrationTest extends TestCase
         $this->assertDatabaseHas('status', [
             'id' => $status->id,
             'name' => 'IN REVIEW',
+        ]);
+    }
+
+    public function test_server_master_data_can_be_created_and_updated_from_administration(): void
+    {
+        $admin = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->post(route('administration.server_kinds.store'), [
+                'name' => 'Applikationsserver',
+            ])
+            ->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']));
+
+        $serverKind = ServerKind::query()->where('name', 'Applikationsserver')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('administration.server_kinds.update', $serverKind), [
+                'name' => 'Datenbankserver',
+            ])
+            ->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']));
+
+        $this->actingAs($admin)
+            ->post(route('administration.operating_systems.store'), [
+                'name' => 'Windows Server 2022',
+            ])
+            ->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']));
+
+        $operatingSystem = OperatingSystem::query()->where('name', 'Windows Server 2022')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('administration.operating_systems.update', $operatingSystem), [
+                'name' => 'Ubuntu 24.04',
+            ])
+            ->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']));
+
+        $this->assertDatabaseHas('server_kinds', [
+            'id' => $serverKind->id,
+            'name' => 'Datenbankserver',
+        ]);
+
+        $this->assertDatabaseHas('operating_systems', [
+            'id' => $operatingSystem->id,
+            'name' => 'Ubuntu 24.04',
         ]);
     }
 

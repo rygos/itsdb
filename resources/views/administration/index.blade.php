@@ -111,6 +111,7 @@
                         <td colspan="2">
                             <div class="admin-tabs admin-subtabs">
                                 <a href="{{ route('administration.index', ['tab' => 'administration', 'subtab' => 'import']) }}" class="{{ $subtab === 'import' ? 'active' : '' }}">Import</a>
+                                <a href="{{ route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']) }}" class="{{ $subtab === 'master-data' ? 'active' : '' }}">Stammdaten</a>
                                 <a href="{{ route('administration.index', ['tab' => 'administration', 'subtab' => 'settings']) }}" class="{{ $subtab === 'settings' ? 'active' : '' }}">Einstellungen</a>
                             </div>
                         </td>
@@ -118,28 +119,7 @@
                 </tbody>
             </table>
 
-            @if($subtab === 'settings')
-                <table id="pouetbox_prodmain">
-                    <thead>
-                        <tr id="prodheader">
-                            <th colspan="2">Einstellungen</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            {!! Form::open(['route' => 'administration.settings.update']) !!}
-                            <td>Registrierung aktiv</td>
-                            <td>
-                                {!! Form::checkbox('registration_enabled', 1, $registrationEnabled) !!}
-                                @if(auth()->user()->hasPermission('administration', 'administration'))
-                                    {{ Form::submit('Speichern') }}
-                                @endif
-                            </td>
-                            {!! Form::close() !!}
-                        </tr>
-                    </tbody>
-                </table>
-            @else
+            @if($subtab === 'import')
                 <table id="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">
@@ -203,6 +183,7 @@
                         </tr>
                     </tbody>
                 </table>
+            @elseif($subtab === 'master-data')
                 <table id="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">
@@ -228,6 +209,90 @@
                         @empty
                             <tr>
                                 <td colspan="4">Noch keine Orte vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="3">Serverarten verwalten</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>Serverart</th>
+                            <th>Server</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(auth()->user()->hasPermission('administration', 'editable'))
+                            <tr>
+                                {!! Form::open(['route' => 'administration.server_kinds.store']) !!}
+                                <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neue Serverart']) !!}</td>
+                                <td>-</td>
+                                <td>{{ Form::submit('Serverart anlegen') }}</td>
+                                {!! Form::close() !!}
+                            </tr>
+                        @endif
+                        @forelse($serverKinds as $serverKind)
+                            <tr>
+                                @if(auth()->user()->hasPermission('administration', 'editable'))
+                                    {!! Form::open(['route' => ['administration.server_kinds.update', $serverKind]]) !!}
+                                    <td>{!! Form::text('name', $serverKind->name) !!}</td>
+                                    <td>{{ $serverKind->servers_count }}</td>
+                                    <td>{{ Form::submit('Speichern') }}</td>
+                                    {!! Form::close() !!}
+                                @else
+                                    <td>{{ $serverKind->name }}</td>
+                                    <td>{{ $serverKind->servers_count }}</td>
+                                    <td>-</td>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3">Noch keine Serverarten vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="3">Betriebssysteme verwalten</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>Betriebssystem</th>
+                            <th>Server</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(auth()->user()->hasPermission('administration', 'editable'))
+                            <tr>
+                                {!! Form::open(['route' => 'administration.operating_systems.store']) !!}
+                                <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neues Betriebssystem']) !!}</td>
+                                <td>-</td>
+                                <td>{{ Form::submit('Betriebssystem anlegen') }}</td>
+                                {!! Form::close() !!}
+                            </tr>
+                        @endif
+                        @forelse($operatingSystems as $operatingSystem)
+                            <tr>
+                                @if(auth()->user()->hasPermission('administration', 'editable'))
+                                    {!! Form::open(['route' => ['administration.operating_systems.update', $operatingSystem]]) !!}
+                                    <td>{!! Form::text('name', $operatingSystem->name) !!}</td>
+                                    <td>{{ $operatingSystem->servers_count }}</td>
+                                    <td>{{ Form::submit('Speichern') }}</td>
+                                    {!! Form::close() !!}
+                                @else
+                                    <td>{{ $operatingSystem->name }}</td>
+                                    <td>{{ $operatingSystem->servers_count }}</td>
+                                    <td>-</td>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3">Noch keine Betriebssysteme vorhanden.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -396,6 +461,27 @@
                         }
                     })();
                 </script>
+            @else
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="2">Einstellungen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {!! Form::open(['route' => 'administration.settings.update']) !!}
+                            <td>Registrierung aktiv</td>
+                            <td>
+                                {!! Form::checkbox('registration_enabled', 1, $registrationEnabled) !!}
+                                @if(auth()->user()->hasPermission('administration', 'administration'))
+                                    {{ Form::submit('Speichern') }}
+                                @endif
+                            </td>
+                            {!! Form::close() !!}
+                        </tr>
+                    </tbody>
+                </table>
             @endif
         @endif
     </div>

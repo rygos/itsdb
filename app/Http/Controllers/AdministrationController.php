@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AppSetting;
 use App\Models\City;
 use App\Models\Customer;
+use App\Models\OperatingSystem;
 use App\Models\Server;
+use App\Models\ServerKind;
 use App\Models\Status;
 use App\Models\User;
 use Carbon\Carbon;
@@ -21,6 +23,11 @@ class AdministrationController extends Controller
 {
     private const MISSING_CITIES_ANCHOR = '#missing-cities';
 
+    private function administrationRoute(string $subtab, ?string $anchor = null): string
+    {
+        return route('administration.index', ['tab' => 'administration', 'subtab' => $subtab]) . ($anchor ?? '');
+    }
+
     public function index(Request $request): View
     {
         abort_unless($request->user()?->hasPermission('administration', 'visible'), 403);
@@ -34,6 +41,8 @@ class AdministrationController extends Controller
             'users' => User::query()->orderBy('name')->get(),
             'statuses' => Status::query()->orderBy('name')->get(),
             'cities' => City::query()->withCount('customers')->orderBy('name')->get(),
+            'serverKinds' => ServerKind::query()->withCount('servers')->orderBy('name')->get(),
+            'operatingSystems' => OperatingSystem::query()->withCount('servers')->orderBy('name')->get(),
             'customersWithoutCity' => Customer::query()->whereNull('city_id')->orderBy('short_no')->get(),
             'registrationEnabled' => AppSetting::getBoolean('registration_enabled', config('app.registration_enabled')),
             'permissionAreas' => User::permissionAreas(),
@@ -108,6 +117,74 @@ class AdministrationController extends Controller
         return redirect()
             ->route('administration.index', ['tab' => 'statuses'])
             ->with('status', 'Status aktualisiert.');
+    }
+
+    public function storeServerKind(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:server_kinds,name'],
+        ]);
+
+        ServerKind::query()->create([
+            'name' => trim($validated['name']),
+        ]);
+
+        return redirect()
+            ->to($this->administrationRoute('master-data'))
+            ->with('status', 'Serverart angelegt.');
+    }
+
+    public function updateServerKind(Request $request, ServerKind $serverKind): RedirectResponse
+    {
+        abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique('server_kinds', 'name')->ignore($serverKind->id)],
+        ]);
+
+        $serverKind->update([
+            'name' => trim($validated['name']),
+        ]);
+
+        return redirect()
+            ->to($this->administrationRoute('master-data'))
+            ->with('status', 'Serverart aktualisiert.');
+    }
+
+    public function storeOperatingSystem(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:operating_systems,name'],
+        ]);
+
+        OperatingSystem::query()->create([
+            'name' => trim($validated['name']),
+        ]);
+
+        return redirect()
+            ->to($this->administrationRoute('master-data'))
+            ->with('status', 'Betriebssystem angelegt.');
+    }
+
+    public function updateOperatingSystem(Request $request, OperatingSystem $operatingSystem): RedirectResponse
+    {
+        abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique('operating_systems', 'name')->ignore($operatingSystem->id)],
+        ]);
+
+        $operatingSystem->update([
+            'name' => trim($validated['name']),
+        ]);
+
+        return redirect()
+            ->to($this->administrationRoute('master-data'))
+            ->with('status', 'Betriebssystem aktualisiert.');
     }
 
     public function updateSettings(Request $request): RedirectResponse
@@ -222,6 +299,8 @@ class AdministrationController extends Controller
 
                 $payload = [
                     'type' => $this->mapServerType((string) $this->csvValue($row, $headerMap, 'Umgebung')),
+                    'server_kind_id' => null,
+                    'operating_system_id' => null,
                     'servername' => $hostname,
                     'int_ip' => trim((string) $this->csvValue($row, $headerMap, 'VM-IP-Addresse')),
                     'db_sid' => trim((string) $this->csvValue($row, $headerMap, 'DB-SID')),
@@ -258,7 +337,7 @@ class AdministrationController extends Controller
         ]);
 
         return redirect()
-            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data'])
             ->with('status', 'Land fuer Ort aktualisiert.');
     }
 
@@ -277,7 +356,7 @@ class AdministrationController extends Controller
         ]);
 
         return redirect()
-            ->to($this->administrationImportUrlWithAnchor())
+            ->to($this->administrationMasterDataUrlWithAnchor())
             ->with('status', 'Ort angelegt.');
     }
 
@@ -305,13 +384,13 @@ class AdministrationController extends Controller
         ]);
 
         return redirect()
-            ->to($this->administrationImportUrlWithAnchor())
+            ->to($this->administrationMasterDataUrlWithAnchor())
             ->with('status', 'Ort fuer Kunden aktualisiert.');
     }
 
-    private function administrationImportUrlWithAnchor(): string
+    private function administrationMasterDataUrlWithAnchor(): string
     {
-        return route('administration.index', ['tab' => 'administration', 'subtab' => 'import']) . self::MISSING_CITIES_ANCHOR;
+        return $this->administrationRoute('master-data', self::MISSING_CITIES_ANCHOR);
     }
 
     private function readCsvRows(UploadedFile $file): array

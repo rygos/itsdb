@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $env_raw
  * @property string|null $server_cert_raw
  * @property string|null $type
+ * @property int|null $server_kind_id
+ * @property int|null $operating_system_id
  * @property string|null $private_key_raw
  * @property int $cert_server_ok
  * @property int $cert_intermediate_ok
@@ -42,6 +44,8 @@ class Server extends Model
 	protected $casts = [
 		'customer_id' => 'int',
 		'user_id' => 'int',
+		'server_kind_id' => 'int',
+		'operating_system_id' => 'int',
 		'cert_server_ok' => 'int',
 		'cert_intermediate_ok' => 'int',
 		'cert_root_ok' => 'int',

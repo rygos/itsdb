@@ -190,7 +190,7 @@ CSV;
 
         $this->actingAs($admin)->post(route('administration.customers.city.update', $customer), [
             'city_id' => $city->id,
-        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'import']));
+        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']) . '#missing-cities');
 
         $this->assertDatabaseHas('customers', [
             'id' => $customer->id,
@@ -205,7 +205,7 @@ CSV;
         $this->actingAs($admin)->post(route('administration.cities.store'), [
             'name' => 'Hamburg',
             'country_code' => 'DE',
-        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'import']));
+        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']) . '#missing-cities');
 
         $this->assertDatabaseHas('citys', [
             'name' => 'Hamburg',

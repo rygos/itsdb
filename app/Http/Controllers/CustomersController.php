@@ -7,7 +7,9 @@ use App\Models\City;
 use App\Models\Customer;
 use App\Models\CustomerContact;
 use App\Models\Log;
+use App\Models\OperatingSystem;
 use App\Models\Remark;
+use App\Models\ServerKind;
 use App\Models\Status;
 use Illuminate\Http\Request;
 
@@ -25,6 +27,16 @@ class CustomersController extends Controller
         return $options;
     }
 
+    private function serverKindOptions(): array
+    {
+        return ['' => ''] + ServerKind::query()->orderBy('name')->pluck('name', 'id')->toArray();
+    }
+
+    private function operatingSystemOptions(): array
+    {
+        return ['' => ''] + OperatingSystem::query()->orderBy('name')->pluck('name', 'id')->toArray();
+    }
+
     public function index(){
         $customers = Customer::with(['city', 'latestProject.status'])
             ->orderBy('short_no')
@@ -36,7 +48,7 @@ class CustomersController extends Controller
     }
 
     public function view($id){
-        $customer = Customer::with(['city', 'projects.status', 'projects.user', 'servers', 'credentials.servers', 'contacts', 'documents'])
+        $customer = Customer::with(['city', 'projects.status', 'projects.user', 'servers.serverKind', 'servers.operatingSystem', 'credentials.servers', 'contacts', 'documents'])
             ->findOrFail($id);
         $remark = Remark::whereType(1)->where('relation_id', $id)->first();
         $st = Status::orderBy('name')->pluck('name', 'id');
@@ -57,6 +69,8 @@ class CustomersController extends Controller
             'documents' => $customer->documents()->orderBy('original_name')->get(),
             'contacts' => $customer->contacts,
             'logs' => Log::whereContentId($customer->id)->where('section', 'customer')->orderBy('created_at')->get(),
+            'serverKindOptions' => $this->serverKindOptions(),
+            'operatingSystemOptions' => $this->operatingSystemOptions(),
         ]);
     }
 
