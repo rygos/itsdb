@@ -197,4 +197,19 @@ CSV;
             'city_id' => $city->id,
         ]);
     }
+
+    public function test_admin_can_create_city_from_admin_area(): void
+    {
+        $admin = User::factory()->create();
+
+        $this->actingAs($admin)->post(route('administration.cities.store'), [
+            'name' => 'Hamburg',
+            'country_code' => 'DE',
+        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'import']));
+
+        $this->assertDatabaseHas('citys', [
+            'name' => 'Hamburg',
+            'country_code' => 'de',
+        ]);
+    }
 }

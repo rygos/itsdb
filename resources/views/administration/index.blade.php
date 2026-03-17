@@ -206,12 +206,22 @@
                 <table id="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">
+                            <th colspan="3">Orte verwalten</th>
+                        </tr>
+                        <tr id="prodheader">
                             <th>Ort</th>
                             <th>Land</th>
                             <th>Aktion</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <tr>
+                            {!! Form::open(['route' => 'administration.cities.store']) !!}
+                            <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neuen Ort anlegen']) !!}</td>
+                            <td>{!! Form::text('country_code', old('country_code', 'de'), ['maxlength' => 2, 'style' => 'width:60px']) !!}</td>
+                            <td>{{ Form::submit('Ort anlegen') }}</td>
+                            {!! Form::close() !!}
+                        </tr>
                         @forelse($cities as $city)
                             <tr>
                                 {!! Form::open(['route' => ['administration.cities.update', $city]]) !!}

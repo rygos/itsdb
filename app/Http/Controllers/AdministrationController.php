@@ -260,6 +260,25 @@ class AdministrationController extends Controller
             ->with('status', 'Land fuer Ort aktualisiert.');
     }
 
+    public function storeCity(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'country_code' => ['required', 'string', 'size:2'],
+        ]);
+
+        City::query()->create([
+            'name' => trim($validated['name']),
+            'country_code' => strtolower($validated['country_code']),
+        ]);
+
+        return redirect()
+            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+            ->with('status', 'Ort angelegt.');
+    }
+
     public function updateCustomerCity(Request $request, Customer $customer): RedirectResponse
     {
         abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
