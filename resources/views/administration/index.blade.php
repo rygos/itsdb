@@ -230,7 +230,7 @@
                         @endforelse
                     </tbody>
                 </table>
-                <table id="pouetbox_prodmain">
+                <table id="missing-cities" class="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">
                             <th colspan="5">Ort fuer fehlende City-Zuordnungen anlegen oder zuweisen</th>

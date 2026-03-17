@@ -19,6 +19,8 @@ use Illuminate\View\View;
 
 class AdministrationController extends Controller
 {
+    private const MISSING_CITIES_ANCHOR = '#missing-cities';
+
     public function index(Request $request): View
     {
         abort_unless($request->user()?->hasPermission('administration', 'visible'), 403);
@@ -275,7 +277,7 @@ class AdministrationController extends Controller
         ]);
 
         return redirect()
-            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+            ->to($this->administrationImportUrlWithAnchor())
             ->with('status', 'Ort angelegt.');
     }
 
@@ -303,8 +305,13 @@ class AdministrationController extends Controller
         ]);
 
         return redirect()
-            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+            ->to($this->administrationImportUrlWithAnchor())
             ->with('status', 'Ort fuer Kunden aktualisiert.');
+    }
+
+    private function administrationImportUrlWithAnchor(): string
+    {
+        return route('administration.index', ['tab' => 'administration', 'subtab' => 'import']) . self::MISSING_CITIES_ANCHOR;
     }
 
     private function readCsvRows(UploadedFile $file): array
