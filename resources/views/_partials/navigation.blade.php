@@ -1,4 +1,5 @@
-{{ Form::open(['route' => 'logout']) }}
+<form method="POST" action="{{ route('logout') }}">
+@csrf
 @if(env('APP_DEV') == true)
     @php $style = 'background-color: darkred;' @endphp
 @else
@@ -41,4 +42,4 @@
         </li>
     @endif
 </ul>
-{{ Form::close() }}
+</form>

@@ -19,19 +19,19 @@
                     <tr>
                         <th colspan="2">Compose Data</th>
                     </tr>
-                    {{ Form::open(['route' => ['container.store', $data->title]]) }}
+                    {{ html()->form()->route('container.store', $data->title)->open() }}
                     <tr>
                         <td>Original</td>
                         <td>Customized</td>
                     </tr>
                     <tr>
                         <td style="text-align: left"><pre>{{ $data->content_orig }}</pre></td>
-                        <td>{{ Form::textarea('content', $data->content, ['rows' => 16]) }}</td>
+                        <td>{{ html()->textarea('content', $data->content)->attribute('rows', 16) }}</td>
                     </tr>
                     <tr>
-                        <td colspan="2">{{ Form::submit('Submit') }}</td>
+                        <td colspan="2">{{ html()->submit('Submit') }}</td>
                     </tr>
-                    {{ Form::close() }}
+                    {{ html()->form()->close() }}
                 </table>
             </tr>
         </table>

@@ -11,7 +11,7 @@
             <tbody>
             <tr>
                 <td>
-                    {{ Form::open(['route' => ['compose.store', $data->compose_filename]]) }}
+                    {{ html()->form()->route('compose.store', $data->compose_filename)->open() }}
                     <table id="pouetbox_prodmain">
                         <tr>
                             <td>Title</td>
@@ -19,7 +19,7 @@
                         </tr>
                         <tr>
                             <td>Alternative Titles</td>
-                            <td>{{ Form::textarea('title_alternatives', $data->title_alternatives, $attributes = ['rows' => 3]) }}</td>
+                            <td>{{ html()->textarea('title_alternatives', $data->title_alternatives)->attribute('rows', 3) }}</td>
                         </tr>
                         <tr>
                             <td>Original URL:</td>
@@ -30,10 +30,10 @@
                             <td>{{ \Carbon\Carbon::parse($data->orig_date)->toDateString() }}</td>
                         </tr>
                         <tr>
-                            <td colspan="2">{{ Form::submit('Submit') }}</td>
+                            <td colspan="2">{{ html()->submit('Submit') }}</td>
                         </tr>
                     </table>
-                    {{ Form::close() }}
+                    {{ html()->form()->close() }}
                 </td>
             </tr>
             <tr>

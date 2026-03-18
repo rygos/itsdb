@@ -9,9 +9,9 @@
                     @if($errors->has('pfx_file'))
                         <div style="margin-bottom: 10px; color: #ff8080;">{{ $errors->first('pfx_file') }}</div>
                     @endif
-                    {{ Form::open(['route' => 'certificate.import_pfx', 'files' => true]) }}
-                    {{ Form::hidden('customer_id', $server->customer->id) }}
-                    {{ Form::hidden('server_id', $server->id) }}
+                    {{ html()->form()->route('certificate.import_pfx')->attribute('enctype', 'multipart/form-data')->open() }}
+                    {{ html()->hidden('customer_id', $server->customer->id) }}
+                    {{ html()->hidden('server_id', $server->id) }}
                     <table style="width: 100%">
                         <tr>
                             <th>PFX-Datei</th>
@@ -19,12 +19,12 @@
                             <th>Aktion</th>
                         </tr>
                         <tr>
-                            <td>{{ Form::file('pfx_file') }}</td>
-                            <td>{{ Form::text('pfx_password') }}</td>
-                            <td>{{ Form::submit('Upload') }}</td>
+                            <td>{{ html()->file('pfx_file') }}</td>
+                            <td>{{ html()->text('pfx_password') }}</td>
+                            <td>{{ html()->submit('Upload') }}</td>
                         </tr>
                     </table>
-                    {{ Form::close() }}
+                    {{ html()->form()->close() }}
                 </td>
             </tr>
             <tr>
@@ -142,18 +142,18 @@
                     @endif
                 </td>
             </tr>
-            {{ Form::open(['route' => 'certificate.update']) }}
-            {{ Form::hidden('customer_id', $server->customer->id) }}
-            {{ Form::hidden('server_id', $server->id) }}
+            {{ html()->form()->route('certificate.update')->open() }}
+            {{ html()->hidden('customer_id', $server->customer->id) }}
+            {{ html()->hidden('server_id', $server->id) }}
             <tr>
-                <td>{{ Form::textarea('server', $server->server_cert_raw) }}</td>
-                <td>{{ Form::textarea('intermediate', $server->customer->intermediate_cert_raw) }}</td>
-                <td>{{ Form::textarea('root', $server->customer->root_cert_raw) }}</td>
-                <td>{{ Form::textarea('private_key', $server->private_key_raw) }}</td>
+                <td>{{ html()->textarea('server', $server->server_cert_raw) }}</td>
+                <td>{{ html()->textarea('intermediate', $server->customer->intermediate_cert_raw) }}</td>
+                <td>{{ html()->textarea('root', $server->customer->root_cert_raw) }}</td>
+                <td>{{ html()->textarea('private_key', $server->private_key_raw) }}</td>
             </tr>
             <tr>
                 <td colspan="4">
-                    {{ Form::submit('Submit') }}
+                    {{ html()->submit('Submit') }}
                     <button
                         type="button"
                         class="itsdb-copy-button"
@@ -165,7 +165,7 @@
                     </button>
                 </td>
             </tr>
-            {{ Form::close() }}
+            {{ html()->form()->close() }}
         </table>
     </td>
 </tr>

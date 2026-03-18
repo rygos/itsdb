@@ -20,8 +20,8 @@
                             </tr>
                             <tr>
                                 <td>
-                                    {{ Form::open(['route' => 'servers.update']) }}
-                                    {{ Form::hidden('server_id', $server->id) }}
+                                    {{ html()->form()->route('servers.update')->open() }}
+                                    {{ html()->hidden('server_id', $server->id) }}
                                     <table style="width: 100%">
                                         <tr>
                                             <th>Type</th>
@@ -37,20 +37,20 @@
                                             <th>Action</th>
                                         </tr>
                                         <tr>
-                                            <td>{{ Form::select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs', 'Integration' => 'Integration', 'Auswerte' => 'Auswerte'], $server->type) }}</td>
-                                            <td>{{ Form::select('server_kind_id', $serverKindOptions, $server->server_kind_id) }}</td>
-                                            <td>{{ Form::select('operating_system_id', $operatingSystemOptions, $server->operating_system_id) }}</td>
-                                            <td>{{ Form::text('servername', $server->servername) }}</td>
-                                            <td>{{ Form::text('fqdn', $server->fqdn) }}</td>
-                                            <td>{{ Form::text('db_sid', $server->db_sid) }}</td>
-                                            <td>{{ Form::text('db_server', $server->db_server) }}</td>
-                                            <td>{{ Form::text('ext_ip', $server->ext_ip) }}</td>
-                                            <td>{{ Form::text('int_ip', $server->int_ip) }}</td>
+                                            <td>{{ html()->select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs', 'Integration' => 'Integration', 'Auswerte' => 'Auswerte'], $server->type) }}</td>
+                                            <td>{{ html()->select('server_kind_id', $serverKindOptions, $server->server_kind_id) }}</td>
+                                            <td>{{ html()->select('operating_system_id', $operatingSystemOptions, $server->operating_system_id) }}</td>
+                                            <td>{{ html()->text('servername', $server->servername) }}</td>
+                                            <td>{{ html()->text('fqdn', $server->fqdn) }}</td>
+                                            <td>{{ html()->text('db_sid', $server->db_sid) }}</td>
+                                            <td>{{ html()->text('db_server', $server->db_server) }}</td>
+                                            <td>{{ html()->text('ext_ip', $server->ext_ip) }}</td>
+                                            <td>{{ html()->text('int_ip', $server->int_ip) }}</td>
                                             <td></td>
-                                            <td>{{ Form::submit('Submit') }}</td>
+                                            <td>{{ html()->submit('Submit') }}</td>
                                         </tr>
                                     </table>
-                                    {{ Form::close() }}
+                                    {{ html()->form()->close() }}
                                 </td>
                             </tr>
                             <tr>
@@ -119,32 +119,32 @@
                 <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
             </div>
             <div class="itsdb-modal__body">
-                {{ Form::open(['route' => 'credentials.store']) }}
-                {{ Form::hidden('customer_id', $server->customer->id) }}
+                {{ html()->form()->route('credentials.store')->open() }}
+                {{ html()->hidden('customer_id', $server->customer->id) }}
                 <table class="itsdb-modal__grid">
                     <tr>
                         <td class="itsdb-modal__grid-label">User</td>
-                        <td>{{ Form::text('username') }}</td>
+                        <td>{{ html()->text('username') }}</td>
                     </tr>
                     <tr>
                         <td class="itsdb-modal__grid-label">Passwort</td>
-                        <td>{{ Form::text('password') }}</td>
+                        <td>{{ html()->text('password') }}</td>
                     </tr>
                     <tr>
                         <td class="itsdb-modal__grid-label">Typ</td>
-                        <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share']) }}</td>
+                        <td>{{ html()->select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share']) }}</td>
                     </tr>
                     <tr>
                         <td class="itsdb-modal__grid-label">Server</td>
                         <td>
-                            {{ Form::select('server_ids[]', $server->customer->servers->pluck('servername', 'id')->toArray(), [(string) $server->id], ['multiple' => true, 'size' => max(3, $server->customer->servers->count())]) }}
+                            {{ html()->select('server_ids[]', $server->customer->servers->pluck('servername', 'id')->toArray(), [(string) $server->id])->attribute('multiple', true)->attribute('size', max(3, $server->customer->servers->count())) }}
                         </td>
                     </tr>
                 </table>
                 <div class="itsdb-modal__footer">
-                    {{ Form::submit('Speichern') }}
+                    {{ html()->submit('Speichern') }}
                 </div>
-                {{ Form::close() }}
+                {{ html()->form()->close() }}
             </div>
         </div>
     </div>
@@ -157,32 +157,32 @@
                     <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
                 </div>
                 <div class="itsdb-modal__body">
-                    {{ Form::open(['route' => 'credentials.update']) }}
-                    {{ Form::hidden('id', $item->id) }}
+                    {{ html()->form()->route('credentials.update')->open() }}
+                    {{ html()->hidden('id', $item->id) }}
                     <table class="itsdb-modal__grid">
                         <tr>
                             <td class="itsdb-modal__grid-label">User</td>
-                            <td>{{ Form::text('username', $item->username) }}</td>
+                            <td>{{ html()->text('username', $item->username) }}</td>
                         </tr>
                         <tr>
                             <td class="itsdb-modal__grid-label">Passwort</td>
-                            <td>{{ Form::text('password', $item->password) }}</td>
+                            <td>{{ html()->text('password', $item->password) }}</td>
                         </tr>
                         <tr>
                             <td class="itsdb-modal__grid-label">Typ</td>
-                            <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share'], $item->type) }}</td>
+                            <td>{{ html()->select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share'], $item->type) }}</td>
                         </tr>
                         <tr>
                             <td class="itsdb-modal__grid-label">Server</td>
                             <td>
-                                {{ Form::select('server_ids[]', $server->customer->servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->map(function ($id) { return (string) $id; })->all(), ['multiple' => true, 'size' => max(3, $server->customer->servers->count())]) }}
+                                {{ html()->select('server_ids[]', $server->customer->servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->map(function ($id) { return (string) $id; })->all())->attribute('multiple', true)->attribute('size', max(3, $server->customer->servers->count())) }}
                             </td>
                         </tr>
                     </table>
                     <div class="itsdb-modal__footer">
-                        {{ Form::submit('Aktualisieren') }}
+                        {{ html()->submit('Aktualisieren') }}
                     </div>
-                    {{ Form::close() }}
+                    {{ html()->form()->close() }}
                 </div>
             </div>
         </div>

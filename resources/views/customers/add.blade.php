@@ -12,35 +12,35 @@
             </tr>
             <tr>
                 <td>
-                    {!! Form::open(['route' => 'customers.store']) !!}
+                    {{ html()->form()->route('customers.store')->open() }}
                     <table id="stattable">
                         <tr>
                             <td>Short No.:</td>
-                            <td>{!! Form::text('short_no') !!}</td>
+                            <td>{{ html()->text('short_no') }}</td>
                         </tr>
                         <tr>
                             <td>SAP No.:</td>
-                            <td>{!! Form::text('sap_no') !!}</td>
+                            <td>{{ html()->text('sap_no') }}</td>
                         </tr>
                         <tr>
                             <td>Dynamics No.:</td>
-                            <td>{!! Form::text('dynamics_no') !!}</td>
+                            <td>{{ html()->text('dynamics_no') }}</td>
                         </tr>
                         <tr>
                             <td>Customer Name:</td>
-                            <td>{!! Form::text('name') !!}</td>
+                            <td>{{ html()->text('name') }}</td>
                         </tr>
                         <tr>
                             <td>Citys:</td>
-                            <td>{!! Form::select('city', $citys) !!}</td>
+                            <td>{{ html()->select('city', $citys) }}</td>
                         </tr>
                         <tr>
                             <td></td>
-                            <td>{{ Form::submit('Submit') }}</td>
+                            <td>{{ html()->submit('Submit') }}</td>
                         </tr>
 
                     </table>
-                    {!! Form::close() !!}
+                    {{ html()->form()->close() }}
                 </td>
             </tr>
             </tbody>
@@ -57,23 +57,23 @@
             </tr>
             <tr>
                 <td>
-                    {!! Form::open(['route' => 'city.add']) !!}
+                    {{ html()->form()->route('city.add')->open() }}
                     <table id="stattable">
                         <tr>
                             <td>City Name:</td>
-                            <td>{!! Form::text('name') !!}</td>
+                            <td>{{ html()->text('name') }}</td>
                         </tr>
                         <tr>
                             <td>SAP No.:</td>
-                            <td>{!! Form::select('country_code', $countrys) !!}</td>
+                            <td>{{ html()->select('country_code', $countrys) }}</td>
                         </tr>
                         <tr>
                             <td></td>
-                            <td>{{ Form::submit('Submit') }}</td>
+                            <td>{{ html()->submit('Submit') }}</td>
                         </tr>
 
                     </table>
-                    {!! Form::close() !!}
+                    {{ html()->form()->close() }}
                 </td>
             </tr>
             </tbody>

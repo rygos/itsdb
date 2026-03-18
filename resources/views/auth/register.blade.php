@@ -2,7 +2,7 @@
 @section('title', 'Register User')
 @section('content')
     <div id="prodpagecontainer">
-        {{ Form::open(['route' => 'register']) }}
+        {{ html()->form()->route('register')->open() }}
         <table id="pouetbox_prodmain">
             <tr id="prodheader">
                 <th colspan="2">
@@ -11,24 +11,24 @@
             </tr>
             <tr>
                 <td>Name</td>
-                <td>{{ Form::text('name') }}</td>
+                <td>{{ html()->text('name') }}</td>
             </tr>
             <tr>
                 <td>E-Mail</td>
-                <td>{{ Form::email('email') }}</td>
+                <td>{{ html()->email('email') }}</td>
             </tr>
             <tr>
                 <td>Password</td>
-                <td>{{ Form::password('password') }}</td>
+                <td>{{ html()->password('password') }}</td>
             </tr>
             <tr>
                 <td>Confirm Password</td>
-                <td>{{ Form::password('password_confirmation') }}</td>
+                <td>{{ html()->password('password_confirmation') }}</td>
             </tr>
             <tr>
-                <td colspan="2">{{ Form::submit('Submit') }}</td>
+                <td colspan="2">{{ html()->submit('Submit') }}</td>
             </tr>
         </table>
-        {{ Form::close() }}
+        {{ html()->form()->close() }}
     </div>
 @endsection

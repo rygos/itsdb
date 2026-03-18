@@ -19,9 +19,9 @@
                 <tr>
                     <td colspan="4">
                         @if($years->isNotEmpty())
-                            {!! Form::open(['route' => 'hours.index', 'method' => 'get']) !!}
-                                {!! Form::select('year', $years, $selectedYear, ['onchange' => 'this.form.submit()']) !!}
-                            {!! Form::close() !!}
+                            <form method="GET" action="{{ route('hours.index') }}">
+                                {{ html()->select('year', $years->all(), $selectedYear)->attribute('onchange', 'this.form.submit()') }}
+                            </form>
                             <div class="hours-summary">
                                 <div><strong>Gesamtstunden {{ $selectedYear }}:</strong> {{ $totalHours }}</div>
                                 <div><strong>Dienstleistungstage (8h):</strong> {{ number_format($totalHours / 8, 2) }}</div>

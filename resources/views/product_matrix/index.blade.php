@@ -57,18 +57,19 @@
                     <td colspan="2">
                         <div class="product-matrix-toolbar">
                             @if(auth()->user()->hasPermission('product_matrix', 'editable'))
-                                {!! Form::open(['route' => 'product_matrix.import', 'files' => true]) !!}
+                                <form method="POST" action="{{ route('product_matrix.import') }}" enctype="multipart/form-data">
+                                    @csrf
                                     <strong>Import:</strong>
-                                    {!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}
-                                    {{ Form::submit('Import') }}
-                                {!! Form::close() !!}
+                                    <input type="file" name="csv_file" accept=".csv,text/csv">
+                                    <button type="submit">Import</button>
+                                </form>
                             @endif
 
-                            {!! Form::open(['route' => 'product_matrix.index', 'method' => 'get']) !!}
+                            <form method="GET" action="{{ route('product_matrix.index') }}">
                                 <strong>Suche:</strong>
-                                {!! Form::text('search', $search, ['placeholder' => 'Produkt suchen']) !!}
-                                {{ Form::submit('Filtern') }}
-                            {!! Form::close() !!}
+                                {{ html()->text('search', $search)->attribute('placeholder', 'Produkt suchen') }}
+                                {{ html()->submit('Filtern') }}
+                            </form>
                         </div>
 
                         @if(session('status'))
@@ -157,8 +158,9 @@
             <tbody>
                 @if(auth()->user()->hasPermission('product_matrix', 'editable'))
                     <tr>
-                        {!! Form::open(['route' => 'product_matrix.aliases.store']) !!}
-                        <td>{!! Form::text('source_name', old('source_name'), ['placeholder' => 'z.B. user-provisioning']) !!}</td>
+                        <form method="POST" action="{{ route('product_matrix.aliases.store') }}">
+                        @csrf
+                        <td><input type="text" name="source_name" value="{{ old('source_name') }}" placeholder="z.B. user-provisioning"></td>
                         <td>
                             <select name="container_id">
                                 <option value="">Bitte waehlen</option>
@@ -167,16 +169,17 @@
                                 @endforeach
                             </select>
                         </td>
-                        <td>{!! Form::checkbox('ignore_on_import', 1, old('ignore_on_import')) !!}</td>
-                        <td class="product-matrix-alias-actions">{{ Form::submit('Alias speichern') }}</td>
-                        {!! Form::close() !!}
+                        <td><input type="checkbox" name="ignore_on_import" value="1" @checked(old('ignore_on_import'))></td>
+                        <td class="product-matrix-alias-actions"><button type="submit">Alias speichern</button></td>
+                        </form>
                     </tr>
                 @endif
                 @forelse($aliases as $alias)
                     <tr>
                         @if(auth()->user()->hasPermission('product_matrix', 'editable'))
-                            {!! Form::open(['route' => ['product_matrix.aliases.update', $alias->id]]) !!}
-                            <td>{!! Form::text('source_name', $alias->source_name) !!}</td>
+                            <form method="POST" action="{{ route('product_matrix.aliases.update', $alias->id) }}">
+                            @csrf
+                            <td><input type="text" name="source_name" value="{{ $alias->source_name }}"></td>
                             <td>
                                 <select name="container_id">
                                     <option value="">Bitte waehlen</option>
@@ -185,12 +188,12 @@
                                     @endforeach
                                 </select>
                             </td>
-                            <td>{!! Form::checkbox('ignore_on_import', 1, $alias->ignore_on_import) !!}</td>
+                            <td><input type="checkbox" name="ignore_on_import" value="1" @checked($alias->ignore_on_import)></td>
                             <td class="product-matrix-alias-actions">
-                                {{ Form::submit('Speichern') }}
+                                <button type="submit">Speichern</button>
                                 <a href="{{ route('product_matrix.aliases.delete', $alias->id) }}" class="itsdb-action-control" onclick="return confirm('Alias wirklich loeschen?')">Loeschen</a>
                             </td>
-                            {!! Form::close() !!}
+                            </form>
                         @else
                             <td>{{ $alias->source_name }}</td>
                             <td>{{ optional($containers->firstWhere('id', $alias->container_id))->title ?? '-' }}</td>

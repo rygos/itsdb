@@ -6,20 +6,20 @@
             <tr>
                 <td>
                     @if(auth()->user()->hasPermission('compose', 'editable'))
-                        {!! Form::open(['route' => 'compose.upload', 'files' => true]) !!}
+                        {{ html()->form()->route('compose.upload')->attribute('enctype', 'multipart/form-data')->open() }}
                         <div>
                             <strong>Upload Compose Files:</strong>
                         </div>
                         <div>
-                            ZIP: {!! Form::file('compose_zip', ['accept' => '.zip']) !!}
+                            ZIP: {{ html()->file('compose_zip')->attribute('accept', '.zip') }}
                         </div>
                         <div>
-                            YML: {!! Form::file('compose_files[]', ['multiple' => true, 'accept' => '.yml,.yaml']) !!}
+                            YML: {{ html()->file('compose_files[]')->attribute('multiple', true)->attribute('accept', '.yml,.yaml') }}
                         </div>
                         <div>
-                            {{ Form::submit('Upload') }}
+                            {{ html()->submit('Upload') }}
                         </div>
-                        {!! Form::close() !!}
+                        {{ html()->form()->close() }}
                     @else
                         <strong>Upload Compose Files:</strong><br>
                         Keine Bearbeitungsberechtigung vorhanden.

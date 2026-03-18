@@ -12,39 +12,39 @@
             </tr>
             <tr>
                 <td>
-                    {!! Form::open(['route' => 'projects.store']) !!}
+                    {{ html()->form()->route('projects.store')->open() }}
                     <table id="stattable">
                         <tr>
                             <td>Dynamics ID:</td>
-                            <td>{!! Form::text('dynamics_id') !!}</td>
+                            <td>{{ html()->text('dynamics_id') }}</td>
                         </tr>
                         <tr>
                             <td>Project Name:</td>
-                            <td>{!! Form::text('name') !!}</td>
+                            <td>{{ html()->text('name') }}</td>
                         </tr>
                         <tr>
                             <td>City:</td>
-                            <td>{!! Form::select('customer', $customers) !!}</td>
+                            <td>{{ html()->select('customer', $customers) }}</td>
                         </tr>
                         <tr>
                             <td>Start Date:</td>
-                            <td>{!! Form::date('start_date', now()->toDateString()) !!}</td>
+                            <td>{{ html()->input('date', 'start_date', now()->toDateString()) }}</td>
                         </tr>
                         <tr>
                             <td>End Date:</td>
-                            <td>{!! Form::date('end_date', now()->toDateString()) !!}</td>
+                            <td>{{ html()->input('date', 'end_date', now()->toDateString()) }}</td>
                         </tr>
                         <tr>
                             <td>Hours:</td>
-                            <td>{!! Form::number('hours', null, ['min' => 0]) !!}</td>
+                            <td>{{ html()->input('number', 'hours')->attribute('min', 0) }}</td>
                         </tr>
                         <tr>
                             <td></td>
-                            <td>{{ Form::submit('Submit') }}</td>
+                            <td>{{ html()->submit('Submit') }}</td>
                         </tr>
 
                     </table>
-                    {!! Form::close() !!}
+                    {{ html()->form()->close() }}
                 </td>
             </tr>
             </tbody>

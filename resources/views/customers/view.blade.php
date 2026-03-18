@@ -70,11 +70,11 @@
                                 <td style="text-align: left;">{{ $item->hours ?? '-' }}</td>
                                 <td style="text-align: left;">
                                     @if($canManageProject)
-                                        {{ Form::open(['route' => 'projects.change_status']) }}
-                                        {{ Form::hidden('project_id', $item->id) }}
-                                        {{ Form::select('status', $status, $item->status_id) }}
-                                        {{ Form::submit('Submit') }}
-                                        {{ Form::close() }}
+                                        {{ html()->form()->route('projects.change_status')->open() }}
+                                        {{ html()->hidden('project_id', $item->id) }}
+                                        {{ html()->select('status', $status, $item->status_id) }}
+                                        {{ html()->submit('Submit') }}
+                                        {{ html()->form()->close() }}
                                     @else
                                         {{ optional($item->status)->name ?? '-' }}
                                     @endif
@@ -86,8 +86,8 @@
             </tr>
             <tr>
                 <td>
-                    {{ Form::open(['route' => 'servers.store']) }}
-                    {{ Form::hidden('customer_id', $customer->id) }}
+                    {{ html()->form()->route('servers.store')->open() }}
+                    {{ html()->hidden('customer_id', $customer->id) }}
                     <table style="width: 100%">
                         <tr>
                             <th>Type</th>
@@ -207,20 +207,20 @@
                             </tr>
                         @endforeach
                         <tr>
-                                <th>{{ Form::select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs', 'Integration' => 'Integration', 'Auswerte' => 'Auswerte']) }}</th>
-                            <td>{{ Form::select('server_kind_id', $serverKindOptions) }}</td>
-                            <td>{{ Form::select('operating_system_id', $operatingSystemOptions) }}</td>
-                            <td>{{ Form::text('servername') }}</td>
-                            <td>{{ Form::text('fqdn') }}</td>
-                            <td>{{ Form::text('db_sid') }}</td>
-                            <td>{{ Form::text('db_server') }}</td>
-                            <td>{{ Form::text('ext_ip') }}</td>
-                            <td>{{ Form::text('int_ip') }}</td>
+                                <th>{{ html()->select('type', ['' => '', 'Produktiv' => 'Produktiv', 'Test' => 'Test', 'Schulungs' => 'Schulungs', 'Entwicklungs' => 'Entwicklungs', 'Integration' => 'Integration', 'Auswerte' => 'Auswerte']) }}</th>
+                            <td>{{ html()->select('server_kind_id', $serverKindOptions) }}</td>
+                            <td>{{ html()->select('operating_system_id', $operatingSystemOptions) }}</td>
+                            <td>{{ html()->text('servername') }}</td>
+                            <td>{{ html()->text('fqdn') }}</td>
+                            <td>{{ html()->text('db_sid') }}</td>
+                            <td>{{ html()->text('db_server') }}</td>
+                            <td>{{ html()->text('ext_ip') }}</td>
+                            <td>{{ html()->text('int_ip') }}</td>
                             <td></td>
-                            <td>{{ Form::submit('Submit') }}</td>
+                            <td>{{ html()->submit('Submit') }}</td>
                         </tr>
                     </table>
-                    {{ Form::close() }}
+                    {{ html()->form()->close() }}
                 </td>
             </tr>
             <tr>
@@ -232,12 +232,12 @@
                         </tr>
                         <tr>
                             <td>
-                                {{ Form::open(['route' => 'remarks.store']) }}
-                                {{ Form::hidden('customer_id', $customer->id) }}
-                                {{ Form::textarea('remark', $remark, ['style' => 'resize:none;width:98%;']) }}
+                                {{ html()->form()->route('remarks.store')->open() }}
+                                {{ html()->hidden('customer_id', $customer->id) }}
+                                {{ html()->textarea('remark', $remark)->attribute('style', 'resize:none;width:98%;') }}
                                 <br>
-                                {{ Form::submit('Submit') }}
-                                {{ Form::close() }}
+                                {{ html()->submit('Submit') }}
+                                {{ html()->form()->close() }}
                             </td>
                             <td>
                                 <table style="width: 100%;">
@@ -337,8 +337,8 @@
                                     @endforelse
                                 </table>
                                 <br>
-                                {{ Form::open(['route' => 'customer_documents.store', 'files' => true, 'id' => 'customer-document-upload-form']) }}
-                                {{ Form::hidden('customer_id', $customer->id) }}
+                                {{ html()->form()->route('customer_documents.store')->id('customer-document-upload-form')->attribute('enctype', 'multipart/form-data')->open() }}
+                                {{ html()->hidden('customer_id', $customer->id) }}
                                 <table style="width: 100%;">
                                     <tr>
                                         <th>Datei</th>
@@ -347,17 +347,17 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            {{ Form::file('document', ['id' => 'customer-document-input', 'accept' => 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip']) }}
+                                            {{ html()->file('document')->id('customer-document-input')->attribute('accept', 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip') }}
                                             <div class="customer-document-paste-box" id="customer-document-paste-box" tabindex="0">
                                                 Bild aus Zwischenablage hier einfuegen mit Strg+V
                                             </div>
                                             <div class="customer-document-paste-status" id="customer-document-paste-status" aria-live="polite"></div>
                                         </td>
-                                        <td>{{ Form::text('description') }}</td>
-                                        <td>{{ Form::submit('Upload') }}</td>
+                                        <td>{{ html()->text('description') }}</td>
+                                        <td>{{ html()->submit('Upload') }}</td>
                                     </tr>
                                 </table>
-                                {{ Form::close() }}
+                                {{ html()->form()->close() }}
                             </td>
                         </tr>
                         <tr>
@@ -375,38 +375,38 @@
                                 </tr>
                                 @foreach($contacts as $contact)
                                     <tr>
-                                        {{ Form::open(['route' => 'contact.update']) }}
-                                        {{ Form::hidden('id', $contact->id) }}
+                                        {{ html()->form()->route('contact.update')->open() }}
+                                        {{ html()->hidden('id', $contact->id) }}
                                         <td>{{ $contact->prefix }}</td>
                                         <td>{{ $contact->name }}</td>
                                         <td>{{ $contact->familyname }}</td>
                                         <td>{{ $contact->phone_mobile }}</td>
                                         <td>{{ $contact->phone_office }}</td>
                                         <td>{{ $contact->email }}</td>
-                                        <td>{{ Form::text('comments', $contact->comments) }}</td>
+                                        <td>{{ html()->text('comments', $contact->comments) }}</td>
                                         <td>{{ $contact->updated_at }}</td>
                                         <td>
                                             <div class="itsdb-actions">
-                                                {{ Form::submit('Submit') }}
+                                                {{ html()->submit('Submit') }}
                                                 <a href="{{ route('contact.delete', $contact->id) }}" class="itsdb-action-control">delete</a>
                                             </div>
                                         </td>
-                                        {{ Form::close() }}
+                                        {{ html()->form()->close() }}
                                     </tr>
                                 @endforeach
                                 <tr>
-                                    {{ Form::open(['route' => 'contact.create']) }}
-                                    {{ Form::hidden('customer_id', $customer->id) }}
-                                    <td>{{ Form::select('prefix', ['Frau' => 'Frau', 'Herr' => 'Herr', 'Prof.' => 'Prof.', 'Dr.' => 'Dr.', 'Mailbox' => 'Mailbox', 'Unbekannt' => 'Unbekannt']) }}</td>
-                                    <td>{{ Form::text('name') }}</td>
-                                    <td>{{ Form::text('familyname') }}</td>
-                                    <td>{{ Form::text('phone_mobile') }}</td>
-                                    <td>{{ Form::text('phone_office') }}</td>
-                                    <td>{{ Form::text('email') }}</td>
-                                    <td>{{ Form::text('comments') }}</td>
+                                    {{ html()->form()->route('contact.create')->open() }}
+                                    {{ html()->hidden('customer_id', $customer->id) }}
+                                    <td>{{ html()->select('prefix', ['Frau' => 'Frau', 'Herr' => 'Herr', 'Prof.' => 'Prof.', 'Dr.' => 'Dr.', 'Mailbox' => 'Mailbox', 'Unbekannt' => 'Unbekannt']) }}</td>
+                                    <td>{{ html()->text('name') }}</td>
+                                    <td>{{ html()->text('familyname') }}</td>
+                                    <td>{{ html()->text('phone_mobile') }}</td>
+                                    <td>{{ html()->text('phone_office') }}</td>
+                                    <td>{{ html()->text('email') }}</td>
+                                    <td>{{ html()->text('comments') }}</td>
                                     <td></td>
-                                    <td>{{ Form::submit('Submit') }}</td>
-                                    {{ Form::close() }}
+                                    <td>{{ html()->submit('Submit') }}</td>
+                                    {{ html()->form()->close() }}
                                 </tr>
                             </table>
                         </tr>
@@ -447,32 +447,32 @@
                 <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
             </div>
             <div class="itsdb-modal__body">
-                {{ Form::open(['route' => 'credentials.store']) }}
-                {{ Form::hidden('customer_id', $customer->id) }}
+                {{ html()->form()->route('credentials.store')->open() }}
+                {{ html()->hidden('customer_id', $customer->id) }}
                 <table class="itsdb-modal__grid">
                     <tr>
                         <td class="itsdb-modal__grid-label">User</td>
-                        <td>{{ Form::text('username') }}</td>
+                        <td>{{ html()->text('username') }}</td>
                     </tr>
                     <tr>
                         <td class="itsdb-modal__grid-label">Passwort</td>
-                        <td>{{ Form::text('password') }}</td>
+                        <td>{{ html()->text('password') }}</td>
                     </tr>
                     <tr>
                         <td class="itsdb-modal__grid-label">Typ</td>
-                        <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share']) }}</td>
+                        <td>{{ html()->select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share']) }}</td>
                     </tr>
                     <tr>
                         <td class="itsdb-modal__grid-label">Server</td>
                         <td>
-                            {{ Form::select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), null, ['multiple' => true, 'size' => max(3, $servers->count())]) }}
+                            {{ html()->select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), null)->attribute('multiple', true)->attribute('size', max(3, $servers->count())) }}
                         </td>
                     </tr>
                 </table>
                 <div class="itsdb-modal__footer">
-                    {{ Form::submit('Speichern') }}
+                    {{ html()->submit('Speichern') }}
                 </div>
-                {{ Form::close() }}
+                {{ html()->form()->close() }}
             </div>
         </div>
     </div>
@@ -485,32 +485,32 @@
                     <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
                 </div>
                 <div class="itsdb-modal__body">
-                    {{ Form::open(['route' => 'credentials.update']) }}
-                    {{ Form::hidden('id', $item->id) }}
+                    {{ html()->form()->route('credentials.update')->open() }}
+                    {{ html()->hidden('id', $item->id) }}
                     <table class="itsdb-modal__grid">
                         <tr>
                             <td class="itsdb-modal__grid-label">User</td>
-                            <td>{{ Form::text('username', $item->username) }}</td>
+                            <td>{{ html()->text('username', $item->username) }}</td>
                         </tr>
                         <tr>
                             <td class="itsdb-modal__grid-label">Passwort</td>
-                            <td>{{ Form::text('password', $item->password) }}</td>
+                            <td>{{ html()->text('password', $item->password) }}</td>
                         </tr>
                         <tr>
                             <td class="itsdb-modal__grid-label">Typ</td>
-                            <td>{{ Form::select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share'], $item->type) }}</td>
+                            <td>{{ html()->select('type', ['Windows Misc' => 'Windows Misc', 'OrbisU' => 'OrbisU', 'Orbis User' => 'Orbis User', 'Orbis Auth' => 'Orbis Auth', 'OAS' => 'OAS', 'OAS Admin' => 'OAS Admin', 'PTC-Share' => 'PTC-Share'], $item->type) }}</td>
                         </tr>
                         <tr>
                             <td class="itsdb-modal__grid-label">Server</td>
                             <td>
-                                {{ Form::select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->map(function ($id) { return (string) $id; })->all(), ['multiple' => true, 'size' => max(3, $servers->count())]) }}
+                                {{ html()->select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->map(function ($id) { return (string) $id; })->all())->attribute('multiple', true)->attribute('size', max(3, $servers->count())) }}
                             </td>
                         </tr>
                     </table>
                     <div class="itsdb-modal__footer">
-                        {{ Form::submit('Aktualisieren') }}
+                        {{ html()->submit('Aktualisieren') }}
                     </div>
-                    {{ Form::close() }}
+                    {{ html()->form()->close() }}
                 </div>
             </div>
         </div>

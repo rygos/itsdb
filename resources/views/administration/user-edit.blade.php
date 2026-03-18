@@ -2,7 +2,7 @@
 @section('title', 'Benutzer bearbeiten')
 @section('content')
     <div id="prodpagecontainer" class="admin-page">
-        {{ Form::open(['route' => ['administration.users.update', $editUser]]) }}
+        {{ html()->modelForm($editUser)->route('administration.users.update', $editUser)->open() }}
         <table id="pouetbox_prodmain">
             <thead>
                 <tr id="prodheader">
@@ -19,19 +19,19 @@
                 @endif
                 <tr>
                     <td>Benutzername</td>
-                    <td>{!! Form::text('name', old('name', $editUser->name)) !!}</td>
+                    <td>{{ html()->text('name', old('name', $editUser->name)) }}</td>
                 </tr>
                 <tr>
                     <td>Email Adresse</td>
-                    <td>{!! Form::email('email', old('email', $editUser->email)) !!}</td>
+                    <td>{{ html()->email('email', old('email', $editUser->email)) }}</td>
                 </tr>
                 <tr>
                     <td>Passwort</td>
-                    <td>{!! Form::password('password') !!}</td>
+                    <td>{{ html()->password('password') }}</td>
                 </tr>
                 <tr>
                     <td>Passwort bestaetigen</td>
-                    <td>{!! Form::password('password_confirmation') !!}</td>
+                    <td>{{ html()->password('password_confirmation') }}</td>
                 </tr>
             </tbody>
         </table>
@@ -67,12 +67,12 @@
                 @endforeach
                 <tr>
                     <td colspan="4">
-                        {{ Form::submit('Benutzer speichern') }}
+                        {{ html()->submit('Benutzer speichern') }}
                         <a href="{{ route('administration.index', ['tab' => 'users']) }}">Zurueck</a>
                     </td>
                 </tr>
             </tbody>
         </table>
-        {{ Form::close() }}
+        {{ html()->closeModelForm() }}
     </div>
 @endsection

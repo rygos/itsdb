@@ -97,79 +97,79 @@
                                     <section class="admin-import-card">
                                         <h3>Compose Files</h3>
                                         <p>Uploads fuer Compose-Dateien.</p>
-                                        {!! Form::open(['route' => 'compose.upload', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        {{ html()->form()->route('compose.upload')->class('admin-import-card__form')->attribute('enctype', 'multipart/form-data')->open() }}
                                         <div class="admin-import-card__field">
                                             <label for="compose-upload-zip">ZIP</label>
-                                            {!! Form::file('compose_zip', ['accept' => '.zip', 'id' => 'compose-upload-zip']) !!}
+                                            {{ html()->file('compose_zip')->attribute('accept', '.zip')->id('compose-upload-zip') }}
                                         </div>
                                         <div class="admin-import-card__field">
                                             <label for="compose-upload-yml">YML-Dateien</label>
-                                            {!! Form::file('compose_files[]', ['multiple' => true, 'accept' => '.yml,.yaml', 'id' => 'compose-upload-yml']) !!}
+                                            {{ html()->file('compose_files[]')->attribute('multiple', true)->attribute('accept', '.yml,.yaml')->id('compose-upload-yml') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('compose', 'editable'))
-                                            <div>{{ Form::submit('Upload Compose') }}</div>
+                                            <div>{{ html()->submit('Upload Compose') }}</div>
                                         @endif
-                                        {!! Form::close() !!}
+                                        {{ html()->form()->close() }}
                                     </section>
 
                                     <section class="admin-import-card">
                                         <h3>Produktmatrix</h3>
                                         <p>CSV-Import fuer die Produktmatrix.</p>
-                                        {!! Form::open(['route' => 'product_matrix.import', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        {{ html()->form()->route('product_matrix.import')->class('admin-import-card__form')->attribute('enctype', 'multipart/form-data')->open() }}
                                         <div class="admin-import-card__field">
                                             <label for="product-matrix-import-file">CSV-Datei</label>
-                                            {!! Form::file('csv_file', ['accept' => '.csv,text/csv', 'id' => 'product-matrix-import-file']) !!}
+                                            {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('product-matrix-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('product_matrix', 'editable'))
-                                            <div>{{ Form::submit('Import Produktmatrix') }}</div>
+                                            <div>{{ html()->submit('Import Produktmatrix') }}</div>
                                         @endif
-                                        {!! Form::close() !!}
+                                        {{ html()->form()->close() }}
                                     </section>
 
                                     <section class="admin-import-card">
                                         <h3>Kundenimport</h3>
                                         <p>Importiert `Kd.Nummer`, `SAP-Nr.` und `Ort` aus der Kundenuebersicht.</p>
-                                        {!! Form::open(['route' => 'administration.imports.customers', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        {{ html()->form()->route('administration.imports.customers')->class('admin-import-card__form')->attribute('enctype', 'multipart/form-data')->open() }}
                                         <div class="admin-import-card__field">
                                             <label for="customers-import-file">CSV-Datei</label>
-                                            {!! Form::file('csv_file', ['accept' => '.csv,text/csv', 'id' => 'customers-import-file']) !!}
+                                            {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('customers-import-file') }}
                                         </div>
                                         <div class="admin-import-card__field">
                                             <label for="customers-import-country">Land-Fallback fuer neue Orte</label>
-                                            {!! Form::select('fallback_country_code', ['de' => 'DE', 'at' => 'AT', 'ch' => 'CH', 'lu' => 'LU'], 'de', ['id' => 'customers-import-country']) !!}
+                                            {{ html()->select('fallback_country_code', ['de' => 'DE', 'at' => 'AT', 'ch' => 'CH', 'lu' => 'LU'], 'de')->id('customers-import-country') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div>{{ Form::submit('Import Kunden') }}</div>
+                                            <div>{{ html()->submit('Import Kunden') }}</div>
                                         @endif
-                                        {!! Form::close() !!}
+                                        {{ html()->form()->close() }}
                                     </section>
 
                                     <section class="admin-import-card">
                                         <h3>OrbisU Server Import</h3>
                                         <p>Ordnet Server ueber die Short-Nummer dem Kunden zu und aktualisiert nur bei neuerem `Aktualisiert`-Wert.</p>
-                                        {!! Form::open(['route' => 'administration.imports.orbisu_servers', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        {{ html()->form()->route('administration.imports.orbisu_servers')->class('admin-import-card__form')->attribute('enctype', 'multipart/form-data')->open() }}
                                         <div class="admin-import-card__field">
                                             <label for="orbisu-import-file">CSV-Datei</label>
-                                            {!! Form::file('csv_file', ['accept' => '.csv,text/csv', 'id' => 'orbisu-import-file']) !!}
+                                            {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('orbisu-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div>{{ Form::submit('Import OrbisU Server') }}</div>
+                                            <div>{{ html()->submit('Import OrbisU Server') }}</div>
                                         @endif
-                                        {!! Form::close() !!}
+                                        {{ html()->form()->close() }}
                                     </section>
 
                                     <section class="admin-import-card">
                                         <h3>OAS-Import</h3>
                                         <p>Importiert OAS-Server ueber `Projekt / SAP Nr`, Hostname und IP-Adresse und verknuepft sie mit bestehenden Kunden.</p>
-                                        {!! Form::open(['route' => 'administration.imports.oas_servers', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        {{ html()->form()->route('administration.imports.oas_servers')->class('admin-import-card__form')->attribute('enctype', 'multipart/form-data')->open() }}
                                         <div class="admin-import-card__field">
                                             <label for="oas-import-file">CSV-Datei</label>
-                                            {!! Form::file('csv_file', ['accept' => '.csv,text/csv', 'id' => 'oas-import-file']) !!}
+                                            {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('oas-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div>{{ Form::submit('Import OAS Server') }}</div>
+                                            <div>{{ html()->submit('Import OAS Server') }}</div>
                                         @endif
-                                        {!! Form::close() !!}
+                                        {{ html()->form()->close() }}
                                     </section>
                                 </div>
                             </td>
@@ -186,20 +186,20 @@
                     <tbody>
                         @if(auth()->user()->hasPermission('administration', 'editable'))
                             <tr>
-                                {!! Form::open(['route' => 'administration.statuses.store']) !!}
-                                <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neuen Status anlegen']) !!}</td>
-                                <td>{{ Form::submit('Status anlegen') }}</td>
-                                {!! Form::close() !!}
+                                {{ html()->form()->route('administration.statuses.store')->open() }}
+                                <td>{{ html()->text('name', old('name'))->attribute('placeholder', 'Neuen Status anlegen') }}</td>
+                                <td>{{ html()->submit('Status anlegen') }}</td>
+                                {{ html()->form()->close() }}
                             </tr>
                         @endif
 
                         @forelse($statuses as $status)
                             <tr>
                                 @if(auth()->user()->hasPermission('administration', 'editable'))
-                                    {!! Form::open(['route' => ['administration.statuses.update', $status]]) !!}
-                                    <td>{!! Form::text('name', $status->name) !!}</td>
-                                    <td>{{ Form::submit('Speichern') }}</td>
-                                    {!! Form::close() !!}
+                                    {{ html()->form()->route('administration.statuses.update', $status)->open() }}
+                                    <td>{{ html()->text('name', $status->name) }}</td>
+                                    <td>{{ html()->submit('Speichern') }}</td>
+                                    {{ html()->form()->close() }}
                                 @else
                                     <td colspan="2">{{ $status->name }}</td>
                                 @endif
@@ -226,12 +226,12 @@
                     <tbody>
                         @forelse($cities as $city)
                             <tr>
-                                {!! Form::open(['route' => ['administration.cities.update', $city]]) !!}
+                                {{ html()->form()->route('administration.cities.update', $city)->open() }}
                                 <td>{{ $city->name }}</td>
-                                <td>{!! Form::text('country_code', $city->country_code, ['maxlength' => 2, 'style' => 'width:60px']) !!}</td>
+                                <td>{{ html()->text('country_code', $city->country_code)->attribute('maxlength', 2)->attribute('style', 'width:60px') }}</td>
                                 <td>{{ $city->customers_count }}</td>
-                                <td>{{ Form::submit('Speichern') }}</td>
-                                {!! Form::close() !!}
+                                <td>{{ html()->submit('Speichern') }}</td>
+                                {{ html()->form()->close() }}
                             </tr>
                         @empty
                             <tr>
@@ -254,21 +254,21 @@
                     <tbody>
                         @if(auth()->user()->hasPermission('administration', 'editable'))
                             <tr>
-                                {!! Form::open(['route' => 'administration.server_kinds.store']) !!}
-                                <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neue Serverart']) !!}</td>
+                                {{ html()->form()->route('administration.server_kinds.store')->open() }}
+                                <td>{{ html()->text('name', old('name'))->attribute('placeholder', 'Neue Serverart') }}</td>
                                 <td>-</td>
-                                <td>{{ Form::submit('Serverart anlegen') }}</td>
-                                {!! Form::close() !!}
+                                <td>{{ html()->submit('Serverart anlegen') }}</td>
+                                {{ html()->form()->close() }}
                             </tr>
                         @endif
                         @forelse($serverKinds as $serverKind)
                             <tr>
                                 @if(auth()->user()->hasPermission('administration', 'editable'))
-                                    {!! Form::open(['route' => ['administration.server_kinds.update', $serverKind]]) !!}
-                                    <td>{!! Form::text('name', $serverKind->name) !!}</td>
+                                    {{ html()->form()->route('administration.server_kinds.update', $serverKind)->open() }}
+                                    <td>{{ html()->text('name', $serverKind->name) }}</td>
                                     <td>{{ $serverKind->servers_count }}</td>
-                                    <td>{{ Form::submit('Speichern') }}</td>
-                                    {!! Form::close() !!}
+                                    <td>{{ html()->submit('Speichern') }}</td>
+                                    {{ html()->form()->close() }}
                                 @else
                                     <td>{{ $serverKind->name }}</td>
                                     <td>{{ $serverKind->servers_count }}</td>
@@ -296,21 +296,21 @@
                     <tbody>
                         @if(auth()->user()->hasPermission('administration', 'editable'))
                             <tr>
-                                {!! Form::open(['route' => 'administration.operating_systems.store']) !!}
-                                <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neues Betriebssystem']) !!}</td>
+                                {{ html()->form()->route('administration.operating_systems.store')->open() }}
+                                <td>{{ html()->text('name', old('name'))->attribute('placeholder', 'Neues Betriebssystem') }}</td>
                                 <td>-</td>
-                                <td>{{ Form::submit('Betriebssystem anlegen') }}</td>
-                                {!! Form::close() !!}
+                                <td>{{ html()->submit('Betriebssystem anlegen') }}</td>
+                                {{ html()->form()->close() }}
                             </tr>
                         @endif
                         @forelse($operatingSystems as $operatingSystem)
                             <tr>
                                 @if(auth()->user()->hasPermission('administration', 'editable'))
-                                    {!! Form::open(['route' => ['administration.operating_systems.update', $operatingSystem]]) !!}
-                                    <td>{!! Form::text('name', $operatingSystem->name) !!}</td>
+                                    {{ html()->form()->route('administration.operating_systems.update', $operatingSystem)->open() }}
+                                    <td>{{ html()->text('name', $operatingSystem->name) }}</td>
                                     <td>{{ $operatingSystem->servers_count }}</td>
-                                    <td>{{ Form::submit('Speichern') }}</td>
-                                    {!! Form::close() !!}
+                                    <td>{{ html()->submit('Speichern') }}</td>
+                                    {{ html()->form()->close() }}
                                 @else
                                     <td>{{ $operatingSystem->name }}</td>
                                     <td>{{ $operatingSystem->servers_count }}</td>
@@ -332,11 +332,11 @@
                     </thead>
                     <tbody>
                         <tr>
-                            {!! Form::open(['route' => 'administration.cities.store']) !!}
-                            <td>{!! Form::text('name', old('name'), ['placeholder' => 'Neuen Ort anlegen']) !!}</td>
-                            <td>{!! Form::text('country_code', old('country_code', 'de'), ['maxlength' => 2, 'style' => 'width:60px']) !!}</td>
-                            <td colspan="3">{{ Form::submit('Ort anlegen') }}</td>
-                            {!! Form::close() !!}
+                            {{ html()->form()->route('administration.cities.store')->open() }}
+                            <td>{{ html()->text('name', old('name'))->attribute('placeholder', 'Neuen Ort anlegen') }}</td>
+                            <td>{{ html()->text('country_code', old('country_code', 'de'))->attribute('maxlength', 2)->attribute('style', 'width:60px') }}</td>
+                            <td colspan="3">{{ html()->submit('Ort anlegen') }}</td>
+                            {{ html()->form()->close() }}
                         </tr>
                     </tbody>
                 </table>
@@ -353,7 +353,7 @@
                     <tbody>
                         @forelse($customersWithoutCity as $customer)
                             <tr>
-                                {!! Form::open(['route' => ['administration.customers.city.update', $customer]]) !!}
+                                {{ html()->form()->route('administration.customers.city.update', $customer)->open() }}
                                 <td>{{ $customer->short_no }}</td>
                                 <td>{{ $customer->sap_no }}</td>
                                 <td>{{ $customer->name }}</td>
@@ -383,8 +383,8 @@
                                     </div>
                                     <input type="hidden" name="city_id" data-city-id-input>
                                 </td>
-                                <td>{{ Form::submit('Ort speichern') }}</td>
-                                {!! Form::close() !!}
+                                <td>{{ html()->submit('Ort speichern') }}</td>
+                                {{ html()->form()->close() }}
                             </tr>
                         @empty
                             <tr>
@@ -497,15 +497,15 @@
                     </thead>
                     <tbody>
                         <tr>
-                            {!! Form::open(['route' => 'administration.settings.update']) !!}
+                            {{ html()->form()->route('administration.settings.update')->open() }}
                             <td>Registrierung aktiv</td>
                             <td>
-                                {!! Form::checkbox('registration_enabled', 1, $registrationEnabled) !!}
+                                {{ html()->checkbox('registration_enabled', $registrationEnabled, 1) }}
                                 @if(auth()->user()->hasPermission('administration', 'administration'))
-                                    {{ Form::submit('Speichern') }}
+                                    {{ html()->submit('Speichern') }}
                                 @endif
                             </td>
-                            {!! Form::close() !!}
+                            {{ html()->form()->close() }}
                         </tr>
                     </tbody>
                 </table>

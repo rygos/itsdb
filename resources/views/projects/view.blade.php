@@ -14,32 +14,32 @@
                 <td>{{ $project->user->name }}</td>
             </tr>
             @if($canManageProject)
-                {{ Form::open(['route' => 'projects.update']) }}
-                {{ Form::hidden('id', $project->id) }}
+                {{ html()->modelForm($project)->route('projects.update')->open() }}
+                {{ html()->hidden('id', $project->id) }}
                 <tr>
                     <td>Name:</td>
-                    <td>{!! Form::text('name', $project->name) !!}</td>
+                    <td>{{ html()->text('name', $project->name) }}</td>
                 </tr>
                 <tr>
                     <td>Dynamics ID:</td>
-                    <td>{!! Form::text('dynamics_id', $project->dynamics_id) !!}</td>
+                    <td>{{ html()->text('dynamics_id', $project->dynamics_id) }}</td>
                 </tr>
                 <tr>
                     <td>Start Date:</td>
-                    <td>{!! Form::date('start_date', \Carbon\Carbon::parse($project->start_date)->toDateString()) !!}</td>
+                    <td>{{ html()->input('date', 'start_date', \Carbon\Carbon::parse($project->start_date)->toDateString()) }}</td>
                 </tr>
                 <tr>
                     <td>End Date:</td>
-                    <td>{!! Form::date('end_date', \Carbon\Carbon::parse($project->end_date)->toDateString()) !!}</td>
+                    <td>{{ html()->input('date', 'end_date', \Carbon\Carbon::parse($project->end_date)->toDateString()) }}</td>
                 </tr>
                 <tr>
                     <td>Hours:</td>
-                    <td>{!! Form::number('hours', $project->hours, ['min' => 0]) !!}</td>
+                    <td>{{ html()->input('number', 'hours', $project->hours)->attribute('min', 0) }}</td>
                 </tr>
                 <tr>
-                    <td colspan="2">{!! Form::submit('Submit') !!}</td>
+                    <td colspan="2">{{ html()->submit('Submit') }}</td>
                 </tr>
-                {{ Form::close() }}
+                {{ html()->closeModelForm() }}
             @else
                 <tr>
                     <td>Name:</td>

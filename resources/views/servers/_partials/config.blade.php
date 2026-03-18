@@ -11,14 +11,14 @@
             <tr>
                 <td>
                     <table id="pouetbox_prodmain">
-                        {{ Form::open(['route' => ['servers.add_composer', $server->id]]) }}
+                        {{ html()->form()->route('servers.add_composer', $server->id)->open() }}
                         <tr>
                             <th>Docker-Compose</th>
                             <th>Action</th>
                         </tr>
                         <tr>
-                            <td>Add docker-compose: {{ Form::select('compose', $compose_select) }}</td>
-                            <td>{{ Form::submit('Submit') }}</td>
+                            <td>Add docker-compose: {{ html()->select('compose', $compose_select) }}</td>
+                            <td>{{ html()->submit('Submit') }}</td>
                         </tr>
                         @foreach($compose as $item)
                             <tr>
@@ -26,7 +26,7 @@
                                 <td><a href="{{ route('servers.del_composer', [$server->id, $item->composer_id]) }}" class="itsdb-action-control">delete</a></td>
                             </tr>
                         @endforeach
-                        {{ Form::close() }}
+                        {{ html()->form()->close() }}
                     </table>
                 </td>
                 <td>
@@ -38,7 +38,7 @@
                         <tr>
                             <td colspan="2"><a href="{{ route('env.generate', $server->id) }}">Generate from docker-compose</a></td>
                         </tr>
-                        {{ Form::open(['route' => ['env.update', $server->id]]) }}
+                        {{ html()->form()->route('env.update', $server->id)->open() }}
                         @foreach($env as $item)
                             <tr>
                                 @php
@@ -49,24 +49,24 @@
                                     }
                                 @endphp
                                 <td style="color: {{ $color }}">{{ $item->key }}</td>
-                                <td>{{ Form::text($item->key, $item->value) }}</td>
+                                <td>{{ html()->text($item->key, $item->value) }}</td>
                             </tr>
                         @endforeach
                         <tr>
-                            <td colspan="2">{{ Form::submit('Submit') }}<br><br><a href="{{ route('env.generate_raw', $server->id) }}">Generate .env Textfield (Overwrites Content)</a></td>
+                            <td colspan="2">{{ html()->submit('Submit') }}<br><br><a href="{{ route('env.generate_raw', $server->id) }}">Generate .env Textfield (Overwrites Content)</a></td>
                         </tr>
-                        {{ Form::close() }}
+                        {{ html()->form()->close() }}
                     </table>
                 </td>
             </tr>
-            {{ Form::open(['route' => 'servers.update_serverconfig']) }}
-            {{ Form::hidden('server_id', $server->id) }}
+            {{ html()->form()->route('servers.update_serverconfig')->open() }}
+            {{ html()->hidden('server_id', $server->id) }}
             <tr>
                 <td>
-                    {{ Form::textarea('docker_compose', $server->docker_compose_raw, ['cols' => 100]) }}
+                    {{ html()->textarea('docker_compose', $server->docker_compose_raw)->attribute('cols', 100) }}
                 </td>
                 <td>
-                    {{ Form::textarea('env', $server->env_raw, ['cols' => 100]) }}
+                    {{ html()->textarea('env', $server->env_raw)->attribute('cols', 100) }}
                 </td>
             </tr>
             <tr>
@@ -74,9 +74,9 @@
                 <td><a href="{{ route('env.generate_from_raw', $server->id) }}">Generate .env config from Textfield (Overwrites Informations)</a></td>
             </tr>
             <tr>
-                <td colspan="2">{{ Form::submit('Submit') }}</td>
+                <td colspan="2">{{ html()->submit('Submit') }}</td>
             </tr>
-            {{ Form::close() }}
+            {{ html()->form()->close() }}
         </table>
     </td>
 </tr>
