@@ -318,7 +318,7 @@
                                     @endforelse
                                 </table>
                                 <br>
-                                {{ Form::open(['route' => 'customer_documents.store', 'files' => true]) }}
+                                {{ Form::open(['route' => 'customer_documents.store', 'files' => true, 'id' => 'customer-document-upload-form']) }}
                                 {{ Form::hidden('customer_id', $customer->id) }}
                                 <table style="width: 100%;">
                                     <tr>
@@ -327,7 +327,13 @@
                                         <th>Aktion</th>
                                     </tr>
                                     <tr>
-                                        <td>{{ Form::file('document') }}</td>
+                                        <td>
+                                            {{ Form::file('document', ['id' => 'customer-document-input', 'accept' => 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip']) }}
+                                            <div class="customer-document-paste-box" id="customer-document-paste-box" tabindex="0">
+                                                Bild aus Zwischenablage hier einfuegen mit Strg+V
+                                            </div>
+                                            <div class="customer-document-paste-status" id="customer-document-paste-status" aria-live="polite"></div>
+                                        </td>
                                         <td>{{ Form::text('description') }}</td>
                                         <td>{{ Form::submit('Upload') }}</td>
                                     </tr>
@@ -503,4 +509,75 @@
             </div>
         </div>
     @endforeach
+
+    <script>
+        (function() {
+            var input = document.getElementById('customer-document-input');
+            var pasteBox = document.getElementById('customer-document-paste-box');
+            var status = document.getElementById('customer-document-paste-status');
+
+            if (!input || !pasteBox || !status || typeof DataTransfer === 'undefined') {
+                return;
+            }
+
+            function setStatus(message, isError) {
+                status.textContent = message || '';
+                status.classList.toggle('is-error', !!isError);
+                status.classList.toggle('is-success', !!message && !isError);
+            }
+
+            function setSelectedFile(file) {
+                var transfer = new DataTransfer();
+                transfer.items.add(file);
+                input.files = transfer.files;
+            }
+
+            function updateSelectedFileStatus() {
+                if (!input.files || !input.files.length) {
+                    setStatus('', false);
+                    return;
+                }
+
+                setStatus('Ausgewaehlt: ' + input.files[0].name, false);
+            }
+
+            function handlePaste(event) {
+                var items = event.clipboardData && event.clipboardData.items ? event.clipboardData.items : [];
+                var imageItem = null;
+
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].type && items[i].type.indexOf('image/') === 0) {
+                        imageItem = items[i];
+                        break;
+                    }
+                }
+
+                if (!imageItem) {
+                    setStatus('Keine Bilddaten in der Zwischenablage gefunden.', true);
+                    return;
+                }
+
+                var blob = imageItem.getAsFile();
+                if (!blob) {
+                    setStatus('Das Bild konnte nicht aus der Zwischenablage gelesen werden.', true);
+                    return;
+                }
+
+                var mimeType = blob.type || 'image/png';
+                var extension = mimeType.split('/')[1] || 'png';
+                var file = new File([blob], 'clipboard-image-' + Date.now() + '.' + extension, { type: mimeType });
+
+                setSelectedFile(file);
+                setStatus('Bild aus Zwischenablage uebernommen: ' + file.name, false);
+                event.preventDefault();
+            }
+
+            pasteBox.addEventListener('click', function() {
+                pasteBox.focus();
+            });
+            pasteBox.addEventListener('paste', handlePaste);
+            input.addEventListener('change', updateSelectedFileStatus);
+            updateSelectedFileStatus();
+        })();
+    </script>
 @endsection

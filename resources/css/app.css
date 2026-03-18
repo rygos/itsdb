@@ -356,6 +356,33 @@ nav li a {
     background: #17395c;
 }
 
+.customer-document-paste-box {
+    margin-top: 6px;
+    padding: 8px;
+    border: 1px dashed #17395c;
+    text-align: left;
+    cursor: text;
+}
+
+.customer-document-paste-box:focus {
+    outline: 1px solid #ffbf00;
+    border-color: #ffbf00;
+}
+
+.customer-document-paste-status {
+    min-height: 16px;
+    margin-top: 4px;
+    text-align: left;
+}
+
+.customer-document-paste-status.is-success {
+    color: #b7ff99;
+}
+
+.customer-document-paste-status.is-error {
+    color: #ff9f9f;
+}
+
 .itsdb-secret-toggle {
     position: relative;
     padding: 2px 6px;

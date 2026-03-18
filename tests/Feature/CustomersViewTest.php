@@ -129,4 +129,24 @@ class CustomersViewTest extends TestCase
             ->assertSee('Applikationsserver')
             ->assertSee('Windows Server 2022');
     }
+
+    public function test_customer_view_shows_clipboard_image_upload_ui_for_documents(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 6072,
+            'sap_no' => '3031303',
+            'dynamics_no' => 'dyn',
+            'name' => 'Mavie Med Holding GmbH',
+            'city_id' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('customers.view', $customer))
+            ->assertOk()
+            ->assertSee('customer-document-paste-box')
+            ->assertSee('Bild aus Zwischenablage hier einfuegen mit Strg+V')
+            ->assertSee('customer-document-input');
+    }
 }
