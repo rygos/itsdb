@@ -239,6 +239,46 @@ nav li a {
     background: #2e5aa8;
 }
 
+.logs-pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.logs-pagination--bottom {
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+.logs-pagination__item {
+    display: inline-block;
+    min-width: 24px;
+    padding: 1px 6px;
+    border: 1px solid #17395c;
+    background: #00001a;
+    color: #ffbf00;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.logs-pagination__item.is-active {
+    background: #17395c;
+    color: #ffffe0;
+}
+
+.logs-pagination__item.is-disabled {
+    color: #7f8b99;
+    border-color: #32485f;
+}
+
+.logs-pagination__summary {
+    margin-left: 8px;
+    color: #ffffe0;
+}
+
 .pouettbl {
     background: #000000;
     border: 0px;

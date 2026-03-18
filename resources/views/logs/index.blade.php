@@ -2,9 +2,38 @@
 @section('title', 'Logs')
 @section('content')
     <div id="prodpagecontainer">
-        <div style="margin-bottom: 10px;">
-            {{ $logs->links() }}
-        </div>
+        @php
+            $windowStart = max(1, $logs->currentPage() - 2);
+            $windowEnd = min($logs->lastPage(), $logs->currentPage() + 2);
+        @endphp
+
+        @if($logs->hasPages())
+            <div class="logs-pagination">
+                @if($logs->onFirstPage())
+                    <span class="logs-pagination__item is-disabled">Zurueck</span>
+                @else
+                    <a href="{{ $logs->previousPageUrl() }}" class="logs-pagination__item">Zurueck</a>
+                @endif
+
+                @for($page = $windowStart; $page <= $windowEnd; $page++)
+                    @if($page === $logs->currentPage())
+                        <span class="logs-pagination__item is-active">{{ $page }}</span>
+                    @else
+                        <a href="{{ $logs->url($page) }}" class="logs-pagination__item">{{ $page }}</a>
+                    @endif
+                @endfor
+
+                @if($logs->hasMorePages())
+                    <a href="{{ $logs->nextPageUrl() }}" class="logs-pagination__item">Weiter</a>
+                @else
+                    <span class="logs-pagination__item is-disabled">Weiter</span>
+                @endif
+
+                <span class="logs-pagination__summary">
+                    Seite {{ $logs->currentPage() }} von {{ $logs->lastPage() }} | {{ $logs->total() }} Eintraege
+                </span>
+            </div>
+        @endif
         <table id="pouetbox_prodmain">
             <thead>
                 <tr id="prodheader">
@@ -42,8 +71,32 @@
                 @endforelse
             </tbody>
         </table>
-        <div style="margin-top: 10px;">
-            {{ $logs->links() }}
-        </div>
+        @if($logs->hasPages())
+            <div class="logs-pagination logs-pagination--bottom">
+                @if($logs->onFirstPage())
+                    <span class="logs-pagination__item is-disabled">Zurueck</span>
+                @else
+                    <a href="{{ $logs->previousPageUrl() }}" class="logs-pagination__item">Zurueck</a>
+                @endif
+
+                @for($page = $windowStart; $page <= $windowEnd; $page++)
+                    @if($page === $logs->currentPage())
+                        <span class="logs-pagination__item is-active">{{ $page }}</span>
+                    @else
+                        <a href="{{ $logs->url($page) }}" class="logs-pagination__item">{{ $page }}</a>
+                    @endif
+                @endfor
+
+                @if($logs->hasMorePages())
+                    <a href="{{ $logs->nextPageUrl() }}" class="logs-pagination__item">Weiter</a>
+                @else
+                    <span class="logs-pagination__item is-disabled">Weiter</span>
+                @endif
+
+                <span class="logs-pagination__summary">
+                    Seite {{ $logs->currentPage() }} von {{ $logs->lastPage() }} | {{ $logs->total() }} Eintraege
+                </span>
+            </div>
+        @endif
     </div>
 @endsection
