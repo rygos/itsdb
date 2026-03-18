@@ -19,4 +19,10 @@ class Log extends BaseLog
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function customer(): BelongsTo
+    {
+        // Customer-related logs store the customer id in content_id.
+        return $this->belongsTo(Customer::class, 'content_id');
+    }
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\EnvController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\IndexController;
+use App\Http\Controllers\LogsController;
 use App\Http\Controllers\ProductMatrixController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\RemarksController;
@@ -116,6 +117,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/calendar/{year?}/{month?}', [CalendarController::class, 'index'])->middleware('area:calendar,visible')->name('calendar.index');
+    Route::get('/logs', [LogsController::class, 'index'])->name('logs.index');
 
     Route::get('/env/generate/server/{server_id}', [EnvController::class, 'generate'])->name('env.generate');
     Route::post('/env/generate/server/{server_id}', [EnvController::class, 'update'])->name('env.update');
