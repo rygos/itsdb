@@ -41,15 +41,32 @@ class CustomersController extends Controller
         return ['' => ''] + OperatingSystem::query()->orderBy('name')->pluck('name', 'id')->toArray();
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $search = trim((string) $request->query('q', ''));
+
         $customers = Customer::query()
             ->with(['city', 'latestProject.status'])
+            ->when($search !== '', function ($query) use ($search) {
+                $like = '%'.$search.'%';
+
+                // Search covers the identifiers users reach for most often plus the linked city name.
+                $query->where(function ($customerQuery) use ($like) {
+                    $customerQuery
+                        ->where('short_no', 'like', $like)
+                        ->orWhere('sap_no', 'like', $like)
+                        ->orWhere('name', 'like', $like)
+                        ->orWhereHas('city', function ($cityQuery) use ($like) {
+                            $cityQuery->where('name', 'like', $like);
+                        });
+                });
+            })
             ->orderBy('short_no')
             ->get();
 
         return view('customers.index', [
             'customers' => $customers,
+            'term' => $search,
         ]);
     }
 

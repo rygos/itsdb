@@ -40,6 +40,108 @@ class CustomersViewTest extends TestCase
             ->assertSee('Kein Ort');
     }
 
+    public function test_customers_index_search_finds_by_customer_name(): void
+    {
+        $user = User::factory()->create();
+
+        Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 1111,
+            'sap_no' => 'SAP-1111',
+            'dynamics_no' => 'dyn-1111',
+            'name' => 'Alpha Medical GmbH',
+            'city_id' => null,
+        ]);
+
+        Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 2222,
+            'sap_no' => 'SAP-2222',
+            'dynamics_no' => 'dyn-2222',
+            'name' => 'Beta Systems GmbH',
+            'city_id' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('customers.index', ['q' => 'Alpha Medical']))
+            ->assertOk()
+            ->assertSee('Suche nach: Alpha Medical')
+            ->assertSee('Alpha Medical GmbH')
+            ->assertDontSee('Beta Systems GmbH');
+    }
+
+    public function test_customers_index_search_finds_by_city_name(): void
+    {
+        $user = User::factory()->create();
+        $vienna = City::query()->create([
+            'name' => 'Wien',
+            'country_code' => 'at',
+        ]);
+        $graz = City::query()->create([
+            'name' => 'Graz',
+            'country_code' => 'at',
+        ]);
+
+        Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 3333,
+            'sap_no' => 'SAP-3333',
+            'dynamics_no' => 'dyn-3333',
+            'name' => 'City Match GmbH',
+            'city_id' => $vienna->id,
+        ]);
+
+        Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 4444,
+            'sap_no' => 'SAP-4444',
+            'dynamics_no' => 'dyn-4444',
+            'name' => 'Other City GmbH',
+            'city_id' => $graz->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('customers.index', ['q' => 'Wien']))
+            ->assertOk()
+            ->assertSee('City Match GmbH')
+            ->assertDontSee('Other City GmbH');
+    }
+
+    public function test_customers_index_search_finds_by_short_number_and_sap_number(): void
+    {
+        $user = User::factory()->create();
+
+        Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 5555,
+            'sap_no' => '900001',
+            'dynamics_no' => 'dyn-5555',
+            'name' => 'Short Search GmbH',
+            'city_id' => null,
+        ]);
+
+        Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 6666,
+            'sap_no' => '900002',
+            'dynamics_no' => 'dyn-6666',
+            'name' => 'Sap Search GmbH',
+            'city_id' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('customers.index', ['q' => '5555']))
+            ->assertOk()
+            ->assertSee('Short Search GmbH')
+            ->assertDontSee('Sap Search GmbH');
+
+        $this->actingAs($user)
+            ->get(route('customers.index', ['q' => '900002']))
+            ->assertOk()
+            ->assertSee('Sap Search GmbH')
+            ->assertDontSee('Short Search GmbH');
+    }
+
     public function test_customer_view_shows_edit_link_for_editable_users(): void
     {
         $user = User::factory()->create();

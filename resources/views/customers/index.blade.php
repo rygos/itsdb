@@ -14,6 +14,11 @@
                 </tr>
             </thead>
             <tbody>
+                @if(isset($term) && $term !== '')
+                    <tr>
+                        <td colspan="6"><strong>Suche nach: {{ $term }}</strong></td>
+                    </tr>
+                @endif
                 @if(isset($city) && $city)
                     <tr>
                         <td colspan="6"><strong>Stadt: {{ $city->name }}</strong></td>
