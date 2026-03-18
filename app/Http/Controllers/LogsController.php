@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Log;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 
 class LogsController extends Controller
 {
@@ -14,7 +14,8 @@ class LogsController extends Controller
             ->with(['user', 'customer'])
             ->where('section', 'customer')
             ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('id')
+            ->paginate(50);
 
         return view('logs.index', [
             'logs' => $logs,

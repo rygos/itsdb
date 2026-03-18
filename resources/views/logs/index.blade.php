@@ -2,6 +2,9 @@
 @section('title', 'Logs')
 @section('content')
     <div id="prodpagecontainer">
+        <div style="margin-bottom: 10px;">
+            {{ $logs->links() }}
+        </div>
         <table id="pouetbox_prodmain">
             <thead>
                 <tr id="prodheader">
@@ -39,5 +42,8 @@
                 @endforelse
             </tbody>
         </table>
+        <div style="margin-top: 10px;">
+            {{ $logs->links() }}
+        </div>
     </div>
 @endsection
