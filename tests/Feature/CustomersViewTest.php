@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\City;
+use App\Models\Credential;
 use App\Models\Customer;
 use App\Models\CustomerDocument;
 use App\Models\OperatingSystem;
@@ -151,6 +152,40 @@ class CustomersViewTest extends TestCase
             ->assertSee('customer-document-paste-box')
             ->assertSee('Bild aus Zwischenablage hier einfuegen mit Strg+V')
             ->assertSee('customer-document-input');
+    }
+
+    public function test_customer_view_shows_enam_button_and_date_without_time_for_credentials(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 6072,
+            'sap_no' => '3031303',
+            'dynamics_no' => 'dyn',
+            'name' => 'Mavie Med Holding GmbH',
+            'city_id' => null,
+        ]);
+        $credential = Credential::query()->forceCreate([
+            'customer_id' => $customer->id,
+            'user_id' => $user->id,
+            'username' => '.\\Administrator',
+            'password' => 'AgfA$2002894',
+            'type' => 'Windows Misc',
+        ]);
+        $credential->forceFill([
+            'created_at' => Carbon::create(2026, 3, 18, 9, 45, 0),
+            'updated_at' => Carbon::create(2026, 3, 18, 9, 45, 0),
+        ])->save();
+
+        $this->actingAs($user)
+            ->get(route('customers.view', $customer))
+            ->assertOk()
+            ->assertSee('ENAM')
+            ->assertSee('data-enam-copy', false)
+            ->assertSee('data-enam-username=".\\Administrator"', false)
+            ->assertSee('data-enam-password="AgfA$2002894"', false)
+            ->assertSee('18.03.2026')
+            ->assertDontSee('09:45');
     }
 
     public function test_customer_view_shows_image_preview_action_and_upload_date(): void

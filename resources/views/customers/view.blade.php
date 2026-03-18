@@ -244,13 +244,14 @@
                                     <tr>
                                         <th>User</th>
                                         <th>Pass</th>
+                                        <th>ENAM</th>
                                         <th>Type</th>
                                         <th>Server</th>
                                         <th>Date</th>
                                         <th>Action</th>
                                     </tr>
                                     <tr>
-                                        <td colspan="6">
+                                        <td colspan="7">
                                             <button type="button" data-modal-target="#credential-create-modal">Credential hinzufuegen</button>
                                         </td>
                                     </tr>
@@ -267,6 +268,19 @@
                                                     'isPassword' => true,
                                                 ])
                                             </td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    class="itsdb-copy-button"
+                                                    data-enam-copy
+                                                    data-enam-username="{{ $item->username }}"
+                                                    data-enam-password="{{ $item->password }}"
+                                                    data-copy-tooltip="Kopiert"
+                                                    title="ENAM-Zeile kopieren"
+                                                >
+                                                    <span aria-hidden="true">&#9000;</span>
+                                                </button>
+                                            </td>
                                             <td>{{ $item->type }}</td>
                                             <td>
                                                 @if($item->servers->isEmpty())
@@ -275,7 +289,7 @@
                                                     {{ $item->servers->pluck('servername')->implode(', ') }}
                                                 @endif
                                             </td>
-                                            <td>{{ $item->created_at }}</td>
+                                            <td>{{ $item->created_at ? $item->created_at->format('d.m.Y') : '-' }}</td>
                                             <td>
                                                 <div class="itsdb-actions">
                                                     <button type="button" data-modal-target="#credential-edit-modal-{{ $item->id }}">bearbeiten</button>
@@ -603,6 +617,71 @@
             pasteBox.addEventListener('paste', handlePaste);
             input.addEventListener('change', updateSelectedFileStatus);
             updateSelectedFileStatus();
+        })();
+    </script>
+
+    <script>
+        (function() {
+            function fallbackCopyText(value) {
+                var element = document.createElement('textarea');
+                element.value = value;
+                element.setAttribute('readonly', 'readonly');
+                element.style.position = 'absolute';
+                element.style.left = '-9999px';
+                document.body.appendChild(element);
+                element.select();
+                document.execCommand('copy');
+                document.body.removeChild(element);
+            }
+
+            function copyText(value) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    return navigator.clipboard.writeText(value);
+                }
+
+                fallbackCopyText(value);
+                return Promise.resolve();
+            }
+
+            function flashCopyState(button) {
+                if (!button) return;
+
+                var originalTitle = button.getAttribute('data-original-title') || button.getAttribute('title') || '';
+                if (!button.getAttribute('data-original-title')) {
+                    button.setAttribute('data-original-title', originalTitle);
+                }
+
+                button.setAttribute('title', 'Kopiert');
+                button.classList.add('is-copied');
+                button.classList.add('show-copy-tooltip');
+
+                window.setTimeout(function() {
+                    button.setAttribute('title', originalTitle);
+                    button.classList.remove('is-copied');
+                    button.classList.remove('show-copy-tooltip');
+                }, 1200);
+            }
+
+            function createUuid() {
+                if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                    return window.crypto.randomUUID();
+                }
+
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(character) {
+                    var random = Math.random() * 16 | 0;
+                    var value = character === 'x' ? random : (random & 0x3 | 0x8);
+                    return value.toString(16);
+                });
+            }
+
+            document.querySelectorAll('[data-enam-copy]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var payload = '<ENAM_UUID>' + createUuid() + ':' + (button.getAttribute('data-enam-username') || '') + ':' + (button.getAttribute('data-enam-password') || '');
+                    copyText(payload).then(function() {
+                        flashCopyState(button);
+                    });
+                });
+            });
         })();
     </script>
 @endsection
