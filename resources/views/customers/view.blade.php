@@ -70,9 +70,17 @@
                                 <td style="text-align: left;">{{ $item->hours ?? '-' }}</td>
                                 <td style="text-align: left;">
                                     @if($canManageProject)
-                                        {{ html()->form()->route('projects.change_status')->open() }}
+                                        {{ html()->form()->route('projects.change_status')->class('js-project-status-form')->open() }}
                                         {{ html()->hidden('project_id', $item->id) }}
-                                        {{ html()->select('status', $status, $item->status_id) }}
+                                        {{ html()->hidden('finished_end_date_action')->attribute('data-finished-end-date-action', 'true') }}
+                                        {{ html()->select('status', $status, $item->status_id)
+                                            ->attribute('data-project-status-select', 'true')
+                                            ->attribute('data-project-name', $item->name)
+                                            ->attribute('data-current-status', (string) $item->status_id)
+                                            ->attribute('data-current-end-date', \Carbon\Carbon::parse($item->end_date)->toDateString())
+                                            ->attribute('data-current-end-date-display', \Carbon\Carbon::parse($item->end_date)->format('d.m.Y'))
+                                            ->attribute('data-finished-status-id', $finishedStatusId ?? '')
+                                        }}
                                         {{ html()->submit('Submit') }}
                                         {{ html()->form()->close() }}
                                     @else
@@ -553,6 +561,133 @@
             </div>
         </div>
     @endforeach
+
+    <div class="itsdb-modal" id="project-finished-end-date-modal" aria-hidden="true">
+        <div class="itsdb-modal__dialog">
+            <div class="itsdb-modal__header">
+                <div class="itsdb-modal__title">Enddatum beim Abschluss anpassen</div>
+                <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
+            </div>
+            <div class="itsdb-modal__body">
+                <p id="project-finished-end-date-message" style="margin-bottom: 12px;">
+                    Dieses Projekt hat aktuell ein anderes Enddatum als heute.
+                </p>
+                <div class="itsdb-actions">
+                    <button type="button" id="project-finished-end-date-confirm">Ja, auf aktuellen Tag setzen</button>
+                    <button type="button" id="project-finished-end-date-keep">Alten Tag lassen</button>
+                    <button type="button" data-modal-close>Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            var modal = document.getElementById('project-finished-end-date-modal');
+            var message = document.getElementById('project-finished-end-date-message');
+            var confirmButton = document.getElementById('project-finished-end-date-confirm');
+            var keepButton = document.getElementById('project-finished-end-date-keep');
+            var pendingForm = null;
+            var pendingSelect = null;
+            var previousStatusValue = null;
+
+            if (!modal || !message || !confirmButton || !keepButton) {
+                return;
+            }
+
+            function setModalState(isOpen) {
+                modal.style.display = isOpen ? 'flex' : 'none';
+                modal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+            }
+
+            function resetPendingSelection() {
+                if (pendingSelect && previousStatusValue !== null) {
+                    pendingSelect.value = previousStatusValue;
+                }
+
+                pendingForm = null;
+                pendingSelect = null;
+                previousStatusValue = null;
+            }
+
+            function submitPendingForm(action) {
+                if (!pendingForm) {
+                    return;
+                }
+
+                var actionInput = pendingForm.querySelector('[data-finished-end-date-action]');
+                if (actionInput) {
+                    actionInput.value = action;
+                }
+
+                setModalState(false);
+                pendingForm.submit();
+                pendingForm = null;
+                pendingSelect = null;
+                previousStatusValue = null;
+            }
+
+            document.querySelectorAll('[data-project-status-select]').forEach(function(select) {
+                select.addEventListener('change', function() {
+                    var finishedStatusId = select.getAttribute('data-finished-status-id');
+                    var currentEndDate = select.getAttribute('data-current-end-date');
+                    var today = new Date();
+                    var todayString = [
+                        today.getFullYear(),
+                        String(today.getMonth() + 1).padStart(2, '0'),
+                        String(today.getDate()).padStart(2, '0')
+                    ].join('-');
+
+                    if (!finishedStatusId || select.value !== finishedStatusId || currentEndDate === todayString) {
+                        return;
+                    }
+
+                    pendingForm = select.closest('form');
+                    pendingSelect = select;
+                    previousStatusValue = select.getAttribute('data-current-status') || select.defaultValue;
+
+                    var projectName = select.getAttribute('data-project-name') || 'Das Projekt';
+                    var currentEndDateDisplay = select.getAttribute('data-current-end-date-display') || currentEndDate;
+                    var todayDisplay = [
+                        String(today.getDate()).padStart(2, '0'),
+                        String(today.getMonth() + 1).padStart(2, '0'),
+                        today.getFullYear()
+                    ].join('.');
+
+                    message.textContent = '"' + projectName + '" hat aktuell das Enddatum ' + currentEndDateDisplay + '. Soll das Enddatum beim Setzen auf FINISHED auf den heutigen Tag ' + todayDisplay + ' gesetzt werden?';
+                    setModalState(true);
+                });
+            });
+
+            confirmButton.addEventListener('click', function() {
+                submitPendingForm('set_today');
+            });
+
+            keepButton.addEventListener('click', function() {
+                submitPendingForm('keep');
+            });
+
+            modal.querySelectorAll('[data-modal-close]').forEach(function(closeTrigger) {
+                closeTrigger.addEventListener('click', function() {
+                    setModalState(false);
+                    resetPendingSelection();
+                });
+            });
+
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    setModalState(false);
+                    resetPendingSelection();
+                }
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') {
+                    resetPendingSelection();
+                }
+            });
+        })();
+    </script>
 
     <script>
         (function() {

@@ -70,12 +70,16 @@ class CustomersController extends Controller
             ->whereType(1)
             ->where('relation_id', $customer->id)
             ->value('remark');
-        $st = Status::query()->orderBy('name')->pluck('name', 'id');
+        $statuses = Status::query()->orderBy('name')->get();
+        $finishedStatusId = $statuses
+            ->firstWhere('name', 'FINISHED')
+            ?->id;
 
         return view('customers.view', [
             'customer' => $customer,
             'remark' => $remark ?? '',
-            'status' => $st,
+            'status' => $statuses->pluck('name', 'id'),
+            'finishedStatusId' => $finishedStatusId,
             'projects' => $customer->projects,
             'servers' => $customer->servers,
             'credentials' => $customer->credentials,

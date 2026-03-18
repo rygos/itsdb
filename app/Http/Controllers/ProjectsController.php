@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\LogHelper;
 use App\Models\Customer;
 use App\Models\Project;
+use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -74,10 +75,19 @@ class ProjectsController extends Controller
         $validated = $request->validate([
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'status' => ['required', 'integer', 'exists:status,id'],
+            'finished_end_date_action' => ['nullable', 'in:keep,set_today'],
         ]);
 
         $project = Project::query()->with('status')->findOrFail($validated['project_id']);
         abort_unless($project->user_id === auth()->id(), 403);
+
+        $targetStatus = Status::query()->findOrFail($validated['status']);
+        $finishedEndDateAction = $validated['finished_end_date_action'] ?? null;
+
+        // Keep the FINISHED workflow resilient even when the request bypasses the customer page modal.
+        if ($targetStatus->name === 'FINISHED' && $finishedEndDateAction === 'set_today') {
+            $project->end_date = Carbon::today()->startOfDay();
+        }
 
         $project->status_id = $validated['status'];
         $project->save();

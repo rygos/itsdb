@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\Status;
 use App\Models\User;
 use App\Http\Middleware\VerifyCsrfToken;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,6 +21,13 @@ class ProjectVisibilityTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware(VerifyCsrfToken::class);
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 
     public function test_hours_page_only_shows_finished_projects_of_authenticated_user(): void
@@ -157,6 +165,76 @@ class ProjectVisibilityTest extends TestCase
         $response->assertForbidden();
         $this->assertSame('Editable project', $project->fresh()->name);
         $this->assertSame(6, $project->fresh()->hours);
+    }
+
+    public function test_setting_finished_status_can_update_end_date_to_today(): void
+    {
+        Carbon::setTestNow('2026-03-18 09:30:00');
+
+        $owner = User::factory()->create();
+        $open = Status::create(['name' => 'OPEN']);
+        $finished = Status::create(['name' => 'FINISHED']);
+        $customer = $this->createCustomer($owner, '4501');
+
+        $project = Project::create([
+            'dynamics_id' => 'OWN-5',
+            'name' => 'Finished today project',
+            'customer_id' => $customer->id,
+            'user_id' => $owner->id,
+            'status_id' => $open->id,
+            'start_date' => '2026-03-01 00:00:00',
+            'end_date' => '2026-03-10 00:00:00',
+            'hours' => 6,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('customers.view', $customer))
+            ->post(route('projects.change_status'), [
+                'project_id' => $project->id,
+                'status' => $finished->id,
+                'finished_end_date_action' => 'set_today',
+            ])
+            ->assertRedirect(route('customers.view', $customer));
+
+        $project->refresh();
+
+        $this->assertSame($finished->id, $project->status_id);
+        $this->assertSame('2026-03-18', $project->end_date->toDateString());
+    }
+
+    public function test_setting_finished_status_can_keep_existing_end_date(): void
+    {
+        Carbon::setTestNow('2026-03-18 09:30:00');
+
+        $owner = User::factory()->create();
+        $open = Status::create(['name' => 'OPEN']);
+        $finished = Status::create(['name' => 'FINISHED']);
+        $customer = $this->createCustomer($owner, '4502');
+
+        $project = Project::create([
+            'dynamics_id' => 'OWN-6',
+            'name' => 'Keep original end date project',
+            'customer_id' => $customer->id,
+            'user_id' => $owner->id,
+            'status_id' => $open->id,
+            'start_date' => '2026-03-01 00:00:00',
+            'end_date' => '2026-03-10 00:00:00',
+            'hours' => 6,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('customers.view', $customer))
+            ->post(route('projects.change_status'), [
+                'project_id' => $project->id,
+                'status' => $finished->id,
+                'finished_end_date_action' => 'keep',
+            ])
+            ->assertRedirect(route('customers.view', $customer));
+
+        $project->refresh();
+
+        $this->assertSame($finished->id, $project->status_id);
+        $this->assertSame('2026-03-10', $project->end_date->toDateString());
     }
 
     public function test_project_store_validates_payload_and_assigns_authenticated_user(): void
