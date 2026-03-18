@@ -503,7 +503,7 @@
                         <tr>
                             <td class="itsdb-modal__grid-label">Server</td>
                             <td>
-                                {{ Form::select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->all(), ['multiple' => true, 'size' => max(3, $servers->count())]) }}
+                                {{ Form::select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->map(function ($id) { return (string) $id; })->all(), ['multiple' => true, 'size' => max(3, $servers->count())]) }}
                             </td>
                         </tr>
                     </table>
