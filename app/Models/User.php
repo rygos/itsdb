@@ -36,6 +36,11 @@ class User extends Authenticatable
     public const PERMISSION_VISIBLE = 1;
     public const PERMISSION_EDITABLE = 2;
     public const PERMISSION_ADMINISTRATION = 3;
+    private const PERMISSION_ALIASES = [
+        'visible' => self::PERMISSION_VISIBLE,
+        'editable' => self::PERMISSION_EDITABLE,
+        'administration' => self::PERMISSION_ADMINISTRATION,
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -110,12 +115,9 @@ class User extends Authenticatable
 
     public function hasPermission(string $area, string|int $level = self::PERMISSION_VISIBLE): bool
     {
+        // Accept both numeric permission levels and readable aliases used by middleware/routes.
         $requiredLevel = is_string($level)
-            ? [
-                'visible' => static::PERMISSION_VISIBLE,
-                'editable' => static::PERMISSION_EDITABLE,
-                'administration' => static::PERMISSION_ADMINISTRATION,
-            ][$level] ?? static::PERMISSION_VISIBLE
+            ? static::PERMISSION_ALIASES[$level] ?? static::PERMISSION_VISIBLE
             : (int) $level;
 
         return $this->permissionLevel($area) >= $requiredLevel;

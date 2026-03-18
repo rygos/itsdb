@@ -99,6 +99,36 @@ class CustomersViewTest extends TestCase
         ]);
     }
 
+    public function test_authenticated_user_is_assigned_when_creating_customer(): void
+    {
+        $this->withoutMiddleware(VerifyCsrfToken::class);
+
+        $user = User::factory()->create();
+        $city = City::query()->create([
+            'name' => 'Berlin',
+            'country_code' => 'de',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('customers.store'), [
+                'short_no' => 8001,
+                'sap_no' => 'SAP-8001',
+                'dynamics_no' => 'DYN-8001',
+                'name' => 'Neukunde GmbH',
+                'city' => (string) $city->id,
+            ])
+            ->assertRedirect(route('index'));
+
+        $this->assertDatabaseHas('customers', [
+            'user_id' => $user->id,
+            'short_no' => 8001,
+            'sap_no' => 'SAP-8001',
+            'dynamics_no' => 'DYN-8001',
+            'name' => 'Neukunde GmbH',
+            'city_id' => $city->id,
+        ]);
+    }
+
     public function test_customer_view_shows_server_kind_and_operating_system(): void
     {
         $user = User::factory()->create();

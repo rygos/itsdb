@@ -11,13 +11,17 @@ use App\Models\OperatingSystem;
 use App\Models\Remark;
 use App\Models\ServerKind;
 use App\Models\Status;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class CustomersController extends Controller
 {
     private function cityOptions(): array
     {
-        $cities = City::orderBy('name')->get();
+        // Keep select option formatting in one place so all customer forms render cities consistently.
+        $cities = City::query()->orderBy('name')->get();
         $options = ['' => 'Bitte waehlen'];
 
         foreach ($cities as $item) {
@@ -37,44 +41,54 @@ class CustomersController extends Controller
         return ['' => ''] + OperatingSystem::query()->orderBy('name')->pluck('name', 'id')->toArray();
     }
 
-    public function index(){
-        $customers = Customer::with(['city', 'latestProject.status'])
+    public function index(): View
+    {
+        $customers = Customer::query()
+            ->with(['city', 'latestProject.status'])
             ->orderBy('short_no')
             ->get();
 
         return view('customers.index', [
-            'customers' => $customers
+            'customers' => $customers,
         ]);
     }
 
-    public function view($id){
-        $customer = Customer::with(['city', 'projects.status', 'projects.user', 'servers.serverKind', 'servers.operatingSystem', 'credentials.servers', 'contacts', 'documents'])
-            ->findOrFail($id);
-        $remark = Remark::whereType(1)->where('relation_id', $id)->first();
-        $st = Status::orderBy('name')->pluck('name', 'id');
-
-        if(!$remark){
-            $remark_ret = '';
-        }else{
-            $remark_ret = $remark->remark;
-        }
+    public function view(Customer $customer): View
+    {
+        // Load all relationships up front to avoid hidden N+1 queries in the Blade template.
+        $customer->load([
+            'city',
+            'projects.status',
+            'projects.user',
+            'servers.serverKind',
+            'servers.operatingSystem',
+            'credentials.servers',
+            'contacts',
+            'documents',
+        ]);
+        $remark = Remark::query()
+            ->whereType(1)
+            ->where('relation_id', $customer->id)
+            ->value('remark');
+        $st = Status::query()->orderBy('name')->pluck('name', 'id');
 
         return view('customers.view', [
             'customer' => $customer,
-            'remark' => $remark_ret,
+            'remark' => $remark ?? '',
             'status' => $st,
             'projects' => $customer->projects,
             'servers' => $customer->servers,
             'credentials' => $customer->credentials,
             'documents' => $customer->documents()->orderBy('original_name')->get(),
             'contacts' => $customer->contacts,
-            'logs' => Log::whereContentId($customer->id)->where('section', 'customer')->orderBy('created_at')->get(),
+            'logs' => Log::query()->whereContentId($customer->id)->where('section', 'customer')->orderBy('created_at')->get(),
             'serverKindOptions' => $this->serverKindOptions(),
             'operatingSystemOptions' => $this->operatingSystemOptions(),
         ]);
     }
 
-    public function add(){
+    public function add(): View
+    {
         $country = [
             'de' => 'Deutschland',
             'at' => 'Österreich',
@@ -88,7 +102,7 @@ class CustomersController extends Controller
         ]);
     }
 
-    public function edit(Customer $customer)
+    public function edit(Customer $customer): View
     {
         return view('customers.edit', [
             'customer' => $customer->load('city'),
@@ -96,10 +110,11 @@ class CustomersController extends Controller
         ]);
     }
 
-    public function city($id){
-        $city = City::whereId($id)->first();
-        $customers = Customer::with(['city', 'latestProject.status'])
-            ->where('city_id', $id)
+    public function city(City $city): View
+    {
+        $customers = Customer::query()
+            ->with(['city', 'latestProject.status'])
+            ->where('city_id', $city->id)
             ->orderBy('short_no')
             ->get();
 
@@ -109,35 +124,46 @@ class CustomersController extends Controller
         ]);
     }
 
-    public function store(Request $request){
-        $c = new Customer;
-        $c->user_id = 1;
-        //$c->type = $request->get('type');
-        $c->short_no = $request->get('short_no');
-        $c->sap_no = $request->get('sap_no');
-        $c->dynamics_no = $request->get('dynamics_no');
-        $c->name = $request->get('name');
-        $c->city_id = $request->get('city');
-        $c->save();
+    public function store(Request $request): RedirectResponse
+    {
+        // Validate explicit input instead of trusting raw request data from the legacy form.
+        $validated = $request->validate([
+            'short_no' => ['required', 'integer', 'min:1', 'unique:customers,short_no'],
+            'sap_no' => ['required', 'string', 'max:255'],
+            'dynamics_no' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
+            'city' => ['nullable', 'integer', 'exists:citys,id'],
+        ]);
 
-        LogHelper::log('customer', $c->id, 'Add', 'Create Customer: '.$c->name);
+        $customer = Customer::query()->create([
+            // New customers should always belong to the authenticated user, never to a hard-coded fallback.
+            'user_id' => (int) $request->user()->id,
+            'short_no' => $validated['short_no'],
+            'sap_no' => trim($validated['sap_no']),
+            'dynamics_no' => trim($validated['dynamics_no']),
+            'name' => trim($validated['name']),
+            'city_id' => $validated['city'] ?? null,
+        ]);
+
+        LogHelper::log('customer', $customer->id, 'Add', 'Create Customer: '.$customer->name);
 
         return redirect()->route('index');
     }
 
-    public function update(Request $request, Customer $customer)
+    public function update(Request $request, Customer $customer): RedirectResponse
     {
+        // The customer number is business-relevant and must remain unique even during updates.
         $validated = $request->validate([
-            'short_no' => ['required', 'integer'],
+            'short_no' => ['required', 'integer', 'min:1', Rule::unique('customers', 'short_no')->ignore($customer->id)],
             'sap_no' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'city' => ['nullable', 'integer', 'exists:citys,id'],
         ]);
 
         $customer->short_no = $validated['short_no'];
-        $customer->sap_no = $validated['sap_no'];
-        $customer->name = $validated['name'];
-        $customer->city_id = $validated['city'] ?: null;
+        $customer->sap_no = trim($validated['sap_no']);
+        $customer->name = trim($validated['name']);
+        $customer->city_id = $validated['city'] ?? null;
         $customer->save();
 
         LogHelper::log('customer', $customer->id, 'Update', 'Update Customer Master Data: '.$customer->name);
@@ -145,45 +171,71 @@ class CustomersController extends Controller
         return redirect()->route('customers.view', $customer);
     }
 
-    public function store_city(Request $request){
-        $c = new City;
-        $c->name = $request->get('name');
-        $c->country_code = $request->get('country_code');
-        $c->save();
+    public function store_city(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'country_code' => ['required', 'string', 'size:2'],
+        ]);
+
+        City::query()->create([
+            'name' => trim($validated['name']),
+            'country_code' => strtolower($validated['country_code']),
+        ]);
 
         return redirect()->back();
     }
 
-    public function contact_create(Request $request){
-        $c = new CustomerContact;
-        $c->customer_id = $request->get('customer_id');
-        $c->prefix = $request->get('prefix');
-        $c->name = $request->get('name');
-        $c->familyname = $request->get('familyname');
-        $c->phone_mobile = $request->get('phone_mobile');
-        $c->phone_office = $request->get('phone_office');
-        $c->email = $request->get('email');
-        $c->comments = $request->get('comments');
-        $c->save();
+    public function contact_create(Request $request): RedirectResponse
+    {
+        // Contacts are created via mass assignment only after validation so the payload stays predictable.
+        $validated = $request->validate([
+            'customer_id' => ['required', 'integer', 'exists:customers,id'],
+            'prefix' => ['nullable', 'string', 'max:255'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'familyname' => ['required', 'string', 'max:255'],
+            'phone_mobile' => ['nullable', 'string', 'max:255'],
+            'phone_office' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'comments' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        LogHelper::log('customer', $c->customer_id, 'Contact', 'Contact Added: '.$c->name.' '.$c->familyname);
+        $contact = CustomerContact::query()->create([
+            'customer_id' => $validated['customer_id'],
+            'prefix' => $validated['prefix'] ?? null,
+            'name' => $validated['name'] ?? null,
+            'familyname' => $validated['familyname'],
+            'phone_mobile' => $validated['phone_mobile'] ?? null,
+            'phone_office' => $validated['phone_office'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'comments' => $validated['comments'] ?? null,
+        ]);
 
-        return redirect()->route('customers.view', $c->customer_id);
+        LogHelper::log('customer', $contact->customer_id, 'Contact', 'Contact Added: '.$contact->name.' '.$contact->familyname);
+
+        return redirect()->route('customers.view', $contact->customer_id);
     }
 
-    public function contact_update(Request $request){
-        $c = CustomerContact::whereId($request->get('id'))->first();
-        $c->comments = $request->get('comments');
-        $c->save();
+    public function contact_update(Request $request): RedirectResponse
+    {
+        // The update flow intentionally only allows comment changes in the current UI.
+        $validated = $request->validate([
+            'id' => ['required', 'integer', 'exists:customer_contacts,id'],
+            'comments' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        LogHelper::log('customer', $c->customer_id, 'Contact', 'Contact Comment for '.$c->name.' '.$c->familyname.' - '.$c->comments);
+        $contact = CustomerContact::query()->findOrFail($validated['id']);
+        $contact->comments = $validated['comments'] ?? null;
+        $contact->save();
+
+        LogHelper::log('customer', $contact->customer_id, 'Contact', 'Contact Comment for '.$contact->name.' '.$contact->familyname.' - '.$contact->comments);
 
         return redirect()->back();
-
     }
 
-    public function contact_delete($id){
-        $contact = CustomerContact::whereId($id)->first();
+    public function contact_delete(int $id): RedirectResponse
+    {
+        $contact = CustomerContact::query()->findOrFail($id);
 
         LogHelper::log('customer', $contact->customer_id, 'Contact', 'Delete Contact: '.$contact->name.' '.$contact->familyname);
 

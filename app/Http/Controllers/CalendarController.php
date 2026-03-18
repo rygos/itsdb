@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\Project;
 
 class CalendarController extends Controller
 {
-    public function index(Request $request, $year = null, $month = null){
-        if(empty($year) or empty($month)){
+    public function index(Request $request, $year = null, $month = null)
+    {
+        // Fall back to the current month when the route is opened without explicit year/month values.
+        if (empty($year) || empty($month)) {
             $date = Carbon::now();
-        }else{
+        } else {
             $date = Carbon::parse('01.'.$month.'.'.$year);
         }
 
@@ -19,24 +21,34 @@ class CalendarController extends Controller
         $end_of_calendar = $date->copy()->lastOfMonth()->endOfWeek(Carbon::SUNDAY);
 
         $day_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        $years = Project::ownedBy(auth()->id())
+        // Use PHP date extraction instead of SQL YEAR() so test and production databases behave the same.
+        $years = Project::query()
+            ->ownedBy(auth()->id())
             ->whereNotNull('end_date')
-            ->selectRaw('YEAR(end_date) as year')
-            ->distinct()
-            ->orderByDesc('year')
-            ->pluck('year', 'year');
+            ->pluck('end_date')
+            ->filter()
+            ->mapWithKeys(function ($endDate) {
+                $year = Carbon::parse($endDate)->year;
 
-        $projectCounts = Project::ownedBy(auth()->id())
+                return [$year => $year];
+            })
+            ->sortKeysDesc();
+
+        // Count projects per day in memory for the same database portability reason.
+        $projectCounts = Project::query()
+            ->ownedBy(auth()->id())
             ->whereNotNull('end_date')
             ->whereBetween('end_date', [$start_of_calendar->copy()->startOfDay(), $end_of_calendar->copy()->endOfDay()])
-            ->selectRaw('DATE(end_date) as day, COUNT(*) as total')
-            ->groupBy('day')
-            ->pluck('total', 'day');
+            ->pluck('end_date')
+            ->filter()
+            ->countBy(fn ($endDate) => Carbon::parse($endDate)->toDateString());
 
         $selectedDay = $request->query('day');
         $selectedProjects = collect();
         if ($selectedDay) {
-            $selectedProjects = Project::with(['customer.city', 'status'])
+            // The detail table is loaded lazily only when the user drills into a specific day.
+            $selectedProjects = Project::query()
+                ->with(['customer.city', 'status'])
                 ->ownedBy(auth()->id())
                 ->whereNotNull('end_date')
                 ->whereDate('end_date', $selectedDay)

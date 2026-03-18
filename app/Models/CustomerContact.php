@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Base\CustomerContact as BaseCustomerContact;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerContact extends BaseCustomerContact
 {
@@ -17,7 +18,8 @@ class CustomerContact extends BaseCustomerContact
 		'comments'
 	];
 
-    public function customer(){
-        return $this->hasOne('App\Models\Customer', 'id', 'customer_id');
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 }

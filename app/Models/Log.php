@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Base\Log as BaseLog;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Log extends BaseLog
 {
@@ -14,7 +15,8 @@ class Log extends BaseLog
         'content_id',
 	];
 
-    public function user(){
-        return $this->hasOne('App\Models\User','id', 'user_id');
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

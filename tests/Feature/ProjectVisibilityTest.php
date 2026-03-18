@@ -7,12 +7,20 @@ use App\Models\Customer;
 use App\Models\Project;
 use App\Models\Status;
 use App\Models\User;
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ProjectVisibilityTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutMiddleware(VerifyCsrfToken::class);
+    }
 
     public function test_hours_page_only_shows_finished_projects_of_authenticated_user(): void
     {
@@ -149,6 +157,31 @@ class ProjectVisibilityTest extends TestCase
         $response->assertForbidden();
         $this->assertSame('Editable project', $project->fresh()->name);
         $this->assertSame(6, $project->fresh()->hours);
+    }
+
+    public function test_project_store_validates_payload_and_assigns_authenticated_user(): void
+    {
+        $user = User::factory()->create();
+        $customer = $this->createCustomer($user, '5001');
+
+        $this->actingAs($user)
+            ->post(route('projects.store'), [
+                'dynamics_id' => 'PROJ-5001',
+                'name' => 'Validated project',
+                'customer' => $customer->id,
+                'start_date' => '2026-04-01',
+                'end_date' => '2026-04-05',
+                'hours' => 10,
+            ])
+            ->assertRedirect(route('index'));
+
+        $this->assertDatabaseHas('projects', [
+            'dynamics_id' => 'PROJ-5001',
+            'name' => 'Validated project',
+            'customer_id' => $customer->id,
+            'user_id' => $user->id,
+            'hours' => 10,
+        ]);
     }
 
     private function createCustomer(User $user, string $shortNo): Customer

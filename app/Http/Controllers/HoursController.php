@@ -10,15 +10,22 @@ class HoursController extends Controller
 {
     public function index(Request $request)
     {
-        $years = Project::ownedBy(auth()->id())
+        // Derive available years in PHP instead of database-specific YEAR() SQL so the logic
+        // works across SQLite in tests and MySQL in production.
+        $years = Project::query()
+            ->ownedBy(auth()->id())
             ->whereNotNull('end_date')
             ->whereHas('status', function ($query) {
                 $query->where('name', 'FINISHED');
             })
-            ->selectRaw('YEAR(end_date) as year')
-            ->distinct()
-            ->orderByDesc('year')
-            ->pluck('year', 'year');
+            ->pluck('end_date')
+            ->filter()
+            ->mapWithKeys(function ($endDate) {
+                $year = Carbon::parse($endDate)->year;
+
+                return [$year => $year];
+            })
+            ->sortKeysDesc();
 
         $selectedYear = $request->get('year', $years->first());
 
@@ -29,7 +36,9 @@ class HoursController extends Controller
         $maxDailyHours = 0;
         $forecastServiceDays = 0;
         if ($selectedYear) {
-            $projects = Project::with(['customer.city', 'status'])
+            // Only finished projects contribute to the hours overview.
+            $projects = Project::query()
+                ->with(['customer.city', 'status'])
                 ->ownedBy(auth()->id())
                 ->whereNotNull('end_date')
                 ->whereHas('status', function ($query) {
@@ -41,6 +50,7 @@ class HoursController extends Controller
 
             $dailyTotals = [];
             foreach ($projects as $project) {
+                // Aggregate by finished date because the chart is day-based, not project-based.
                 $dateKey = Carbon::parse($project->end_date)->toDateString();
                 $hours = (int) ($project->hours ?? 0);
                 $dailyTotals[$dateKey] = ($dailyTotals[$dateKey] ?? 0) + $hours;
@@ -65,6 +75,7 @@ class HoursController extends Controller
             $averageHours = $workingDays > 0 ? $totalHours / $workingDays : 0;
             $maxDailyHours = max(1, (int) $dailyHours->max());
             if ((int) $selectedYear === (int) Carbon::now()->year) {
+                // Current-year forecast extrapolates the average onto the remaining working days.
                 $fullYearWorkingDays = $this->count_working_days(
                     Carbon::create($selectedYear, 1, 1)->startOfDay(),
                     Carbon::create($selectedYear, 12, 31)->endOfDay()
@@ -88,8 +99,9 @@ class HoursController extends Controller
         ]);
     }
 
-    private function count_working_days(Carbon $startDate, Carbon $endDate)
+    private function count_working_days(Carbon $startDate, Carbon $endDate): int
     {
+        // Holiday handling is centralized here so the dashboard calculation stays deterministic.
         $holidays = $this->nrw_holidays((int)$startDate->year, (int)$endDate->year);
         $workingDays = 0;
         $cursor = $startDate->copy()->startOfDay();
@@ -107,7 +119,7 @@ class HoursController extends Controller
         return $workingDays;
     }
 
-    private function nrw_holidays(int $startYear, int $endYear)
+    private function nrw_holidays(int $startYear, int $endYear): array
     {
         $dates = [];
         for ($year = $startYear; $year <= $endYear; $year++) {
@@ -138,7 +150,7 @@ class HoursController extends Controller
         return array_values(array_unique($dates));
     }
 
-    private function easter_sunday(int $year)
+    private function easter_sunday(int $year): Carbon
     {
         $a = $year % 19;
         $b = intdiv($year, 100);

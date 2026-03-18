@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\Base\ServersComposersRel as BaseServersComposersRel;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ServersComposersRel extends BaseServersComposersRel
 {
@@ -12,11 +12,13 @@ class ServersComposersRel extends BaseServersComposersRel
 		'server_id'
 	];
 
-    public function composer(){
-        return $this->hasOne('App\Models\Composer', 'id', 'composer_id');
+    public function composer(): BelongsTo
+    {
+        return $this->belongsTo(Composer::class, 'composer_id');
     }
 
-    public function server(){
-        return $this->hasOne('App\Models\Server', 'server_id', 'id');
+    public function server(): BelongsTo
+    {
+        return $this->belongsTo(Server::class, 'server_id');
     }
 }

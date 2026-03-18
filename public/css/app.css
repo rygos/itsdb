@@ -57,6 +57,21 @@ select[multiple="multiple"], select[multiple="multiple"] option {
     padding: 1px;
 }
 
+select[multiple="multiple"] {
+    background-color: #00001a;
+}
+
+select[multiple="multiple"] option:checked,
+select[multiple="multiple"] option[selected] {
+    background: #17395c linear-gradient(0deg, #17395c 0%, #17395c 100%);
+    color: #ffffff;
+}
+
+select[multiple="multiple"]:focus {
+    outline: 1px solid #ffbf00;
+    outline-offset: 1px;
+}
+
 input {
     padding: 2px;
 }

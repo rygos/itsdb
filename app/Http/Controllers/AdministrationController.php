@@ -432,9 +432,7 @@ class AdministrationController extends Controller
         $cityId = $validated['city_id'] ?? null;
 
         if (!$cityId && !empty($validated['city_name'])) {
-            $cityId = City::query()
-                ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($validated['city_name']))])
-                ->value('id');
+            $cityId = $this->findCityIdByName($validated['city_name']);
         }
 
         abort_unless($cityId, 422, 'Ort nicht gefunden.');
@@ -455,19 +453,42 @@ class AdministrationController extends Controller
 
     private function readCsvRows(UploadedFile $file): array
     {
-        $content = file_get_contents($file->getRealPath());
-        $content = $this->normalizeCsvContent($content ?: '');
-        $lines = preg_split("/\r\n|\n|\r/", trim($content));
-        $rows = array_map(static fn ($line) => str_getcsv($line, ';'), $lines ?: []);
+        $path = $file->getRealPath();
+        abort_unless($path, 422, 'Datei konnte nicht gelesen werden.');
 
-        $header = array_shift($rows) ?: [];
+        $handle = fopen($path, 'rb');
+        abort_unless($handle !== false, 422, 'Datei konnte nicht gelesen werden.');
+
+        $header = [];
+        $rows = [];
+
+        while (($row = fgetcsv($handle, separator: ';')) !== false) {
+            // Normalize encoding cell-by-cell because import files come from multiple external systems.
+            $row = array_map(
+                fn ($value) => $this->normalizeCsvCell((string) $value),
+                $row
+            );
+
+            if ($header === []) {
+                $header = $row;
+                continue;
+            }
+
+            if ($row === [null] || $row === ['']) {
+                continue;
+            }
+
+            $rows[] = $row;
+        }
+
+        fclose($handle);
 
         return [$header, $rows];
     }
 
-    private function normalizeCsvContent(string $content): string
+    private function normalizeCsvCell(string $value): string
     {
-        return mb_convert_encoding($content, 'UTF-8', 'UTF-8, ISO-8859-1, Windows-1252');
+        return trim(mb_convert_encoding($value, 'UTF-8', 'UTF-8, ISO-8859-1, Windows-1252'));
     }
 
     private function buildHeaderMap(array $header): array
@@ -493,13 +514,16 @@ class AdministrationController extends Controller
 
     private function resolveCityId(string $cityName, string $fallbackCountryCode): ?int
     {
+        $cityName = trim($cityName);
+
         if ($cityName === '') {
             return null;
         }
 
-        $existingCity = City::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($cityName)])->first();
-        if ($existingCity) {
-            return $existingCity->id;
+        // Reuse existing city records whenever possible so imports do not create case-based duplicates.
+        $existingCityId = $this->findCityIdByName($cityName);
+        if ($existingCityId) {
+            return $existingCityId;
         }
 
         $city = City::query()->create([
@@ -629,5 +653,13 @@ class AdministrationController extends Controller
         $value = preg_replace('/[^a-z0-9]+/', '', $value) ?? '';
 
         return $value;
+    }
+
+    private function findCityIdByName(string $cityName): ?int
+    {
+        // City names are matched case-insensitively because import sources are inconsistent.
+        return City::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($cityName))])
+            ->value('id');
     }
 }

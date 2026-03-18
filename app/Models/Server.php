@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Models\Base\Server as BaseServer;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Server extends BaseServer
 {
@@ -20,25 +23,29 @@ class Server extends BaseServer
         'user_id',
 	];
 
-    public function customer(){
-        return $this->hasOne('App\Models\Customer', 'id', 'customer_id');
-    }
-
-    public function composer_rel(){
-        return $this->hasMany('App\Models\ServersComposersRel', 'server_id', 'id');
-    }
-
-    public function credentials(){
-        return $this->belongsToMany('App\Models\Credential', 'credential_server', 'server_id', 'credential_id');
-    }
-
-    public function serverKind()
+    public function customer(): BelongsTo
     {
-        return $this->belongsTo(ServerKind::class, 'server_kind_id', 'id');
+        // Servers are assigned to exactly one customer through customer_id.
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function operatingSystem()
+    public function composer_rel(): HasMany
     {
-        return $this->belongsTo(OperatingSystem::class, 'operating_system_id', 'id');
+        return $this->hasMany(ServersComposersRel::class, 'server_id');
+    }
+
+    public function credentials(): BelongsToMany
+    {
+        return $this->belongsToMany(Credential::class, 'credential_server', 'server_id', 'credential_id');
+    }
+
+    public function serverKind(): BelongsTo
+    {
+        return $this->belongsTo(ServerKind::class, 'server_kind_id');
+    }
+
+    public function operatingSystem(): BelongsTo
+    {
+        return $this->belongsTo(OperatingSystem::class, 'operating_system_id');
     }
 }

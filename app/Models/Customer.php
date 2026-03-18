@@ -7,8 +7,10 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Project;
 
 /**
  * Class Customer
@@ -42,35 +44,45 @@ class Customer extends Model
         'city_id',
 	];
 
-    public function city(){
-        return $this->hasOne('App\Models\City','id', 'city_id');
+    public function city(): BelongsTo
+    {
+        // Customer holds the foreign key, so this must be a belongsTo relation.
+        return $this->belongsTo(City::class, 'city_id');
     }
 
-    public function projects(){
-        return $this->hasMany('App\Models\Project', 'customer_id', 'id');
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'customer_id');
     }
 
-    public function latestProject(){
-        return $this->hasOne(Project::class, 'customer_id', 'id')->latest('updated_at');
+    public function latestProject(): HasOne
+    {
+        // latestOfMany expresses the actual intent better than a manual latest() chain.
+        return $this->hasOne(Project::class, 'customer_id')->latestOfMany('updated_at');
     }
 
-    public function servers(){
-        return $this->hasMany('App\Models\Server', 'customer_id', 'id');
+    public function servers(): HasMany
+    {
+        return $this->hasMany(Server::class, 'customer_id');
     }
 
-    public function credentials(){
-        return $this->hasMany('App\Models\Credential', 'customer_id', 'id');
+    public function credentials(): HasMany
+    {
+        return $this->hasMany(Credential::class, 'customer_id');
     }
 
-    public function remark(){
-        return $this->hasOne('App\Models\Remark', 'customer_id', 'id');
+    public function remark(): HasOne
+    {
+        return $this->hasOne(Remark::class, 'customer_id');
     }
 
-    public function contacts(){
-        return $this->hasMany('App\Models\CustomerContact', 'customer_id', 'id');
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(CustomerContact::class, 'customer_id');
     }
 
-    public function documents(){
-        return $this->hasMany('App\Models\CustomerDocument', 'customer_id', 'id');
+    public function documents(): HasMany
+    {
+        return $this->hasMany(CustomerDocument::class, 'customer_id');
     }
 }
