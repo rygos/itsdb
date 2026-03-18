@@ -50,7 +50,7 @@
                             <td>{{ optional($user->last_login_at)->format('Y-m-d H:i') ?? '-' }}</td>
                             <td>
                                 @if(auth()->user()->hasPermission('administration', 'administration'))
-                                    <a href="{{ route('administration.users.edit', $user) }}">Edit</a>
+                                    <a href="{{ route('administration.users.edit', $user) }}" class="itsdb-action-control">Edit</a>
                                 @else
                                     -
                                 @endif
@@ -87,75 +87,92 @@
                 <table id="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">
-                            <th>Import</th>
-                            <th>Beschreibung</th>
+                            <th>Importe</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>
-                                {!! Form::open(['route' => 'compose.upload', 'files' => true]) !!}
-                                <div><strong>Compose Files</strong></div>
-                                <div>ZIP: {!! Form::file('compose_zip', ['accept' => '.zip']) !!}</div>
-                                <div>YML: {!! Form::file('compose_files[]', ['multiple' => true, 'accept' => '.yml,.yaml']) !!}</div>
-                                @if(auth()->user()->hasPermission('compose', 'editable'))
-                                    <div>{{ Form::submit('Upload Compose') }}</div>
-                                @endif
-                                {!! Form::close() !!}
-                            </td>
-                            <td>Uploads fuer Compose-Dateien.</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                {!! Form::open(['route' => 'product_matrix.import', 'files' => true]) !!}
-                                <div><strong>Produktenmatrix</strong></div>
-                                <div>{!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}</div>
-                                @if(auth()->user()->hasPermission('product_matrix', 'editable'))
-                                    <div>{{ Form::submit('Import Produktmatrix') }}</div>
-                                @endif
-                                {!! Form::close() !!}
-                            </td>
-                            <td>CSV-Import fuer die Produktmatrix.</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                {!! Form::open(['route' => 'administration.imports.customers', 'files' => true]) !!}
-                                <div><strong>Kundenimport</strong></div>
-                                <div>{!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}</div>
-                                <div>
-                                    Land-Fallback fuer neue Orte:
-                                    {!! Form::select('fallback_country_code', ['de' => 'DE', 'at' => 'AT', 'ch' => 'CH', 'lu' => 'LU'], 'de') !!}
+                                <div class="admin-imports">
+                                    <section class="admin-import-card">
+                                        <h3>Compose Files</h3>
+                                        <p>Uploads fuer Compose-Dateien.</p>
+                                        {!! Form::open(['route' => 'compose.upload', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        <div class="admin-import-card__field">
+                                            <label for="compose-upload-zip">ZIP</label>
+                                            {!! Form::file('compose_zip', ['accept' => '.zip', 'id' => 'compose-upload-zip']) !!}
+                                        </div>
+                                        <div class="admin-import-card__field">
+                                            <label for="compose-upload-yml">YML-Dateien</label>
+                                            {!! Form::file('compose_files[]', ['multiple' => true, 'accept' => '.yml,.yaml', 'id' => 'compose-upload-yml']) !!}
+                                        </div>
+                                        @if(auth()->user()->hasPermission('compose', 'editable'))
+                                            <div>{{ Form::submit('Upload Compose') }}</div>
+                                        @endif
+                                        {!! Form::close() !!}
+                                    </section>
+
+                                    <section class="admin-import-card">
+                                        <h3>Produktmatrix</h3>
+                                        <p>CSV-Import fuer die Produktmatrix.</p>
+                                        {!! Form::open(['route' => 'product_matrix.import', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        <div class="admin-import-card__field">
+                                            <label for="product-matrix-import-file">CSV-Datei</label>
+                                            {!! Form::file('csv_file', ['accept' => '.csv,text/csv', 'id' => 'product-matrix-import-file']) !!}
+                                        </div>
+                                        @if(auth()->user()->hasPermission('product_matrix', 'editable'))
+                                            <div>{{ Form::submit('Import Produktmatrix') }}</div>
+                                        @endif
+                                        {!! Form::close() !!}
+                                    </section>
+
+                                    <section class="admin-import-card">
+                                        <h3>Kundenimport</h3>
+                                        <p>Importiert `Kd.Nummer`, `SAP-Nr.` und `Ort` aus der Kundenuebersicht.</p>
+                                        {!! Form::open(['route' => 'administration.imports.customers', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        <div class="admin-import-card__field">
+                                            <label for="customers-import-file">CSV-Datei</label>
+                                            {!! Form::file('csv_file', ['accept' => '.csv,text/csv', 'id' => 'customers-import-file']) !!}
+                                        </div>
+                                        <div class="admin-import-card__field">
+                                            <label for="customers-import-country">Land-Fallback fuer neue Orte</label>
+                                            {!! Form::select('fallback_country_code', ['de' => 'DE', 'at' => 'AT', 'ch' => 'CH', 'lu' => 'LU'], 'de', ['id' => 'customers-import-country']) !!}
+                                        </div>
+                                        @if(auth()->user()->hasPermission('administration', 'editable'))
+                                            <div>{{ Form::submit('Import Kunden') }}</div>
+                                        @endif
+                                        {!! Form::close() !!}
+                                    </section>
+
+                                    <section class="admin-import-card">
+                                        <h3>OrbisU Server Import</h3>
+                                        <p>Ordnet Server ueber die Short-Nummer dem Kunden zu und aktualisiert nur bei neuerem `Aktualisiert`-Wert.</p>
+                                        {!! Form::open(['route' => 'administration.imports.orbisu_servers', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        <div class="admin-import-card__field">
+                                            <label for="orbisu-import-file">CSV-Datei</label>
+                                            {!! Form::file('csv_file', ['accept' => '.csv,text/csv', 'id' => 'orbisu-import-file']) !!}
+                                        </div>
+                                        @if(auth()->user()->hasPermission('administration', 'editable'))
+                                            <div>{{ Form::submit('Import OrbisU Server') }}</div>
+                                        @endif
+                                        {!! Form::close() !!}
+                                    </section>
+
+                                    <section class="admin-import-card">
+                                        <h3>OAS-Import</h3>
+                                        <p>Importiert OAS-Server ueber `Projekt / SAP Nr`, Hostname und IP-Adresse und verknuepft sie mit bestehenden Kunden.</p>
+                                        {!! Form::open(['route' => 'administration.imports.oas_servers', 'files' => true, 'class' => 'admin-import-card__form']) !!}
+                                        <div class="admin-import-card__field">
+                                            <label for="oas-import-file">CSV-Datei</label>
+                                            {!! Form::file('csv_file', ['accept' => '.csv,text/csv', 'id' => 'oas-import-file']) !!}
+                                        </div>
+                                        @if(auth()->user()->hasPermission('administration', 'editable'))
+                                            <div>{{ Form::submit('Import OAS Server') }}</div>
+                                        @endif
+                                        {!! Form::close() !!}
+                                    </section>
                                 </div>
-                                @if(auth()->user()->hasPermission('administration', 'editable'))
-                                    <div>{{ Form::submit('Import Kunden') }}</div>
-                                @endif
-                                {!! Form::close() !!}
                             </td>
-                            <td>Importiert `Kd.Nummer`, `SAP-Nr.` und `Ort` aus der Kundenuebersicht.</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                {!! Form::open(['route' => 'administration.imports.orbisu_servers', 'files' => true]) !!}
-                                <div><strong>OrbisU Server Import</strong></div>
-                                <div>{!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}</div>
-                                @if(auth()->user()->hasPermission('administration', 'editable'))
-                                    <div>{{ Form::submit('Import OrbisU Server') }}</div>
-                                @endif
-                                {!! Form::close() !!}
-                            </td>
-                            <td>Ordnet Server ueber die Short-Nummer dem Kunden zu und aktualisiert nur bei neuerem `Aktualisiert`-Wert.</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                {!! Form::open(['route' => 'administration.imports.oas_servers', 'files' => true]) !!}
-                                <div><strong>OAS-Import</strong></div>
-                                <div>{!! Form::file('csv_file', ['accept' => '.csv,text/csv']) !!}</div>
-                                @if(auth()->user()->hasPermission('administration', 'editable'))
-                                    <div>{{ Form::submit('Import OAS Server') }}</div>
-                                @endif
-                                {!! Form::close() !!}
-                            </td>
-                            <td>Importiert OAS-Server ueber `Projekt / SAP Nr`, Hostname und IP-Adresse und verknuepft sie mit bestehenden Kunden.</td>
                         </tr>
                     </tbody>
                 </table>

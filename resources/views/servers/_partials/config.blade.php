@@ -23,7 +23,7 @@
                         @foreach($compose as $item)
                             <tr>
                                 <td><a href="{{ route('compose.show', $item->composer->compose_filename) }}">{{ $item->composer->title }} @if(!is_null($item->composer->title_alternatives)) {{ ' ('.$item->composer->title_alternatives.')' }} @endif</a></td>
-                                <td><a href="{{ route('servers.del_composer', [$server->id, $item->composer_id]) }}">delete</a></td>
+                                <td><a href="{{ route('servers.del_composer', [$server->id, $item->composer_id]) }}" class="itsdb-action-control">delete</a></td>
                             </tr>
                         @endforeach
                         {{ Form::close() }}

@@ -293,7 +293,7 @@
                                             <td>
                                                 <div class="itsdb-actions">
                                                     <button type="button" data-modal-target="#credential-edit-modal-{{ $item->id }}">bearbeiten</button>
-                                                    <a href="{{ route('credentials.delete', $item->id) }}">delete</a>
+                                                    <a href="{{ route('credentials.delete', $item->id) }}" class="itsdb-action-control">delete</a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -325,7 +325,7 @@
                                                     @if($document->is_image)
                                                         <button type="button" data-modal-target="#customer-document-preview-modal-{{ $document->id }}">view</button>
                                                     @endif
-                                                    <a href="{{ route('customer_documents.download', $document->id) }}">download</a>
+                                                    <a href="{{ route('customer_documents.download', $document->id) }}" class="itsdb-action-control">download</a>
                                                     <button type="button" data-modal-target="#customer-document-delete-modal-{{ $document->id }}">loeschen</button>
                                                 </div>
                                             </td>
@@ -385,7 +385,12 @@
                                         <td>{{ $contact->email }}</td>
                                         <td>{{ Form::text('comments', $contact->comments) }}</td>
                                         <td>{{ $contact->updated_at }}</td>
-                                        <td>{{ Form::submit('Submit') }} - <a href="{{ route('contact.delete', $contact->id) }}">delete</a></td>
+                                        <td>
+                                            <div class="itsdb-actions">
+                                                {{ Form::submit('Submit') }}
+                                                <a href="{{ route('contact.delete', $contact->id) }}" class="itsdb-action-control">delete</a>
+                                            </div>
+                                        </td>
                                         {{ Form::close() }}
                                     </tr>
                                 @endforeach
@@ -541,7 +546,7 @@
                 <div class="itsdb-modal__body">
                     <p style="margin-bottom: 12px;">Soll das Dokument "{{ $document->original_name }}" wirklich geloescht werden?</p>
                     <div class="itsdb-actions">
-                        <a href="{{ route('customer_documents.delete', $document->id) }}">Ja, loeschen</a>
+                        <a href="{{ route('customer_documents.delete', $document->id) }}" class="itsdb-action-control">Ja, loeschen</a>
                         <button type="button" data-modal-close>Abbrechen</button>
                     </div>
                 </div>

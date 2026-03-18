@@ -91,7 +91,7 @@
                                                 <td>
                                                     <div class="itsdb-actions">
                                                         <button type="button" data-modal-target="#server-credential-edit-modal-{{ $item->id }}">bearbeiten</button>
-                                                        <a href="{{ route('credentials.delete', $item->id) }}">delete</a>
+                                                        <a href="{{ route('credentials.delete', $item->id) }}" class="itsdb-action-control">delete</a>
                                                     </div>
                                                 </td>
                                             </tr>

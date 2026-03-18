@@ -188,7 +188,7 @@
                             <td>{!! Form::checkbox('ignore_on_import', 1, $alias->ignore_on_import) !!}</td>
                             <td class="product-matrix-alias-actions">
                                 {{ Form::submit('Speichern') }}
-                                <a href="{{ route('product_matrix.aliases.delete', $alias->id) }}" onclick="return confirm('Alias wirklich loeschen?')">Loeschen</a>
+                                <a href="{{ route('product_matrix.aliases.delete', $alias->id) }}" class="itsdb-action-control" onclick="return confirm('Alias wirklich loeschen?')">Loeschen</a>
                             </td>
                             {!! Form::close() !!}
                         @else
