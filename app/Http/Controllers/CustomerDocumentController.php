@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CustomerDocumentController extends Controller
@@ -49,6 +50,18 @@ class CustomerDocumentController extends Controller
         abort_unless(Storage::disk($document->disk)->exists($document->path), 404);
 
         return Storage::disk($document->disk)->download($document->path, $document->original_name);
+    }
+
+    public function preview(int $id): BinaryFileResponse
+    {
+        $document = CustomerDocument::findOrFail($id);
+        abort_unless($document->is_image, 404);
+        abort_unless(Storage::disk($document->disk)->exists($document->path), 404);
+
+        return response()->file(Storage::disk($document->disk)->path($document->path), [
+            'Content-Type' => $document->mime_type ?: 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="'.$document->original_name.'"',
+        ]);
     }
 
     public function delete(int $id): RedirectResponse

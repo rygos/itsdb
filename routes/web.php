@@ -47,6 +47,7 @@ Route::group(['middleware' => ['auth']], function(){
     Route::get('/customers/{id}', '\App\Http\Controllers\CustomersController@view')->middleware('area:customers,visible')->name('customers.view');
     Route::post('/customer-documents/store', [CustomerDocumentController::class, 'store'])->middleware('area:customers,editable')->name('customer_documents.store');
     Route::get('/customer-documents/{id}/download', [CustomerDocumentController::class, 'download'])->middleware('area:customers,visible')->name('customer_documents.download');
+    Route::get('/customer-documents/{id}/preview', [CustomerDocumentController::class, 'preview'])->middleware('area:customers,visible')->name('customer_documents.preview');
     Route::get('/customer-documents/{id}/delete', [CustomerDocumentController::class, 'delete'])->middleware('area:customers,editable')->name('customer_documents.delete');
     Route::post('/contacts/create', 'App\Http\Controllers\CustomersController@contact_create')->middleware('area:customers,editable')->name('contact.create');
     Route::post('/contacts/update', 'App\Http\Controllers\CustomersController@contact_update')->middleware('area:customers,editable')->name('contact.update');

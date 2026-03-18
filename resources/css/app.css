@@ -1274,6 +1274,10 @@ td.date {
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
 }
 
+.itsdb-modal__dialog--image-preview {
+    width: min(1100px, 100%);
+}
+
 .itsdb-modal__header {
     display: flex;
     justify-content: space-between;
@@ -1290,6 +1294,14 @@ td.date {
 .itsdb-modal__body {
     padding: 12px;
     background: #00001a;
+}
+
+.itsdb-modal__body--image-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: calc(100vh - 160px);
+    overflow: auto;
 }
 
 .itsdb-modal__close {
@@ -1323,6 +1335,16 @@ td.date {
 .itsdb-modal[aria-hidden="false"] {
     display: flex !important;
 }
+
+.customer-document-preview-image {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100vh - 200px);
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+}
+
 tr.sortable th {
     text-align: left;
 }

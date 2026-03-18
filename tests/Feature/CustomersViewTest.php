@@ -4,12 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\City;
 use App\Models\Customer;
+use App\Models\CustomerDocument;
 use App\Models\OperatingSystem;
 use App\Models\Server;
 use App\Models\ServerKind;
 use App\Models\User;
 use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CustomersViewTest extends TestCase
@@ -148,5 +151,75 @@ class CustomersViewTest extends TestCase
             ->assertSee('customer-document-paste-box')
             ->assertSee('Bild aus Zwischenablage hier einfuegen mit Strg+V')
             ->assertSee('customer-document-input');
+    }
+
+    public function test_customer_view_shows_image_preview_action_and_upload_date(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 6072,
+            'sap_no' => '3031303',
+            'dynamics_no' => 'dyn',
+            'name' => 'Mavie Med Holding GmbH',
+            'city_id' => null,
+        ]);
+        $document = CustomerDocument::query()->create([
+            'customer_id' => $customer->id,
+            'user_id' => $user->id,
+            'original_name' => 'screenshot.png',
+            'stored_name' => 'stored.png',
+            'disk' => 'local',
+            'path' => 'customer-documents/'.$customer->id.'/stored.png',
+            'description' => 'Fehlermeldung',
+            'file_size' => 12345,
+            'mime_type' => 'image/png',
+        ]);
+        $document->forceFill([
+            'created_at' => Carbon::create(2026, 3, 18, 14, 30, 0),
+            'updated_at' => Carbon::create(2026, 3, 18, 14, 30, 0),
+        ])->save();
+
+        $this->actingAs($user)
+            ->get(route('customers.view', $customer))
+            ->assertOk()
+            ->assertSee('Upload Datum')
+            ->assertSee('18.03.2026 14:30')
+            ->assertSee('customer-document-preview-modal-'.$document->id)
+            ->assertSee(route('customer_documents.preview', $document), false);
+    }
+
+    public function test_customer_document_preview_returns_image_response(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+        $customer = Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 6072,
+            'sap_no' => '3031303',
+            'dynamics_no' => 'dyn',
+            'name' => 'Mavie Med Holding GmbH',
+            'city_id' => null,
+        ]);
+
+        Storage::disk('local')->put('customer-documents/'.$customer->id.'/stored.png', 'fake-image-content');
+
+        $document = CustomerDocument::query()->create([
+            'customer_id' => $customer->id,
+            'user_id' => $user->id,
+            'original_name' => 'screenshot.png',
+            'stored_name' => 'stored.png',
+            'disk' => 'local',
+            'path' => 'customer-documents/'.$customer->id.'/stored.png',
+            'description' => null,
+            'file_size' => 17,
+            'mime_type' => 'image/png',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('customer_documents.preview', $document))
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
     }
 }

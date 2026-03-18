@@ -297,6 +297,7 @@
                                         <th>Dateiname</th>
                                         <th>Dateibeschreibung</th>
                                         <th>Dateigroesse</th>
+                                        <th>Upload Datum</th>
                                         <th>Aktion</th>
                                     </tr>
                                     @forelse($documents as $document)
@@ -304,8 +305,12 @@
                                             <td style="text-align: left;">{{ $document->original_name }}</td>
                                             <td style="text-align: left;">{{ $document->description ?: '-' }}</td>
                                             <td style="text-align: left;">{{ $document->formatted_size }}</td>
+                                            <td style="text-align: left;">{{ $document->formatted_uploaded_at }}</td>
                                             <td style="text-align: left;">
                                                 <div class="itsdb-actions">
+                                                    @if($document->is_image)
+                                                        <button type="button" data-modal-target="#customer-document-preview-modal-{{ $document->id }}">view</button>
+                                                    @endif
                                                     <a href="{{ route('customer_documents.download', $document->id) }}">download</a>
                                                     <button type="button" data-modal-target="#customer-document-delete-modal-{{ $document->id }}">loeschen</button>
                                                 </div>
@@ -313,7 +318,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4">Keine Dokumente vorhanden.</td>
+                                            <td colspan="5">Keine Dokumente vorhanden.</td>
                                         </tr>
                                     @endforelse
                                 </table>
@@ -490,6 +495,26 @@
                 </div>
             </div>
         </div>
+    @endforeach
+
+    @foreach($documents as $document)
+        @if($document->is_image)
+            <div class="itsdb-modal" id="customer-document-preview-modal-{{ $document->id }}" aria-hidden="true">
+                <div class="itsdb-modal__dialog itsdb-modal__dialog--image-preview">
+                    <div class="itsdb-modal__header">
+                        <div class="itsdb-modal__title">{{ $document->original_name }}</div>
+                        <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
+                    </div>
+                    <div class="itsdb-modal__body itsdb-modal__body--image-preview">
+                        <img
+                            src="{{ route('customer_documents.preview', $document->id) }}"
+                            alt="{{ $document->original_name }}"
+                            class="customer-document-preview-image"
+                        >
+                    </div>
+                </div>
+            </div>
+        @endif
     @endforeach
 
     @foreach($documents as $document)

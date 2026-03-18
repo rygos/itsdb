@@ -49,4 +49,18 @@ class CustomerDocument extends Model
 
         return number_format($size, $unitIndex === 0 ? 0 : 2, ',', '.').' '.$units[$unitIndex];
     }
+
+    public function getIsImageAttribute(): bool
+    {
+        return str_starts_with((string) $this->mime_type, 'image/');
+    }
+
+    public function getFormattedUploadedAtAttribute(): string
+    {
+        if (!$this->created_at) {
+            return '-';
+        }
+
+        return $this->created_at->format('d.m.Y H:i');
+    }
 }
