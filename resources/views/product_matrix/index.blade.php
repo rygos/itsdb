@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Produkte Matrix')
 @section('content')
+    @php($productMatrixImportPreview = session('product_matrix_import_preview'))
     <style>
         .product-matrix-toolbar {
             display: flex;
@@ -61,7 +62,7 @@
                                     @csrf
                                     <strong>Import:</strong>
                                     <input type="file" name="csv_file" accept=".csv,text/csv">
-                                    <button type="submit">Import</button>
+                                    <button type="submit" name="import_mode" value="preview">Preview</button>
                                 </form>
                             @endif
 
@@ -78,6 +79,38 @@
 
                         @if(isset($errors) && $errors->any())
                             <div class="product-matrix-status error">{{ $errors->first() }}</div>
+                        @endif
+
+                        @if(($productMatrixImportPreview['token'] ?? null) && ($productMatrixImportPreview['records'] ?? false))
+                            <div class="product-matrix-status success">
+                                Vorschau: neu {{ $productMatrixImportPreview['summary']['new'] ?? 0 }},
+                                update {{ $productMatrixImportPreview['summary']['update'] ?? 0 }},
+                                skip {{ $productMatrixImportPreview['summary']['skip'] ?? 0 }}
+                            </div>
+                            <table style="width: 100%">
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Produkt</th>
+                                    <th>Kategorie</th>
+                                    <th>Funktion</th>
+                                    <th>Container</th>
+                                </tr>
+                                @foreach($productMatrixImportPreview['records'] as $record)
+                                    <tr>
+                                        <td>{{ $record['action'] }}</td>
+                                        <td>{{ $record['product'] }}</td>
+                                        <td>{{ $record['category'] }}</td>
+                                        <td>{{ $record['function_name'] }}</td>
+                                        <td>{{ count($record['container_ids'] ?? []) }}</td>
+                                    </tr>
+                                @endforeach
+                            </table>
+                            <form method="POST" action="{{ route('product_matrix.import') }}">
+                                @csrf
+                                <input type="hidden" name="import_mode" value="confirm">
+                                <input type="hidden" name="preview_token" value="{{ $productMatrixImportPreview['token'] }}">
+                                <button type="submit">Import bestaetigen</button>
+                            </form>
                         @endif
                     </td>
                 </tr>

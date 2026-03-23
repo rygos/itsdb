@@ -12,9 +12,9 @@ use Illuminate\Validation\ValidationException;
 
 class ProductMatrixController extends Controller
 {
-    public function __construct(private readonly ComposeServiceExporter $composeServiceExporter)
-    {
-    }
+    private const IMPORT_PREVIEW_SESSION_KEY = 'product_matrix_import_preview';
+
+    public function __construct(private readonly ComposeServiceExporter $composeServiceExporter) {}
 
     public function index(Request $request)
     {
@@ -25,11 +25,11 @@ class ProductMatrixController extends Controller
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
-                $builder->where('product', 'like', '%' . $search . '%')
-                    ->orWhere('category', 'like', '%' . $search . '%')
-                    ->orWhere('function_name', 'like', '%' . $search . '%')
-                    ->orWhere('synonyms', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%');
+                $builder->where('product', 'like', '%'.$search.'%')
+                    ->orWhere('category', 'like', '%'.$search.'%')
+                    ->orWhere('function_name', 'like', '%'.$search.'%')
+                    ->orWhere('synonyms', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%');
             });
         }
 
@@ -48,6 +48,52 @@ class ProductMatrixController extends Controller
 
     public function import(Request $request)
     {
+        if ($request->input('import_mode') === 'confirm') {
+            $preview = $request->session()->get(self::IMPORT_PREVIEW_SESSION_KEY);
+
+            abort_unless(
+                is_array($preview) && ($preview['token'] ?? null) === $request->input('preview_token'),
+                422,
+                'Import-Vorschau nicht mehr gueltig. Bitte Vorschau erneut erzeugen.'
+            );
+
+            $request->session()->forget(self::IMPORT_PREVIEW_SESSION_KEY);
+
+            DB::transaction(function () use ($preview) {
+                $seenImportKeys = [];
+
+                foreach ($preview['records'] as $record) {
+                    if (($record['action'] ?? null) === 'skip') {
+                        continue;
+                    }
+
+                    $seenImportKeys[] = $record['import_key'];
+
+                    $entry = ProductMatrix::updateOrCreate([
+                        'import_key' => $record['import_key'],
+                    ], [
+                        'position' => $record['position'],
+                        'category' => $record['category'],
+                        'function_name' => $record['function_name'],
+                        'product' => $record['product'],
+                        'short_description' => $record['short_description'],
+                        'synonyms' => $record['synonyms'],
+                        'description' => $record['description'],
+                    ]);
+
+                    $entry->containers()->sync($record['container_ids']);
+                }
+
+                ProductMatrix::query()
+                    ->whereNotIn('import_key', $seenImportKeys)
+                    ->delete();
+            });
+
+            return redirect()
+                ->route('product_matrix.index')
+                ->with('status', count(array_filter($preview['records'], fn (array $record): bool => ($record['action'] ?? null) !== 'skip')).' Produkte importiert.');
+        }
+
         $request->validate([
             'csv_file' => ['required', 'file'],
         ]);
@@ -55,7 +101,7 @@ class ProductMatrixController extends Controller
         $uploadedFile = $request->file('csv_file');
         $originalExtension = strtolower((string) $uploadedFile->getClientOriginalExtension());
 
-        if (!in_array($originalExtension, ['csv', 'txt'], true)) {
+        if (! in_array($originalExtension, ['csv', 'txt'], true)) {
             return redirect()
                 ->route('product_matrix.index')
                 ->withInput()
@@ -66,7 +112,7 @@ class ProductMatrixController extends Controller
 
         [$records, $missingContainers] = $this->parseCsvImport($uploadedFile->getRealPath());
 
-        if (!empty($missingContainers)) {
+        if (! empty($missingContainers)) {
             $missingList = implode(', ', array_slice($missingContainers, 0, 12));
             $suffix = count($missingContainers) > 12 ? ' ...' : '';
 
@@ -74,39 +120,66 @@ class ProductMatrixController extends Controller
                 ->route('product_matrix.index')
                 ->withInput()
                 ->withErrors([
-                    'csv_file' => 'Import abgebrochen. Fehlende Container in der Datenbank: ' . $missingList . $suffix,
+                    'csv_file' => 'Import abgebrochen. Fehlende Container in der Datenbank: '.$missingList.$suffix,
                 ]);
         }
 
-        DB::transaction(function () use ($records) {
-            $seenImportKeys = [];
+        $previewRecords = collect($records)
+            ->map(function (array $record): array {
+                $existing = ProductMatrix::query()->where('import_key', $record['import_key'])->exists();
 
-            foreach ($records as $record) {
-                $seenImportKeys[] = $record['import_key'];
+                return $record + [
+                    'action' => $existing ? 'update' : 'new',
+                ];
+            })
+            ->all();
 
-                $entry = ProductMatrix::updateOrCreate([
-                    'import_key' => $record['import_key'],
-                ], [
-                    'position' => $record['position'],
-                    'category' => $record['category'],
-                    'function_name' => $record['function_name'],
-                    'product' => $record['product'],
-                    'short_description' => $record['short_description'],
-                    'synonyms' => $record['synonyms'],
-                    'description' => $record['description'],
-                ]);
+        if ($request->input('import_mode') !== 'preview') {
+            DB::transaction(function () use ($previewRecords) {
+                $seenImportKeys = [];
 
-                $entry->containers()->sync($record['container_ids']);
-            }
+                foreach ($previewRecords as $record) {
+                    if (($record['action'] ?? null) === 'skip') {
+                        continue;
+                    }
 
-            ProductMatrix::query()
-                ->whereNotIn('import_key', $seenImportKeys)
-                ->delete();
-        });
+                    $seenImportKeys[] = $record['import_key'];
+
+                    $entry = ProductMatrix::updateOrCreate([
+                        'import_key' => $record['import_key'],
+                    ], [
+                        'position' => $record['position'],
+                        'category' => $record['category'],
+                        'function_name' => $record['function_name'],
+                        'product' => $record['product'],
+                        'short_description' => $record['short_description'],
+                        'synonyms' => $record['synonyms'],
+                        'description' => $record['description'],
+                    ]);
+
+                    $entry->containers()->sync($record['container_ids']);
+                }
+
+                ProductMatrix::query()
+                    ->whereNotIn('import_key', $seenImportKeys)
+                    ->delete();
+            });
+
+            return redirect()
+                ->route('product_matrix.index')
+                ->with('status', count($previewRecords).' Produkte importiert.');
+        }
+
+        $token = (string) str()->uuid();
+        $request->session()->put(self::IMPORT_PREVIEW_SESSION_KEY, [
+            'token' => $token,
+            'records' => $previewRecords,
+            'summary' => collect($previewRecords)->countBy('action')->all(),
+        ]);
 
         return redirect()
             ->route('product_matrix.index')
-            ->with('status', count($records) . ' Produkte importiert.');
+            ->with('status', 'Vorschau fuer Produktmatrix-Import erstellt.');
     }
 
     public function storeAlias(Request $request)
@@ -218,14 +291,16 @@ class ProductMatrixController extends Controller
 
                     if ($alias->container) {
                         $containerIds[] = $alias->container->id;
+
                         continue;
                     }
                 }
 
                 $container = $containersByTitle[$normalizedTitle] ?? null;
 
-                if (!$container) {
+                if (! $container) {
                     $missingContainers[$normalizedTitle] = $title;
+
                     continue;
                 }
 
@@ -330,7 +405,7 @@ class ProductMatrixController extends Controller
             ]);
         }
 
-        if (!$ignore && !$containerId) {
+        if (! $ignore && ! $containerId) {
             throw ValidationException::withMessages([
                 'container_id' => 'Bitte Ziel-Container auswählen oder Import ignorieren aktivieren.',
             ]);

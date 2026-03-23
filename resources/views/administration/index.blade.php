@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('title', 'Administration')
 @section('content')
+    @php($adminImportPreview = session('import_preview'))
+    @php($composeImportPreview = session('compose_import_preview'))
     <div id="prodpagecontainer" class="admin-page">
         <table id="pouetbox_prodmain" class="admin-table-shell">
             <thead>
@@ -111,9 +113,40 @@
                                             {{ html()->file('compose_files[]')->attribute('multiple', true)->attribute('accept', '.yml,.yaml')->id('compose-upload-yml') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('compose', 'editable'))
-                                            <div>{{ html()->submit('Upload Compose') }}</div>
+                                            <div>
+                                                <button type="submit" name="import_mode" value="preview">Preview</button>
+                                            </div>
                                         @endif
                                         {{ html()->form()->close() }}
+                                        @if(($composeImportPreview['token'] ?? null) && ($composeImportPreview['uploads'] ?? false))
+                                            <div class="product-matrix-status success">
+                                                Vorschau: neu {{ $composeImportPreview['summary']['new'] ?? 0 }},
+                                                update {{ $composeImportPreview['summary']['update'] ?? 0 }},
+                                                skip {{ $composeImportPreview['summary']['skip'] ?? 0 }},
+                                                conflict {{ $composeImportPreview['summary']['conflict'] ?? 0 }}
+                                            </div>
+                                            <table style="width: 100%">
+                                                <tr>
+                                                    <th>Status</th>
+                                                    <th>Datei</th>
+                                                    <th>Hinweis</th>
+                                                    <th>Services</th>
+                                                </tr>
+                                                @foreach($composeImportPreview['uploads'] as $item)
+                                                    <tr>
+                                                        <td>{{ $item['action'] }}</td>
+                                                        <td>{{ $item['filename'] }}</td>
+                                                        <td>{{ $item['title'] }}</td>
+                                                        <td>{{ $item['service_count'] }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </table>
+                                            {{ html()->form()->route('compose.upload')->class('admin-import-card__form')->open() }}
+                                            {{ html()->hidden('import_mode', 'confirm') }}
+                                            {{ html()->hidden('preview_token', $composeImportPreview['token']) }}
+                                            <button type="submit">Import bestaetigen</button>
+                                            {{ html()->form()->close() }}
+                                        @endif
                                     </section>
 
                                     <section class="admin-import-card">
@@ -125,7 +158,7 @@
                                             {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('product-matrix-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('product_matrix', 'editable'))
-                                            <div>{{ html()->submit('Import Produktmatrix') }}</div>
+                                            <div><button type="submit" name="import_mode" value="preview">Preview</button></div>
                                         @endif
                                         {{ html()->form()->close() }}
                                     </section>
@@ -143,9 +176,37 @@
                                             {{ html()->select('fallback_country_code', ['de' => 'DE', 'at' => 'AT', 'ch' => 'CH', 'lu' => 'LU'], 'de')->id('customers-import-country') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div>{{ html()->submit('Import Kunden') }}</div>
+                                            <div><button type="submit" name="import_mode" value="preview">Preview</button></div>
                                         @endif
                                         {{ html()->form()->close() }}
+                                        @if(($adminImportPreview['type'] ?? null) === 'customers')
+                                            <div class="product-matrix-status success">
+                                                Vorschau: neu {{ $adminImportPreview['summary']['new'] ?? 0 }},
+                                                update {{ $adminImportPreview['summary']['update'] ?? 0 }},
+                                                skip {{ $adminImportPreview['summary']['skip'] ?? 0 }},
+                                                conflict {{ $adminImportPreview['summary']['conflict'] ?? 0 }}
+                                            </div>
+                                            <table style="width: 100%">
+                                                <tr>
+                                                    <th>Status</th>
+                                                    <th>Hinweis</th>
+                                                    <th>Details</th>
+                                                </tr>
+                                                @foreach($adminImportPreview['plan'] as $item)
+                                                    <tr>
+                                                        <td>{{ $item['action'] }}</td>
+                                                        <td>{{ $item['title'] }}</td>
+                                                        <td>{{ collect($item['details'] ?? [])->map(fn ($value, $key) => $key.': '.$value)->implode(', ') }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </table>
+                                            {{ html()->form()->route('administration.imports.customers')->class('admin-import-card__form')->open() }}
+                                            {{ html()->hidden('import_mode', 'confirm') }}
+                                            {{ html()->hidden('preview_type', 'customers') }}
+                                            {{ html()->hidden('preview_token', $adminImportPreview['token']) }}
+                                            <button type="submit">Import bestaetigen</button>
+                                            {{ html()->form()->close() }}
+                                        @endif
                                     </section>
 
                                     <section class="admin-import-card">
@@ -157,9 +218,37 @@
                                             {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('orbisu-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div>{{ html()->submit('Import OrbisU Server') }}</div>
+                                            <div><button type="submit" name="import_mode" value="preview">Preview</button></div>
                                         @endif
                                         {{ html()->form()->close() }}
+                                        @if(($adminImportPreview['type'] ?? null) === 'orbisu_servers')
+                                            <div class="product-matrix-status success">
+                                                Vorschau: neu {{ $adminImportPreview['summary']['new'] ?? 0 }},
+                                                update {{ $adminImportPreview['summary']['update'] ?? 0 }},
+                                                skip {{ $adminImportPreview['summary']['skip'] ?? 0 }},
+                                                conflict {{ $adminImportPreview['summary']['conflict'] ?? 0 }}
+                                            </div>
+                                            <table style="width: 100%">
+                                                <tr>
+                                                    <th>Status</th>
+                                                    <th>Hinweis</th>
+                                                    <th>Details</th>
+                                                </tr>
+                                                @foreach($adminImportPreview['plan'] as $item)
+                                                    <tr>
+                                                        <td>{{ $item['action'] }}</td>
+                                                        <td>{{ $item['title'] }}</td>
+                                                        <td>{{ collect($item['details'] ?? [])->map(fn ($value, $key) => $key.': '.$value)->implode(', ') }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </table>
+                                            {{ html()->form()->route('administration.imports.orbisu_servers')->class('admin-import-card__form')->open() }}
+                                            {{ html()->hidden('import_mode', 'confirm') }}
+                                            {{ html()->hidden('preview_type', 'orbisu_servers') }}
+                                            {{ html()->hidden('preview_token', $adminImportPreview['token']) }}
+                                            <button type="submit">Import bestaetigen</button>
+                                            {{ html()->form()->close() }}
+                                        @endif
                                     </section>
 
                                     <section class="admin-import-card">
@@ -171,9 +260,37 @@
                                             {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('oas-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div>{{ html()->submit('Import OAS Server') }}</div>
+                                            <div><button type="submit" name="import_mode" value="preview">Preview</button></div>
                                         @endif
                                         {{ html()->form()->close() }}
+                                        @if(($adminImportPreview['type'] ?? null) === 'oas_servers')
+                                            <div class="product-matrix-status success">
+                                                Vorschau: neu {{ $adminImportPreview['summary']['new'] ?? 0 }},
+                                                update {{ $adminImportPreview['summary']['update'] ?? 0 }},
+                                                skip {{ $adminImportPreview['summary']['skip'] ?? 0 }},
+                                                conflict {{ $adminImportPreview['summary']['conflict'] ?? 0 }}
+                                            </div>
+                                            <table style="width: 100%">
+                                                <tr>
+                                                    <th>Status</th>
+                                                    <th>Hinweis</th>
+                                                    <th>Details</th>
+                                                </tr>
+                                                @foreach($adminImportPreview['plan'] as $item)
+                                                    <tr>
+                                                        <td>{{ $item['action'] }}</td>
+                                                        <td>{{ $item['title'] }}</td>
+                                                        <td>{{ collect($item['details'] ?? [])->map(fn ($value, $key) => $key.': '.$value)->implode(', ') }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </table>
+                                            {{ html()->form()->route('administration.imports.oas_servers')->class('admin-import-card__form')->open() }}
+                                            {{ html()->hidden('import_mode', 'confirm') }}
+                                            {{ html()->hidden('preview_type', 'oas_servers') }}
+                                            {{ html()->hidden('preview_token', $adminImportPreview['token']) }}
+                                            <button type="submit">Import bestaetigen</button>
+                                            {{ html()->form()->close() }}
+                                        @endif
                                     </section>
                                 </div>
                             </td>

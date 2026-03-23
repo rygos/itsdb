@@ -26,6 +26,8 @@ class AdministrationController extends Controller
 {
     private const MISSING_CITIES_ANCHOR = '#missing-cities';
 
+    private const IMPORT_PREVIEW_SESSION_KEY = 'import_preview';
+
     private function administrationRoute(string $subtab, ?string $anchor = null): string
     {
         return route('administration.index', ['tab' => 'administration', 'subtab' => $subtab]).($anchor ?? '');
@@ -242,190 +244,101 @@ class AdministrationController extends Controller
     {
         abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
 
+        if ($this->isConfirmImport($request, 'customers')) {
+            $payload = $this->requireImportPreview($request, 'customers');
+            $result = $this->executeCustomerImportPlan($request, $payload['plan']);
+
+            return redirect()
+                ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+                ->with('status', $result['created'].' Kunden importiert, '.$result['skipped'].' uebersprungen.');
+        }
+
         $validated = $request->validate([
             'csv_file' => ['required', 'file'],
             'fallback_country_code' => ['nullable', 'string', 'size:2'],
         ]);
 
         [$header, $rows] = $this->readCsvRows($validated['csv_file']);
-        $headerMap = $this->buildHeaderMap($header);
-        $importedCount = 0;
-        $skippedCount = 0;
+        $plan = $this->buildCustomerImportPlan($rows, $this->buildHeaderMap($header), strtolower((string) $request->input('fallback_country_code', 'de')));
 
-        DB::transaction(function () use ($rows, $headerMap, $request, &$importedCount, &$skippedCount) {
-            $seenShortNumbers = [];
+        if ($request->input('import_mode') !== 'preview') {
+            $result = $this->executeCustomerImportPlan($request, $plan);
 
-            foreach ($rows as $row) {
-                $shortNo = trim((string) $this->csvValue($row, $headerMap, 'Kd.Nummer'));
-                if ($shortNo === '' || ! is_numeric($shortNo)) {
-                    $skippedCount++;
+            return redirect()
+                ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+                ->with('status', $result['created'].' Kunden importiert, '.$result['skipped'].' uebersprungen.');
+        }
 
-                    continue;
-                }
-
-                $shortNo = (int) $shortNo;
-                if (isset($seenShortNumbers[$shortNo])) {
-                    $skippedCount++;
-
-                    continue;
-                }
-                $seenShortNumbers[$shortNo] = true;
-
-                if (Customer::query()->where('short_no', $shortNo)->exists()) {
-                    $skippedCount++;
-
-                    continue;
-                }
-
-                $cityId = $this->resolveCityId(
-                    trim((string) $this->csvValue($row, $headerMap, 'Ort')),
-                    strtolower((string) $request->input('fallback_country_code', 'de'))
-                );
-
-                $customer = new Customer;
-                $customer->short_no = $shortNo;
-                $customer->user_id = $request->user()->id;
-                $customer->sap_no = trim((string) $this->csvValue($row, $headerMap, 'SAP-Nr.'));
-                $customer->dynamics_no = 'x';
-                $customer->name = 'Unbekannt';
-                $customer->city_id = $cityId;
-                $customer->save();
-
-                $importedCount++;
-            }
-        });
-
-        return redirect()
-            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
-            ->with('status', $importedCount.' Kunden importiert, '.$skippedCount.' uebersprungen.');
+        return $this->redirectWithImportPreview(
+            'customers',
+            'Kundenimport',
+            $plan,
+            [
+                'fallback_country_code' => strtolower((string) $request->input('fallback_country_code', 'de')),
+            ]
+        );
     }
 
     public function importOrbisUServers(Request $request): RedirectResponse
     {
         abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
 
+        if ($this->isConfirmImport($request, 'orbisu_servers')) {
+            $payload = $this->requireImportPreview($request, 'orbisu_servers');
+            $result = $this->executeOrbisuImportPlan($request, $payload['plan']);
+
+            return redirect()
+                ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+                ->with('status', $result['created'].' Server importiert, '.$result['skipped'].' uebersprungen.');
+        }
+
         $validated = $request->validate([
             'csv_file' => ['required', 'file'],
         ]);
 
         [$header, $rows] = $this->readCsvRows($validated['csv_file']);
-        $headerMap = $this->buildHeaderMap($header);
-        $importedCount = 0;
-        $skippedCount = 0;
+        $plan = $this->buildOrbisuImportPlan($rows, $this->buildHeaderMap($header));
 
-        DB::transaction(function () use ($rows, $headerMap, $request, &$importedCount, &$skippedCount) {
-            foreach ($rows as $row) {
-                $hostname = trim((string) $this->csvValue($row, $headerMap, 'VM-Hostname'));
-                $shortNo = $this->extractLeadingNumber((string) $this->csvValue($row, $headerMap, 'Kunde'));
+        if ($request->input('import_mode') !== 'preview') {
+            $result = $this->executeOrbisuImportPlan($request, $plan);
 
-                if ($hostname === '' || ! $shortNo) {
-                    $skippedCount++;
+            return redirect()
+                ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+                ->with('status', $result['created'].' Server importiert, '.$result['skipped'].' uebersprungen.');
+        }
 
-                    continue;
-                }
-
-                $customer = $this->findOrCreateCustomerForServerImport(
-                    $request->user()->id,
-                    $shortNo,
-                    (string) $this->csvValue($row, $headerMap, 'Kundename (SAP-Nr.)')
-                );
-
-                $importUpdatedAt = $this->parseImportTimestamp((string) $this->csvValue($row, $headerMap, 'Aktualisiert'));
-                $server = Server::query()->where('servername', $hostname)->first();
-
-                if ($server && $importUpdatedAt && $server->updated_at && $importUpdatedAt->lessThanOrEqualTo($server->updated_at)) {
-                    $skippedCount++;
-
-                    continue;
-                }
-
-                $payload = [
-                    'type' => $this->mapServerType((string) $this->csvValue($row, $headerMap, 'Umgebung')),
-                    'server_kind_id' => null,
-                    'operating_system_id' => null,
-                    'servername' => $hostname,
-                    'int_ip' => trim((string) $this->csvValue($row, $headerMap, 'VM-IP-Addresse')),
-                    'db_sid' => trim((string) $this->csvValue($row, $headerMap, 'DB-SID')),
-                    'customer_id' => $customer->id,
-                    'user_id' => $request->user()->id,
-                ];
-
-                if ($server) {
-                    $server->fill($payload);
-                    $server->save();
-                } else {
-                    Server::query()->create($payload);
-                }
-
-                $importedCount++;
-            }
-        });
-
-        return redirect()
-            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
-            ->with('status', $importedCount.' Server importiert, '.$skippedCount.' uebersprungen.');
+        return $this->redirectWithImportPreview('orbisu_servers', 'OrbisU Server Import', $plan);
     }
 
     public function importOasServers(Request $request): RedirectResponse
     {
         abort_unless($request->user()?->hasPermission('administration', 'editable'), 403);
 
+        if ($this->isConfirmImport($request, 'oas_servers')) {
+            $payload = $this->requireImportPreview($request, 'oas_servers');
+            $result = $this->executeOasImportPlan($request, $payload['plan']);
+
+            return redirect()
+                ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+                ->with('status', $result['created'].' OAS-Server importiert, '.$result['skipped'].' uebersprungen.');
+        }
+
         $validated = $request->validate([
             'csv_file' => ['required', 'file'],
         ]);
 
         [$header, $rows] = $this->readCsvRows($validated['csv_file']);
-        $headerMap = $this->buildHeaderMap($header);
-        $importedCount = 0;
-        $skippedCount = 0;
+        $plan = $this->buildOasImportPlan($rows, $this->buildHeaderMap($header));
 
-        DB::transaction(function () use ($rows, $headerMap, $request, &$importedCount, &$skippedCount) {
-            foreach ($rows as $row) {
-                $hostname = trim((string) $this->csvValue($row, $headerMap, 'Hostname'));
-                $ipAddress = trim((string) $this->csvValue($row, $headerMap, 'IP-Adresse'));
-                $shortNo = $this->extractProjectShortNumber((string) $this->csvValue($row, $headerMap, 'Projekt / SAP Nr'));
+        if ($request->input('import_mode') !== 'preview') {
+            $result = $this->executeOasImportPlan($request, $plan);
 
-                if ($hostname === '' || $ipAddress === '' || ! $shortNo) {
-                    $skippedCount++;
+            return redirect()
+                ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+                ->with('status', $result['created'].' OAS-Server importiert, '.$result['skipped'].' uebersprungen.');
+        }
 
-                    continue;
-                }
-
-                $customer = Customer::query()->where('short_no', $shortNo)->first();
-
-                if (! $customer) {
-                    $skippedCount++;
-
-                    continue;
-                }
-
-                $payload = [
-                    'type' => $this->mapOasServerType((string) $this->csvValue($row, $headerMap, 'Typ')),
-                    'server_kind_id' => $this->resolveOasServerKindId((string) $this->csvValue($row, $headerMap, 'OAS-Modul')),
-                    'operating_system_id' => null,
-                    'servername' => $hostname,
-                    'int_ip' => $ipAddress,
-                    'db_sid' => trim((string) $this->csvValue($row, $headerMap, 'Datenbank')),
-                    'customer_id' => $customer->id,
-                    'user_id' => $request->user()->id,
-                ];
-
-                $server = Server::query()->where('servername', $hostname)->first();
-
-                if ($server) {
-                    $server->fill($payload);
-                    $server->save();
-                } else {
-                    Server::query()->create($payload);
-                }
-
-                $importedCount++;
-            }
-        });
-
-        return redirect()
-            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
-            ->with('status', $importedCount.' OAS-Server importiert, '.$skippedCount.' uebersprungen.');
+        return $this->redirectWithImportPreview('oas_servers', 'OAS Import', $plan);
     }
 
     public function updateCity(Request $request, City $city): RedirectResponse
@@ -718,5 +631,312 @@ class AdministrationController extends Controller
         return City::query()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($cityName))])
             ->value('id');
+    }
+
+    private function isConfirmImport(Request $request, string $type): bool
+    {
+        return $request->input('import_mode') === 'confirm' && $request->input('preview_type') === $type;
+    }
+
+    private function requireImportPreview(Request $request, string $type): array
+    {
+        $preview = $request->session()->get(self::IMPORT_PREVIEW_SESSION_KEY);
+
+        abort_unless(
+            is_array($preview)
+            && ($preview['type'] ?? null) === $type
+            && ($preview['token'] ?? null) === $request->input('preview_token'),
+            422,
+            'Import-Vorschau nicht mehr gueltig. Bitte Vorschau erneut erzeugen.'
+        );
+
+        $request->session()->forget(self::IMPORT_PREVIEW_SESSION_KEY);
+
+        return $preview;
+    }
+
+    private function redirectWithImportPreview(string $type, string $label, array $plan, array $options = []): RedirectResponse
+    {
+        $summary = collect($plan)->countBy('action')->all();
+        $token = (string) str()->uuid();
+
+        session()->put(self::IMPORT_PREVIEW_SESSION_KEY, [
+            'token' => $token,
+            'type' => $type,
+            'label' => $label,
+            'summary' => $summary,
+            'plan' => $plan,
+            'options' => $options,
+        ]);
+
+        return redirect()
+            ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
+            ->with('status', 'Vorschau fuer '.$label.' erstellt.');
+    }
+
+    private function buildCustomerImportPlan(array $rows, array $headerMap, string $fallbackCountryCode): array
+    {
+        $seenShortNumbers = [];
+        $plan = [];
+
+        foreach ($rows as $row) {
+            $shortNoValue = trim((string) $this->csvValue($row, $headerMap, 'Kd.Nummer'));
+            $sapNo = trim((string) $this->csvValue($row, $headerMap, 'SAP-Nr.'));
+            $cityName = trim((string) $this->csvValue($row, $headerMap, 'Ort'));
+
+            if ($shortNoValue === '' || ! is_numeric($shortNoValue)) {
+                $plan[] = $this->previewItem('conflict', 'Ungueltige Kd.Nummer', ['short_no' => $shortNoValue, 'sap_no' => $sapNo]);
+
+                continue;
+            }
+
+            $shortNo = (int) $shortNoValue;
+            if (isset($seenShortNumbers[$shortNo])) {
+                $plan[] = $this->previewItem('conflict', 'Doppelte Kd.Nummer in Datei', ['short_no' => $shortNo, 'sap_no' => $sapNo]);
+
+                continue;
+            }
+            $seenShortNumbers[$shortNo] = true;
+
+            if (Customer::query()->where('short_no', $shortNo)->exists()) {
+                $plan[] = $this->previewItem('skip', 'Kunde existiert bereits', ['short_no' => $shortNo, 'sap_no' => $sapNo]);
+
+                continue;
+            }
+
+            $plan[] = [
+                'action' => 'new',
+                'title' => 'Neuer Kunde',
+                'details' => [
+                    'short_no' => $shortNo,
+                    'sap_no' => $sapNo,
+                    'city' => $cityName !== '' ? $cityName : '-',
+                ],
+                'payload' => [
+                    'short_no' => $shortNo,
+                    'sap_no' => $sapNo,
+                    'city_name' => $cityName,
+                    'fallback_country_code' => $fallbackCountryCode,
+                ],
+            ];
+        }
+
+        return $plan;
+    }
+
+    private function executeCustomerImportPlan(Request $request, array $plan): array
+    {
+        $created = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($plan, $request, &$created, &$skipped) {
+            foreach ($plan as $item) {
+                if (($item['action'] ?? null) !== 'new') {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $payload = $item['payload'] ?? [];
+                $cityId = $this->resolveCityId(
+                    (string) ($payload['city_name'] ?? ''),
+                    (string) ($payload['fallback_country_code'] ?? 'de')
+                );
+
+                Customer::query()->create([
+                    'short_no' => (int) $payload['short_no'],
+                    'user_id' => (int) $request->user()->id,
+                    'sap_no' => (string) $payload['sap_no'],
+                    'dynamics_no' => 'x',
+                    'name' => 'Unbekannt',
+                    'city_id' => $cityId,
+                ]);
+
+                $created++;
+            }
+        });
+
+        return ['created' => $created, 'skipped' => $skipped];
+    }
+
+    private function buildOrbisuImportPlan(array $rows, array $headerMap): array
+    {
+        $plan = [];
+
+        foreach ($rows as $row) {
+            $hostname = trim((string) $this->csvValue($row, $headerMap, 'VM-Hostname'));
+            $shortNo = $this->extractLeadingNumber((string) $this->csvValue($row, $headerMap, 'Kunde'));
+
+            if ($hostname === '' || ! $shortNo) {
+                $plan[] = $this->previewItem('conflict', 'Pflichtfelder fehlen', ['server' => $hostname ?: '-', 'short_no' => $shortNo ?: '-']);
+
+                continue;
+            }
+
+            $importUpdatedAt = $this->parseImportTimestamp((string) $this->csvValue($row, $headerMap, 'Aktualisiert'));
+            $server = Server::query()->where('servername', $hostname)->first();
+
+            if ($server && $importUpdatedAt && $server->updated_at && $importUpdatedAt->lessThanOrEqualTo($server->updated_at)) {
+                $plan[] = $this->previewItem('skip', 'Server in Datenbank ist neuer oder gleich aktuell', ['server' => $hostname, 'short_no' => $shortNo]);
+
+                continue;
+            }
+
+            $payload = [
+                'short_no' => $shortNo,
+                'customer_label' => (string) $this->csvValue($row, $headerMap, 'Kundename (SAP-Nr.)'),
+                'type' => $this->mapServerType((string) $this->csvValue($row, $headerMap, 'Umgebung')),
+                'servername' => $hostname,
+                'int_ip' => trim((string) $this->csvValue($row, $headerMap, 'VM-IP-Addresse')),
+                'db_sid' => trim((string) $this->csvValue($row, $headerMap, 'DB-SID')),
+            ];
+
+            $plan[] = [
+                'action' => $server ? 'update' : 'new',
+                'title' => $server ? 'Server wird aktualisiert' : 'Neuer Server',
+                'details' => ['server' => $hostname, 'short_no' => $shortNo, 'type' => $payload['type'] ?: '-'],
+                'payload' => $payload,
+            ];
+        }
+
+        return $plan;
+    }
+
+    private function executeOrbisuImportPlan(Request $request, array $plan): array
+    {
+        $created = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($plan, $request, &$created, &$skipped) {
+            foreach ($plan as $item) {
+                if (! in_array($item['action'] ?? null, ['new', 'update'], true)) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $payload = $item['payload'] ?? [];
+                $customer = $this->findOrCreateCustomerForServerImport(
+                    (int) $request->user()->id,
+                    (int) $payload['short_no'],
+                    (string) $payload['customer_label']
+                );
+
+                $serverPayload = [
+                    'type' => $payload['type'],
+                    'server_kind_id' => null,
+                    'operating_system_id' => null,
+                    'servername' => $payload['servername'],
+                    'int_ip' => $payload['int_ip'],
+                    'db_sid' => $payload['db_sid'],
+                    'customer_id' => $customer->id,
+                    'user_id' => (int) $request->user()->id,
+                ];
+
+                $server = Server::query()->where('servername', $payload['servername'])->first();
+                if ($server) {
+                    $server->fill($serverPayload);
+                    $server->save();
+                } else {
+                    Server::query()->create($serverPayload);
+                }
+
+                $created++;
+            }
+        });
+
+        return ['created' => $created, 'skipped' => $skipped];
+    }
+
+    private function buildOasImportPlan(array $rows, array $headerMap): array
+    {
+        $plan = [];
+
+        foreach ($rows as $row) {
+            $hostname = trim((string) $this->csvValue($row, $headerMap, 'Hostname'));
+            $ipAddress = trim((string) $this->csvValue($row, $headerMap, 'IP-Adresse'));
+            $shortNo = $this->extractProjectShortNumber((string) $this->csvValue($row, $headerMap, 'Projekt / SAP Nr'));
+
+            if ($hostname === '' || $ipAddress === '' || ! $shortNo) {
+                $plan[] = $this->previewItem('conflict', 'Pflichtfelder fehlen', ['server' => $hostname ?: '-', 'short_no' => $shortNo ?: '-']);
+
+                continue;
+            }
+
+            $customer = Customer::query()->where('short_no', $shortNo)->first();
+            if (! $customer) {
+                $plan[] = $this->previewItem('conflict', 'Kunde fuer Short-Nummer nicht gefunden', ['server' => $hostname, 'short_no' => $shortNo]);
+
+                continue;
+            }
+
+            $payload = [
+                'type' => $this->mapOasServerType((string) $this->csvValue($row, $headerMap, 'Typ')),
+                'server_kind_id' => $this->resolveOasServerKindId((string) $this->csvValue($row, $headerMap, 'OAS-Modul')),
+                'servername' => $hostname,
+                'int_ip' => $ipAddress,
+                'db_sid' => trim((string) $this->csvValue($row, $headerMap, 'Datenbank')),
+                'customer_id' => $customer->id,
+            ];
+
+            $server = Server::query()->where('servername', $hostname)->first();
+            $plan[] = [
+                'action' => $server ? 'update' : 'new',
+                'title' => $server ? 'OAS-Server wird aktualisiert' : 'Neuer OAS-Server',
+                'details' => ['server' => $hostname, 'short_no' => $shortNo, 'customer' => $customer->name],
+                'payload' => $payload,
+            ];
+        }
+
+        return $plan;
+    }
+
+    private function executeOasImportPlan(Request $request, array $plan): array
+    {
+        $created = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($plan, $request, &$created, &$skipped) {
+            foreach ($plan as $item) {
+                if (! in_array($item['action'] ?? null, ['new', 'update'], true)) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $payload = $item['payload'] ?? [];
+                $serverPayload = [
+                    'type' => $payload['type'],
+                    'server_kind_id' => $payload['server_kind_id'],
+                    'operating_system_id' => null,
+                    'servername' => $payload['servername'],
+                    'int_ip' => $payload['int_ip'],
+                    'db_sid' => $payload['db_sid'],
+                    'customer_id' => $payload['customer_id'],
+                    'user_id' => (int) $request->user()->id,
+                ];
+
+                $server = Server::query()->where('servername', $payload['servername'])->first();
+                if ($server) {
+                    $server->fill($serverPayload);
+                    $server->save();
+                } else {
+                    Server::query()->create($serverPayload);
+                }
+
+                $created++;
+            }
+        });
+
+        return ['created' => $created, 'skipped' => $skipped];
+    }
+
+    private function previewItem(string $action, string $title, array $details): array
+    {
+        return [
+            'action' => $action,
+            'title' => $title,
+            'details' => $details,
+        ];
     }
 }
