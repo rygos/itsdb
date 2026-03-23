@@ -9,29 +9,27 @@
             align-items: start;
         }
         .project-board__column {
-            border: 1px solid rgba(0, 0, 0, 0.25);
+            background: #00001a;
+            color: #ffffe0;
+            border: 1px solid #17395c;
             padding: 12px;
         }
         .project-board__column--new {
-            background: #f4d35e;
-            color: #2b2110;
+            box-shadow: inset 0 4px 0 0 #4d6d8c;
         }
         .project-board__column--in-progress {
-            background: #ee964b;
-            color: #2d1605;
+            box-shadow: inset 0 4px 0 0 #2f6f9f;
         }
         .project-board__column--blocked {
-            background: #c44536;
-            color: #fff4f2;
+            box-shadow: inset 0 4px 0 0 #8f3b52;
         }
         .project-board__column--finished {
-            background: #4f772d;
-            color: #f5ffe8;
+            box-shadow: inset 0 4px 0 0 #2f7a57;
         }
         .project-board__header {
             margin-bottom: 12px;
             padding-bottom: 8px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid #17395c;
         }
         .project-board__meta {
             font-size: 12px;
@@ -42,13 +40,23 @@
             gap: 12px;
         }
         .project-card {
-            border: 1px solid rgba(0, 0, 0, 0.3);
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+            background: #0a1630;
+            color: #ffffe0;
+            border: 1px solid #17395c;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 224, 0.06);
             padding: 10px;
         }
         .project-card__title {
             font-weight: bold;
             margin-bottom: 6px;
+        }
+        .project-card__title a,
+        .project-card__line a {
+            color: #ffbf00;
+        }
+        .project-card__title a:hover,
+        .project-card__line a:hover {
+            color: #ffdf00;
         }
         .project-card__line {
             font-size: 12px;
@@ -58,6 +66,9 @@
             display: inline-block;
             padding: 2px 6px;
             margin-bottom: 8px;
+            background: #17395c;
+            color: #ffffe0;
+            border: 1px solid #295785;
         }
         .project-card__form {
             margin-top: 8px;
@@ -66,7 +77,19 @@
         .project-card input,
         .project-card button {
             width: 100%;
-            color: #000;
+            color: #ffffe0;
+        }
+        .project-card select,
+        .project-card input {
+            background: #00001a;
+            border: 1px solid #17395c;
+        }
+        .project-card button {
+            background: #17395c;
+            border: 1px solid #295785;
+        }
+        .project-card button:hover {
+            background: #295785;
         }
         @media (max-width: 1100px) {
             .project-board {
@@ -113,28 +136,19 @@
                                 </div>
                                 <div class="project-board__stack">
                                     @forelse($column['projects'] as $project)
-                                        @php
-                                            $statusName = optional($project->status)->name;
-                                            $statusColor = \App\Helpers\StatusHelper::color($statusName);
-                                            $statusTextColor = \App\Helpers\StatusHelper::textColor($statusName);
-                                            $cardBackground = $statusColor === 'none' ? 'rgba(255, 255, 255, 0.85)' : $statusColor;
-                                            $cardTextColor = $statusTextColor === 'inherit' ? '#000000' : $statusTextColor;
-                                        @endphp
-                                        <article class="project-card" style="background-color: {{ $cardBackground }}; color: {{ $cardTextColor }};">
+                                        @php($statusName = optional($project->status)->name)
+                                        <article class="project-card">
                                             <div class="project-card__title">
-                                                <a href="{{ route('projects.view', $project) }}" style="color: inherit;">{{ $project->name }}</a>
+                                                <a href="{{ route('projects.view', $project) }}">{{ $project->name }}</a>
                                             </div>
-                                            <div
-                                                class="project-card__status"
-                                                style="background-color: rgba(255, 255, 255, 0.25); color: inherit; border: 1px solid rgba(0, 0, 0, 0.15);"
-                                            >
+                                            <div class="project-card__status">
                                                 {{ $statusName ?? 'Ohne Status' }}
                                             </div>
                                             <div class="project-card__line"><strong>Dynamics:</strong> {{ $project->dynamics_id }}</div>
                                             <div class="project-card__line">
                                                 <strong>Kunde:</strong>
                                                 @if($project->customer)
-                                                    <a href="{{ route('customers.view', $project->customer) }}" style="color: inherit;">{{ $project->customer->name }}</a>
+                                                    <a href="{{ route('customers.view', $project->customer) }}">{{ $project->customer->name }}</a>
                                                 @else
                                                     -
                                                 @endif
@@ -152,7 +166,7 @@
                                             </form>
                                         </article>
                                     @empty
-                                        <div class="project-card" style="background-color: rgba(255, 255, 255, 0.25); color: inherit;">Keine Projekte.</div>
+                                        <div class="project-card">Keine Projekte.</div>
                                     @endforelse
                                 </div>
                             </section>
