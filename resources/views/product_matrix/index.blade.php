@@ -124,9 +124,9 @@
                                 <button
                                     type="button"
                                     class="itsdb-copy-button"
-                                    data-copy-value="{{ $entry->containers->pluck('title')->implode("\n") }}"
+                                    data-copy-value="{{ $entry->copy_compose_services }}"
                                     data-copy-tooltip="Kopiert"
-                                    title="Services kopieren"
+                                    title="Compose-Services kopieren"
                                 >
                                     Copy
                                 </button>

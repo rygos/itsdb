@@ -80,7 +80,7 @@ CSV;
         $alpha = Container::create([
             'title' => 'alpha-service',
             'content' => null,
-            'content_orig' => 'services: {}',
+            'content_orig' => "image: addons/alpha-service\nenvironment:\n  - DB_USER=\${DB_USER}\n",
             'content_orig_date' => now(),
         ]);
 
@@ -106,6 +106,9 @@ CSV;
         $response->assertOk();
         $response->assertSee('Alpha Suite');
         $response->assertDontSee('Beta Viewer');
+        $response->assertSee('alpha-service:', false);
+        $response->assertSee('image: addons/alpha-service', false);
+        $response->assertSee('DB_USER=${DB_USER}', false);
     }
 
     public function test_product_matrix_import_uses_alias_mapping_for_containers()

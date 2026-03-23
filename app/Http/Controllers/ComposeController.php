@@ -7,6 +7,7 @@ use App\Models\ComposerContainerRel;
 use App\Models\Container;
 use App\Models\Server;
 use App\Models\ServersComposersRel;
+use App\Support\ComposeServiceExporter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Symfony\Component\Yaml\Yaml;
@@ -14,28 +15,27 @@ use ZipArchive;
 
 class ComposeController extends Controller
 {
+    public function __construct(private readonly ComposeServiceExporter $composeServiceExporter)
+    {
+    }
+
     public function generate($server_id){
         $comp = ServersComposersRel::whereServerId($server_id)->get();
 
-        $container = [];
+        $containers = [];
         $container_dupe_check = [];
         foreach ($comp as $item){
             foreach($item->composer->rel()->get() as $c){
                 if(!in_array($c->container->title, $container_dupe_check)){
-                    if($c->container->content == ''){
-                        $container[$c->container->title] = Yaml::parse($c->container->content_orig);
-                        $container_dupe_check[] = $c->container->title;
-                    }else{
-                        $container[$c->container->title] = Yaml::parse($c->container->content);
-                        $container_dupe_check[] = $c->container->title;
-                    }
+                    $containers[] = $c->container;
+                    $container_dupe_check[] = $c->container->title;
                 }
             }
         }
 
         $compose = [
             'version' => '3.3',
-            'services' => $container,
+            'services' => $this->composeServiceExporter->buildServicesPayload($containers),
             'networks' => [
                 'u' => [
                     'driver' => 'bridge',

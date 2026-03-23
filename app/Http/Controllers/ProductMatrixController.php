@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Container;
 use App\Models\ContainerImportAlias;
 use App\Models\ProductMatrix;
+use App\Support\ComposeServiceExporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ProductMatrixController extends Controller
 {
+    public function __construct(private readonly ComposeServiceExporter $composeServiceExporter)
+    {
+    }
+
     public function index(Request $request)
     {
         $search = trim((string) $request->get('search', ''));
@@ -28,8 +33,13 @@ class ProductMatrixController extends Controller
             });
         }
 
+        $entries = $query->get();
+        $entries->each(function (ProductMatrix $entry) {
+            $entry->copy_compose_services = $this->composeServiceExporter->dumpServices($entry->containers);
+        });
+
         return view('product_matrix.index', [
-            'entries' => $query->get(),
+            'entries' => $entries,
             'search' => $search,
             'aliases' => ContainerImportAlias::with('container')->orderBy('source_name')->get(),
             'containers' => Container::orderBy('title')->get(['id', 'title']),
