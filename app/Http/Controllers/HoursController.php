@@ -103,12 +103,19 @@ class HoursController extends Controller
             $averageHours = $daysConsideredForAverage > 0 ? $totalHours / $daysConsideredForAverage : 0;
             $maxDailyHours = max(1, (int) $dailyHours->max());
             if ((int) $selectedYear === (int) Carbon::now()->year) {
+                $fullYearAbsenceData = $this->buildAbsenceChartData($selectedYear, false);
+                $forecastExcludedDates = collect($fullYearAbsenceData)
+                    ->filter(fn (array $absence): bool => $absence['type'] === Vacation::TYPE_VACATION)
+                    ->keys()
+                    ->values()
+                    ->all();
+
                 // Current-year forecast extrapolates the average onto the remaining working days.
                 $fullYearAverageDays = $this->count_average_days(
                     Carbon::create($selectedYear, 1, 1)->startOfDay(),
                     Carbon::create($selectedYear, 12, 31)->endOfDay(),
                     $projectCompletionDates,
-                    $excludedAverageDates
+                    $forecastExcludedDates
                 );
                 $forecastHours = $averageHours * $fullYearAverageDays;
                 $forecastServiceDays = $forecastHours / 8;
@@ -137,11 +144,11 @@ class HoursController extends Controller
         ]);
     }
 
-    private function buildAbsenceChartData(int|string $selectedYear): array
+    private function buildAbsenceChartData(int|string $selectedYear, bool $limitToToday = true): array
     {
         $startDate = Carbon::create((int) $selectedYear, 1, 1)->startOfDay();
         $endDate = Carbon::create((int) $selectedYear, 12, 31)->endOfDay();
-        if ((int) $selectedYear === (int) Carbon::now()->year) {
+        if ($limitToToday && (int) $selectedYear === (int) Carbon::now()->year) {
             $endDate = Carbon::now()->endOfDay();
         }
 
