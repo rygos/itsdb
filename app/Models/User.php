@@ -8,11 +8,11 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-
 
 /**
  * Class User
@@ -25,17 +25,19 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- *
- * @package App\Models
  */
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     public const PERMISSION_NONE = 0;
+
     public const PERMISSION_VISIBLE = 1;
+
     public const PERMISSION_EDITABLE = 2;
+
     public const PERMISSION_ADMINISTRATION = 3;
+
     private const PERMISSION_ALIASES = [
         'visible' => self::PERMISSION_VISIBLE,
         'editable' => self::PERMISSION_EDITABLE,
@@ -105,7 +107,7 @@ class User extends Authenticatable
 
     public static function permissionColumn(string $area): string
     {
-        return 'permission_' . $area;
+        return 'permission_'.$area;
     }
 
     public function permissionLevel(string $area): int
@@ -132,5 +134,35 @@ class User extends Authenticatable
         }
 
         return max(array_map('intval', $values));
+    }
+
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class, 'user_id');
+    }
+
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'user_id');
+    }
+
+    public function servers(): HasMany
+    {
+        return $this->hasMany(Server::class, 'user_id');
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(Log::class, 'user_id');
+    }
+
+    public function vacations(): HasMany
+    {
+        return $this->hasMany(Vacation::class, 'user_id');
+    }
+
+    public function customerDocuments(): HasMany
+    {
+        return $this->hasMany(CustomerDocument::class, 'user_id');
     }
 }

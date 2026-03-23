@@ -49,10 +49,13 @@
                             <td>{{ optional($user->created_at)->format('Y-m-d H:i') ?? '-' }}</td>
                             <td>{{ optional($user->last_login_at)->format('Y-m-d H:i') ?? '-' }}</td>
                             <td>
+                                <a href="{{ route('users.statistics', ['user_id' => $user->id]) }}" class="itsdb-action-control">Statistik</a>
                                 @if(auth()->user()->hasPermission('administration', 'administration'))
                                     <a href="{{ route('administration.users.edit', $user) }}" class="itsdb-action-control">Edit</a>
                                 @else
-                                    -
+                                    @if(! auth()->user()->hasPermission('administration', 'visible'))
+                                        -
+                                    @endif
                                 @endif
                             </td>
                         </tr>

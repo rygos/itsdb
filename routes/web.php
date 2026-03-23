@@ -19,6 +19,7 @@ use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\RemarksController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\UserStatisticsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,10 +75,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/customers-projects/lookup-city', [CustomerProjectController::class, 'lookup_city'])->middleware('area:projects,editable')->name('customers_projects.lookup_city');
     Route::post('/customers-projects/store', [CustomerProjectController::class, 'store'])->middleware('area:projects,editable')->name('customers_projects.store');
 
-    //Routes for Hours
+    // Routes for Hours
     Route::get('/hours', [HoursController::class, 'index'])->middleware('area:hours,visible')->name('hours.index');
 
-    //Routes for Product Matrix
+    // Routes for Product Matrix
     Route::get('/product-matrix', [ProductMatrixController::class, 'index'])->middleware('area:product_matrix,visible')->name('product_matrix.index');
     Route::post('/product-matrix/import', [ProductMatrixController::class, 'import'])->middleware('area:product_matrix,editable')->name('product_matrix.import');
     Route::post('/product-matrix/aliases', [ProductMatrixController::class, 'storeAlias'])->middleware('area:product_matrix,editable')->name('product_matrix.aliases.store');
@@ -121,19 +122,20 @@ Route::middleware('auth')->group(function () {
     Route::post('/calendar/vacations/{vacation}', [CalendarController::class, 'updateVacation'])->middleware('area:calendar,editable')->name('calendar.vacations.update');
     Route::post('/calendar/vacations/{vacation}/delete', [CalendarController::class, 'deleteVacation'])->middleware('area:calendar,editable')->name('calendar.vacations.delete');
     Route::get('/logs', [LogsController::class, 'index'])->name('logs.index');
+    Route::get('/user/{user_id}', [UserStatisticsController::class, 'show'])->name('users.statistics');
 
     Route::get('/env/generate/server/{server_id}', [EnvController::class, 'generate'])->name('env.generate');
     Route::post('/env/generate/server/{server_id}', [EnvController::class, 'update'])->name('env.update');
     Route::get('/env/generate_from_raw/server/{server_id}', [EnvController::class, 'generate_from_raw'])->name('env.generate_from_raw');
     Route::get('/env/generate_raw/server/{server_id}', [EnvController::class, 'generate_raw'])->name('env.generate_raw');
 
-    //Changelog Routes
+    // Changelog Routes
     Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog.index');
     Route::post('/changelog/add_changelog', [ChangelogController::class, 'add_changelog'])->name('changelog.add_changelog');
     Route::post('/changelog/add_version', [ChangelogController::class, 'add_version'])->name('changelog.add_version');
     Route::post('/changelog/publish', [ChangelogController::class, 'publish_version'])->name('changelog.publish_version');
 
-    //Administration Routes
+    // Administration Routes
     Route::get('/administration', [AdministrationController::class, 'index'])->middleware('area:administration,visible')->name('administration.index');
     Route::get('/administration/users/{user}/edit', [AdministrationController::class, 'editUser'])->middleware('area:administration,administration')->name('administration.users.edit');
     Route::post('/administration/users/{user}', [AdministrationController::class, 'updateUser'])->middleware('area:administration,administration')->name('administration.users.update');
