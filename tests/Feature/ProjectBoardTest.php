@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Project;
 use App\Models\Status;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,6 +20,14 @@ class ProjectBoardTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware(VerifyCsrfToken::class);
+        Carbon::setTestNow('2026-03-24 10:00:00');
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 
     /**
@@ -98,6 +107,17 @@ class ProjectBoardTest extends TestCase
         ]);
 
         Project::query()->create([
+            'dynamics_id' => 'KAN-OLD-DONE',
+            'name' => 'Alte fertige Aufgabe',
+            'customer_id' => $customer->id,
+            'user_id' => $user->id,
+            'status_id' => $finishedStatus->id,
+            'start_date' => now()->subDays(70),
+            'end_date' => now()->subDays(45),
+            'hours' => 13,
+        ]);
+
+        Project::query()->create([
             'dynamics_id' => 'KAN-OTHER',
             'name' => 'Fremde Aufgabe',
             'customer_id' => $otherCustomer->id,
@@ -120,6 +140,8 @@ class ProjectBoardTest extends TestCase
             ->assertSee('Laufende Aufgabe')
             ->assertSee('Blockierte Aufgabe')
             ->assertSee('Fertige Aufgabe')
+            ->assertSee('Nur Abschluesse der letzten 30 Tage')
+            ->assertDontSee('Alte fertige Aufgabe')
             ->assertDontSee('Fremde Aufgabe');
     }
 }

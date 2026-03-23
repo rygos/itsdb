@@ -9,26 +9,41 @@
             align-items: start;
         }
         .project-board__column {
-            background: #f3f3f3;
-            border: 1px solid #cfcfcf;
+            border: 1px solid rgba(0, 0, 0, 0.25);
             padding: 12px;
+        }
+        .project-board__column--new {
+            background: #f4d35e;
+            color: #2b2110;
+        }
+        .project-board__column--in-progress {
+            background: #ee964b;
+            color: #2d1605;
+        }
+        .project-board__column--blocked {
+            background: #c44536;
+            color: #fff4f2;
+        }
+        .project-board__column--finished {
+            background: #4f772d;
+            color: #f5ffe8;
         }
         .project-board__header {
             margin-bottom: 12px;
             padding-bottom: 8px;
-            border-bottom: 1px solid #d6d6d6;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
         }
         .project-board__meta {
             font-size: 12px;
-            color: #444;
+            color: inherit;
         }
         .project-board__stack {
             display: grid;
             gap: 12px;
         }
         .project-card {
-            background: #fff;
-            border: 1px solid #d9d9d9;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
             padding: 10px;
         }
         .project-card__title {
@@ -46,6 +61,12 @@
         }
         .project-card__form {
             margin-top: 8px;
+        }
+        .project-card select,
+        .project-card input,
+        .project-card button {
+            width: 100%;
+            color: #000;
         }
         @media (max-width: 1100px) {
             .project-board {
@@ -72,11 +93,23 @@
             <tr>
                 <td>
                     <div class="project-board">
-                        @foreach($boardColumns as $column)
-                            <section class="project-board__column">
+                        @foreach($boardColumns as $columnKey => $column)
+                            @php
+                                $columnClass = match ($columnKey) {
+                                    'new' => 'project-board__column--new',
+                                    'in_progress' => 'project-board__column--in-progress',
+                                    'blocked' => 'project-board__column--blocked',
+                                    'finished' => 'project-board__column--finished',
+                                    default => '',
+                                };
+                            @endphp
+                            <section class="project-board__column {{ $columnClass }}">
                                 <div class="project-board__header">
                                     <div><strong>{{ $column['label'] }}</strong></div>
                                     <div class="project-board__meta">{{ $column['count'] }} Projekte | {{ $column['hours'] }} h</div>
+                                    @if($loop->last)
+                                        <div class="project-board__meta">Nur Abschluesse der letzten 30 Tage</div>
+                                    @endif
                                 </div>
                                 <div class="project-board__stack">
                                     @forelse($column['projects'] as $project)
@@ -84,14 +117,16 @@
                                             $statusName = optional($project->status)->name;
                                             $statusColor = \App\Helpers\StatusHelper::color($statusName);
                                             $statusTextColor = \App\Helpers\StatusHelper::textColor($statusName);
+                                            $cardBackground = $statusColor === 'none' ? 'rgba(255, 255, 255, 0.85)' : $statusColor;
+                                            $cardTextColor = $statusTextColor === 'inherit' ? '#000000' : $statusTextColor;
                                         @endphp
-                                        <article class="project-card">
+                                        <article class="project-card" style="background-color: {{ $cardBackground }}; color: {{ $cardTextColor }};">
                                             <div class="project-card__title">
-                                                <a href="{{ route('projects.view', $project) }}">{{ $project->name }}</a>
+                                                <a href="{{ route('projects.view', $project) }}" style="color: inherit;">{{ $project->name }}</a>
                                             </div>
                                             <div
                                                 class="project-card__status"
-                                                style="background-color: {{ $statusColor }}; color: {{ $statusTextColor }};"
+                                                style="background-color: rgba(255, 255, 255, 0.25); color: inherit; border: 1px solid rgba(0, 0, 0, 0.15);"
                                             >
                                                 {{ $statusName ?? 'Ohne Status' }}
                                             </div>
@@ -99,7 +134,7 @@
                                             <div class="project-card__line">
                                                 <strong>Kunde:</strong>
                                                 @if($project->customer)
-                                                    <a href="{{ route('customers.view', $project->customer) }}">{{ $project->customer->name }}</a>
+                                                    <a href="{{ route('customers.view', $project->customer) }}" style="color: inherit;">{{ $project->customer->name }}</a>
                                                 @else
                                                     -
                                                 @endif
@@ -117,7 +152,7 @@
                                             </form>
                                         </article>
                                     @empty
-                                        <div class="project-card">Keine Projekte.</div>
+                                        <div class="project-card" style="background-color: rgba(255, 255, 255, 0.25); color: inherit;">Keine Projekte.</div>
                                     @endforelse
                                 </div>
                             </section>

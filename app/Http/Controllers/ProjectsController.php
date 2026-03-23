@@ -23,6 +23,8 @@ class ProjectsController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $finishedThreshold = Carbon::today()->subDays(30)->startOfDay();
+
         $boardColumns = collect(StatusHelper::pipelineColumns())
             ->mapWithKeys(function (string $label, string $column) use ($projects): array {
                 $items = $projects
@@ -36,6 +38,17 @@ class ProjectsController extends Controller
                     'hours' => (int) $items->sum(fn (Project $project): int => (int) ($project->hours ?? 0)),
                 ]];
             });
+
+        $finishedColumn = $boardColumns->get('finished');
+
+        $recentFinishedProjects = $finishedColumn['projects']
+            ->filter(fn (Project $project): bool => $project->end_date !== null && $project->end_date->gte($finishedThreshold))
+            ->values();
+        $finishedColumn['projects'] = $recentFinishedProjects;
+        $finishedColumn['count'] = $recentFinishedProjects->count();
+        $finishedColumn['hours'] = (int) $recentFinishedProjects
+            ->sum(fn (Project $project): int => (int) ($project->hours ?? 0));
+        $boardColumns->put('finished', $finishedColumn);
 
         return view('projects.board', [
             'boardColumns' => $boardColumns,
