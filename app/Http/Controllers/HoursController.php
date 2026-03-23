@@ -35,6 +35,8 @@ class HoursController extends Controller
         $averageHours = 0;
         $maxDailyHours = 0;
         $forecastServiceDays = 0;
+        $daysConsideredForAverage = 0;
+        $projectCompletionDates = [];
         if ($selectedYear) {
             // Only finished projects contribute to the hours overview.
             $projects = Project::query()
@@ -71,16 +73,25 @@ class HoursController extends Controller
             }
 
             $totalHours = $dailyHours->sum();
-            $workingDays = $this->count_working_days($startDate, $endDate);
-            $averageHours = $workingDays > 0 ? $totalHours / $workingDays : 0;
+            $projectCompletionDates = $projects
+                ->pluck('end_date')
+                ->filter()
+                ->map(fn ($endDate) => Carbon::parse($endDate)->toDateString())
+                ->unique()
+                ->values()
+                ->all();
+
+            $daysConsideredForAverage = $this->count_average_days($startDate, $endDate, $projectCompletionDates);
+            $averageHours = $daysConsideredForAverage > 0 ? $totalHours / $daysConsideredForAverage : 0;
             $maxDailyHours = max(1, (int) $dailyHours->max());
             if ((int) $selectedYear === (int) Carbon::now()->year) {
                 // Current-year forecast extrapolates the average onto the remaining working days.
-                $fullYearWorkingDays = $this->count_working_days(
+                $fullYearAverageDays = $this->count_average_days(
                     Carbon::create($selectedYear, 1, 1)->startOfDay(),
-                    Carbon::create($selectedYear, 12, 31)->endOfDay()
+                    Carbon::create($selectedYear, 12, 31)->endOfDay(),
+                    $projectCompletionDates
                 );
-                $forecastHours = $averageHours * $fullYearWorkingDays;
+                $forecastHours = $averageHours * $fullYearAverageDays;
                 $forecastServiceDays = $forecastHours / 8;
             } else {
                 $forecastServiceDays = $totalHours / 8;
@@ -94,29 +105,35 @@ class HoursController extends Controller
             'dailyHours' => $dailyHours,
             'totalHours' => $totalHours,
             'averageHours' => $averageHours,
+            'daysConsideredForAverage' => $daysConsideredForAverage,
+            'projectCompletionDates' => $projectCompletionDates,
             'maxDailyHours' => $maxDailyHours,
             'forecastServiceDays' => $forecastServiceDays,
         ]);
     }
 
-    private function count_working_days(Carbon $startDate, Carbon $endDate): int
+    private function count_average_days(Carbon $startDate, Carbon $endDate, array $projectCompletionDates): int
     {
-        // Holiday handling is centralized here so the dashboard calculation stays deterministic.
+        // Averages use weekdays plus weekend dates that actually had finished projects.
         $holidays = $this->nrw_holidays((int)$startDate->year, (int)$endDate->year);
-        $workingDays = 0;
+        $projectCompletionDateLookup = array_fill_keys($projectCompletionDates, true);
+        $days = 0;
         $cursor = $startDate->copy()->startOfDay();
         $end = $endDate->copy()->startOfDay();
 
         while ($cursor->lte($end)) {
             $dateKey = $cursor->toDateString();
             $isWeekend = $cursor->isWeekend();
-            if (!$isWeekend && !in_array($dateKey, $holidays, true)) {
-                $workingDays++;
+            $isHoliday = in_array($dateKey, $holidays, true);
+            $hasProjectCompletion = isset($projectCompletionDateLookup[$dateKey]);
+
+            if ((!$isWeekend && !$isHoliday) || ($isWeekend && $hasProjectCompletion)) {
+                $days++;
             }
             $cursor->addDay();
         }
 
-        return $workingDays;
+        return $days;
     }
 
     private function nrw_holidays(int $startYear, int $endYear): array

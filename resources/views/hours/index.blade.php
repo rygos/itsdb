@@ -59,7 +59,7 @@
                             <div class="hours-summary">
                                 <div><strong>Gesamtstunden {{ $selectedYear }}:</strong> {{ $totalHours }}</div>
                                 <div><strong>Dienstleistungstage (8h):</strong> {{ number_format($totalHours / 8, 2) }}</div>
-                                <div><strong>Durchschnitt pro Kalendertag:</strong> {{ number_format($averageHours, 2) }}</div>
+                                <div><strong>Durchschnitt pro beruecksichtigtem Tag:</strong> {{ number_format($averageHours, 2) }}</div>
                                 <div><strong>Forecast Dienstleistungstage bis Jahresende:</strong> {{ number_format($forecastServiceDays, 2) }}</div>
                             </div>
                             @if($dailyHours->isNotEmpty())
@@ -78,6 +78,7 @@
                                     (function () {
                                         var labels = @json($dailyHours->keys()->values());
                                         var hoursData = @json($dailyHours->values()->values());
+                                        var projectCompletionDates = @json($projectCompletionDates);
                                         var average = {{ number_format($averageHours, 2, '.', '') }};
                                         var minHours = 8;
 
@@ -106,7 +107,17 @@
                                             return isoYear + '-W' + String(week).padStart(2, '0');
                                         }
 
+                                        function hasWeekendProjectCompletion(dateString) {
+                                            return projectCompletionDates.indexOf(dateString) !== -1;
+                                        }
+
                                         labels.forEach(function (label, index) {
+                                            var date = parseIsoDate(label);
+                                            var day = date.getUTCDay();
+                                            if ((day === 0 || day === 6) && !hasWeekendProjectCompletion(label)) {
+                                                return;
+                                            }
+
                                             var weekKey = getIsoWeekKey(label);
                                             if (!weeklyAverageMap[weekKey]) {
                                                 weeklyAverageMap[weekKey] = { total: 0, count: 0 };
@@ -117,8 +128,16 @@
                                         });
 
                                         labels.forEach(function (label) {
+                                            var date = parseIsoDate(label);
+                                            var day = date.getUTCDay();
                                             var weekData = weeklyAverageMap[getIsoWeekKey(label)];
-                                            weeklyAverageLine.push(weekData.count > 0 ? Number((weekData.total / weekData.count).toFixed(2)) : 0);
+
+                                            if (((day === 0 || day === 6) && !hasWeekendProjectCompletion(label)) || !weekData || weekData.count === 0) {
+                                                weeklyAverageLine.push(null);
+                                                return;
+                                            }
+
+                                            weeklyAverageLine.push(Number((weekData.total / weekData.count).toFixed(2)));
                                         });
 
                                         var canvas = document.getElementById('hoursChart');
