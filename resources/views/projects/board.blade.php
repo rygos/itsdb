@@ -2,17 +2,27 @@
 @section('title', 'Projekt-Board')
 @section('content')
     <style>
+        #prodpagecontainer.project-board-page,
+        #prodpagecontainer.project-board-page #pouetbox_prodmain {
+            width: 100%;
+        }
         .project-board {
             display: grid;
-            grid-template-columns: repeat(4, minmax(220px, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 16px;
             align-items: start;
+            width: 100%;
+        }
+        .project-board,
+        .project-board * {
+            box-sizing: border-box;
         }
         .project-board__column {
             background: #00001a;
             color: #ffffe0;
             border: 1px solid #17395c;
             padding: 12px;
+            min-width: 0;
         }
         .project-board__column--new {
             box-shadow: inset 0 4px 0 0 #4d6d8c;
@@ -38,6 +48,11 @@
         .project-board__stack {
             display: grid;
             gap: 12px;
+            min-width: 0;
+        }
+        .project-board__stack.is-drop-target {
+            outline: 2px dashed #ffbf00;
+            outline-offset: 4px;
         }
         .project-card {
             background: #0a1630;
@@ -45,10 +60,18 @@
             border: 1px solid #17395c;
             box-shadow: inset 0 0 0 1px rgba(255, 255, 224, 0.06);
             padding: 10px;
+            width: 100%;
+            min-width: 0;
+            cursor: grab;
+        }
+        .project-card.is-dragging {
+            opacity: 0.55;
+            cursor: grabbing;
         }
         .project-card__title {
             font-weight: bold;
             margin-bottom: 6px;
+            overflow-wrap: anywhere;
         }
         .project-card__title a,
         .project-card__line a {
@@ -66,30 +89,15 @@
             display: inline-block;
             padding: 2px 6px;
             margin-bottom: 8px;
-            background: #17395c;
-            color: #ffffe0;
             border: 1px solid #295785;
         }
         .project-card__form {
             margin-top: 8px;
         }
-        .project-card select,
-        .project-card input,
-        .project-card button {
-            width: 100%;
-            color: #ffffe0;
-        }
-        .project-card select,
-        .project-card input {
-            background: #00001a;
-            border: 1px solid #17395c;
-        }
-        .project-card button {
-            background: #17395c;
-            border: 1px solid #295785;
-        }
-        .project-card button:hover {
-            background: #295785;
+        .project-card__hint {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #9db5cf;
         }
         @media (max-width: 1100px) {
             .project-board {
@@ -102,13 +110,13 @@
             }
         }
     </style>
-    <div id="prodpagecontainer">
+    <div id="prodpagecontainer" class="project-board-page">
         <table id="pouetbox_prodmain">
             <thead>
             <tr id="prodheader">
                 <th>
                     <span id="title"><big>Projekt-Pipeline</big></span>
-                    <div id="nfo">Kanban-Ansicht fuer deine Projekte nach Statusgruppe</div>
+                    <div id="nfo">Kanban-Ansicht fuer deine Projekte nach Statusgruppe. Projekte koennen per Maus zwischen den Spalten verschoben werden.</div>
                 </th>
             </tr>
             </thead>
@@ -134,14 +142,35 @@
                                         <div class="project-board__meta">Nur Abschluesse der letzten 30 Tage</div>
                                     @endif
                                 </div>
-                                <div class="project-board__stack">
+                                <div
+                                    class="project-board__stack"
+                                    data-project-column="{{ $columnKey }}"
+                                    data-finished-status-id="{{ $loop->last ? $finishedStatusId : '' }}"
+                                >
                                     @forelse($column['projects'] as $project)
-                                        @php($statusName = optional($project->status)->name)
-                                        <article class="project-card">
+                                        @php
+                                            $statusName = optional($project->status)->name;
+                                            $statusAccent = match ($statusName) {
+                                                'NEW', 'OPEN' => ['background' => 'rgba(77, 109, 140, 0.22)', 'border' => '#4d6d8c', 'color' => '#d9ecff'],
+                                                'WIP', 'CHECK' => ['background' => 'rgba(47, 111, 159, 0.22)', 'border' => '#2f6f9f', 'color' => '#d7eeff'],
+                                                'WAIT FOR INFO', 'ON HOLD', 'BLOCKED', 'BLOCKIERT' => ['background' => 'rgba(143, 59, 82, 0.25)', 'border' => '#8f3b52', 'color' => '#ffd8e2'],
+                                                'FINISHED', 'DONE', 'CLOSED', 'ERLEDIGT' => ['background' => 'rgba(47, 122, 87, 0.24)', 'border' => '#2f7a57', 'color' => '#dcffe8'],
+                                                default => ['background' => 'rgba(23, 57, 92, 0.55)', 'border' => '#295785', 'color' => '#ffffe0'],
+                                            };
+                                        @endphp
+                                        <article
+                                            class="project-card"
+                                            draggable="true"
+                                            data-project-card="true"
+                                            data-project-id="{{ $project->id }}"
+                                        >
                                             <div class="project-card__title">
                                                 <a href="{{ route('projects.view', $project) }}">{{ $project->name }}</a>
                                             </div>
-                                            <div class="project-card__status">
+                                            <div
+                                                class="project-card__status"
+                                                style="background-color: {{ $statusAccent['background'] }}; border-color: {{ $statusAccent['border'] }}; color: {{ $statusAccent['color'] }};"
+                                            >
                                                 {{ $statusName ?? 'Ohne Status' }}
                                             </div>
                                             <div class="project-card__line"><strong>Dynamics:</strong> {{ $project->dynamics_id }}</div>
@@ -157,12 +186,12 @@
                                             <div class="project-card__line"><strong>Start:</strong> {{ optional($project->start_date)->format('d.m.Y') ?? '-' }}</div>
                                             <div class="project-card__line"><strong>Ende:</strong> {{ optional($project->end_date)->format('d.m.Y') ?? '-' }}</div>
                                             <div class="project-card__line"><strong>Stunden:</strong> {{ $project->hours ?? '-' }}</div>
-                                            <form method="POST" action="{{ route('projects.change_status') }}" class="project-card__form">
+                                            <div class="project-card__hint">Per Drag-and-Drop verschieben</div>
+                                            <form method="POST" action="{{ route('projects.change_status') }}" class="project-card__form" hidden>
                                                 @csrf
                                                 <input type="hidden" name="project_id" value="{{ $project->id }}">
                                                 <input type="hidden" name="finished_end_date_action" value="keep">
-                                                {{ html()->select('status', $statusOptions, $project->status_id) }}
-                                                {{ html()->submit('Status setzen') }}
+                                                <input type="hidden" name="status" value="{{ $project->status_id }}" data-project-status-input="true">
                                             </form>
                                         </article>
                                     @empty
@@ -177,4 +206,67 @@
             </tbody>
         </table>
     </div>
+    <script>
+        (function () {
+            var board = document.querySelector('.project-board');
+            if (!board) {
+                return;
+            }
+
+            var draggedCard = null;
+            var columnStatusMap = @json($boardDropStatuses);
+
+            function attachDragEvents(card) {
+                card.addEventListener('dragstart', function () {
+                    draggedCard = card;
+                    card.classList.add('is-dragging');
+                });
+
+                card.addEventListener('dragend', function () {
+                    card.classList.remove('is-dragging');
+                    document.querySelectorAll('[data-project-column]').forEach(function (column) {
+                        column.classList.remove('is-drop-target');
+                    });
+                    draggedCard = null;
+                });
+            }
+
+            document.querySelectorAll('[data-project-card="true"]').forEach(attachDragEvents);
+
+            document.querySelectorAll('[data-project-column]').forEach(function (column) {
+                column.addEventListener('dragover', function (event) {
+                    event.preventDefault();
+                    column.classList.add('is-drop-target');
+                });
+
+                column.addEventListener('dragleave', function () {
+                    column.classList.remove('is-drop-target');
+                });
+
+                column.addEventListener('drop', function (event) {
+                    event.preventDefault();
+                    column.classList.remove('is-drop-target');
+
+                    if (!draggedCard) {
+                        return;
+                    }
+
+                    var columnKey = column.getAttribute('data-project-column');
+                    var targetStatusId = columnStatusMap[columnKey];
+                    if (!targetStatusId) {
+                        return;
+                    }
+
+                    var form = draggedCard.querySelector('.project-card__form');
+                    var statusInput = draggedCard.querySelector('[data-project-status-input="true"]');
+                    if (!form || !statusInput) {
+                        return;
+                    }
+
+                    statusInput.value = targetStatusId;
+                    form.submit();
+                });
+            });
+        })();
+    </script>
 @endsection

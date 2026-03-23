@@ -54,6 +54,7 @@ class ProjectsController extends Controller
             'boardColumns' => $boardColumns,
             'statusOptions' => Status::query()->orderBy('name')->pluck('name', 'id'),
             'finishedStatusId' => Status::query()->where('name', 'FINISHED')->value('id'),
+            'boardDropStatuses' => $this->boardDropStatuses(),
         ]);
     }
 
@@ -171,5 +172,17 @@ class ProjectsController extends Controller
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'hours' => ['nullable', 'integer', 'min:0'],
         ]);
+    }
+
+    private function boardDropStatuses(): array
+    {
+        $statusOptions = Status::query()->pluck('name', 'id');
+
+        return [
+            'new' => (string) ($statusOptions->search('OPEN') ?: $statusOptions->search('NEW') ?: $statusOptions->keys()->first()),
+            'in_progress' => (string) ($statusOptions->search('WIP') ?: $statusOptions->search('CHECK') ?: $statusOptions->keys()->first()),
+            'blocked' => (string) ($statusOptions->search('WAIT FOR INFO') ?: $statusOptions->search('ON HOLD') ?: $statusOptions->keys()->first()),
+            'finished' => (string) ($statusOptions->search('FINISHED') ?: $statusOptions->keys()->first()),
+        ];
     }
 }
