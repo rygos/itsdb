@@ -99,6 +99,11 @@
                     <tbody>
                         <tr>
                             <td>
+                                <div class="product-matrix-status success" style="text-align: left;">
+                                    Import-Ablauf: zuerst <strong>Preview / Dry Run</strong> ausfuehren, danach den vorgeschlagenen Import mit
+                                    <strong>Import bestaetigen</strong> freigeben. In der Vorschau werden Eintraege als
+                                    <strong>new</strong>, <strong>update</strong>, <strong>skip</strong> oder <strong>conflict</strong> markiert.
+                                </div>
                                 <div class="admin-imports">
                                     <section class="admin-import-card">
                                         <h3>Compose Files</h3>
@@ -114,8 +119,9 @@
                                         </div>
                                         @if(auth()->user()->hasPermission('compose', 'editable'))
                                             <div>
-                                                <button type="submit" name="import_mode" value="preview">Preview</button>
+                                                <button type="submit" name="import_mode" value="preview">Preview / Dry Run</button>
                                             </div>
+                                            <p>Erzeugt zuerst nur eine Vorschau. Es wird noch nichts importiert.</p>
                                         @endif
                                         {{ html()->form()->close() }}
                                         @if(($composeImportPreview['token'] ?? null) && ($composeImportPreview['uploads'] ?? false))
@@ -158,7 +164,8 @@
                                             {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('product-matrix-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('product_matrix', 'editable'))
-                                            <div><button type="submit" name="import_mode" value="preview">Preview</button></div>
+                                            <div><button type="submit" name="import_mode" value="preview">Preview / Dry Run</button></div>
+                                            <p>Die Vorschau fuer die Produktmatrix wird auf der Produktmatrix-Seite angezeigt und dort bestaetigt.</p>
                                         @endif
                                         {{ html()->form()->close() }}
                                     </section>
@@ -176,7 +183,8 @@
                                             {{ html()->select('fallback_country_code', ['de' => 'DE', 'at' => 'AT', 'ch' => 'CH', 'lu' => 'LU'], 'de')->id('customers-import-country') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div><button type="submit" name="import_mode" value="preview">Preview</button></div>
+                                            <div><button type="submit" name="import_mode" value="preview">Preview / Dry Run</button></div>
+                                            <p>Zeigt vor dem Schreiben an, welche Kunden neu angelegt oder uebersprungen werden.</p>
                                         @endif
                                         {{ html()->form()->close() }}
                                         @if(($adminImportPreview['type'] ?? null) === 'customers')
@@ -218,7 +226,8 @@
                                             {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('orbisu-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div><button type="submit" name="import_mode" value="preview">Preview</button></div>
+                                            <div><button type="submit" name="import_mode" value="preview">Preview / Dry Run</button></div>
+                                            <p>Prueft zuerst, ob Server neu, aktualisiert, uebersprungen oder konflikthaft sind.</p>
                                         @endif
                                         {{ html()->form()->close() }}
                                         @if(($adminImportPreview['type'] ?? null) === 'orbisu_servers')
@@ -260,7 +269,8 @@
                                             {{ html()->file('csv_file')->attribute('accept', '.csv,text/csv')->id('oas-import-file') }}
                                         </div>
                                         @if(auth()->user()->hasPermission('administration', 'editable'))
-                                            <div><button type="submit" name="import_mode" value="preview">Preview</button></div>
+                                            <div><button type="submit" name="import_mode" value="preview">Preview / Dry Run</button></div>
+                                            <p>Zeigt vorab, welche OAS-Server neu angelegt oder aktualisiert werden wuerden.</p>
                                         @endif
                                         {{ html()->form()->close() }}
                                         @if(($adminImportPreview['type'] ?? null) === 'oas_servers')
