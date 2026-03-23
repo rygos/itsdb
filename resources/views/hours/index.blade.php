@@ -4,7 +4,41 @@
     <style>
         .hours-summary { margin: 10px 0 14px; }
         .hours-chart { height: 260px; }
-        .hours-legend { font-size: 12px; margin-top: 6px; }
+        .hours-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .hours-legend__item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .hours-legend__swatch {
+            width: 18px;
+            height: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            display: inline-block;
+        }
+        .hours-legend__swatch--bar { background: #4a7a2a; }
+        .hours-legend__swatch--weekend { background: rgba(102, 0, 0, 0.65); }
+        .hours-legend__swatch--year-average {
+            height: 0;
+            border: 0;
+            border-top: 2px solid #b00020;
+        }
+        .hours-legend__swatch--week-average {
+            height: 0;
+            border: 0;
+            border-top: 2px solid #1f5aa6;
+        }
+        .hours-legend__swatch--minimum {
+            height: 0;
+            border: 0;
+            border-top: 2px dashed #666;
+        }
     </style>
     <div id="prodpagecontainer">
         <table id="pouetbox_prodmain">
@@ -33,7 +67,11 @@
                                     <canvas id="hoursChart" aria-label="Stunden pro Tag"></canvas>
                                 </div>
                                 <div class="hours-legend">
-                                    Balken: Stunden pro Tag | Rot: Durchschnitt | Grau: 8h Minimum
+                                    <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--bar"></span>Stunden pro Tag</span>
+                                    <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--weekend"></span>Wochenende</span>
+                                    <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--year-average"></span>Jahresdurchschnitt</span>
+                                    <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--week-average"></span>Wochendurchschnitt</span>
+                                    <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--minimum"></span>8h Minimum</span>
                                 </div>
                                 <script src="/js/chart.min.js"></script>
                                 <script>
@@ -45,13 +83,84 @@
 
                                         var avgLine = labels.map(function () { return average; });
                                         var minLine = labels.map(function () { return minHours; });
+                                        var weeklyAverageMap = {};
+                                        var weeklyAverageLine = [];
+
+                                        function parseIsoDate(dateString) {
+                                            var parts = dateString.split('-');
+                                            return new Date(Date.UTC(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)));
+                                        }
+
+                                        function getIsoWeekKey(dateString) {
+                                            var date = parseIsoDate(dateString);
+                                            var day = date.getUTCDay();
+                                            if (day === 0) {
+                                                day = 7;
+                                            }
+
+                                            date.setUTCDate(date.getUTCDate() + 4 - day);
+                                            var isoYear = date.getUTCFullYear();
+                                            var yearStart = new Date(Date.UTC(isoYear, 0, 1));
+                                            var week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+
+                                            return isoYear + '-W' + String(week).padStart(2, '0');
+                                        }
+
+                                        labels.forEach(function (label, index) {
+                                            var weekKey = getIsoWeekKey(label);
+                                            if (!weeklyAverageMap[weekKey]) {
+                                                weeklyAverageMap[weekKey] = { total: 0, count: 0 };
+                                            }
+
+                                            weeklyAverageMap[weekKey].total += Number(hoursData[index] || 0);
+                                            weeklyAverageMap[weekKey].count += 1;
+                                        });
+
+                                        labels.forEach(function (label) {
+                                            var weekData = weeklyAverageMap[getIsoWeekKey(label)];
+                                            weeklyAverageLine.push(weekData.count > 0 ? Number((weekData.total / weekData.count).toFixed(2)) : 0);
+                                        });
 
                                         var canvas = document.getElementById('hoursChart');
                                         if (!canvas) return;
                                         var ctx = canvas.getContext('2d');
 
+                                        var weekendBackgroundPlugin = {
+                                            beforeDatasetsDraw: function (chart) {
+                                                var chartArea = chart.chartArea;
+                                                var xScale = chart.scales['x-axis-0'];
+                                                if (!chartArea || !xScale) return;
+
+                                                var meta = chart.getDatasetMeta(0);
+                                                if (!meta || !meta.data || !meta.data.length) return;
+
+                                                var context = chart.ctx;
+                                                context.save();
+                                                context.fillStyle = 'rgba(102, 0, 0, 0.65)';
+
+                                                meta.data.forEach(function (bar, index) {
+                                                    var date = parseIsoDate(labels[index]);
+                                                    var day = date.getUTCDay();
+                                                    if (day !== 0 && day !== 6) {
+                                                        return;
+                                                    }
+
+                                                    var currentX = bar._model.x;
+                                                    var previousX = index > 0 ? meta.data[index - 1]._model.x : null;
+                                                    var nextX = index < meta.data.length - 1 ? meta.data[index + 1]._model.x : null;
+                                                    var left = previousX === null ? chartArea.left : (previousX + currentX) / 2;
+                                                    var right = nextX === null ? chartArea.right : (currentX + nextX) / 2;
+
+                                                    context.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
+                                                });
+
+                                                context.restore();
+                                            }
+                                        };
+
                                         new Chart(ctx, {
                                             type: 'bar',
+                                            plugins: [weekendBackgroundPlugin],
                                             data: {
                                                 labels: labels,
                                                 datasets: [
@@ -66,6 +175,16 @@
                                                         type: 'line',
                                                         data: avgLine,
                                                         borderColor: '#b00020',
+                                                        borderWidth: 2,
+                                                        pointRadius: 0,
+                                                        lineTension: 0,
+                                                        fill: false
+                                                    },
+                                                    {
+                                                        label: 'Wochendurchschnitt',
+                                                        type: 'line',
+                                                        data: weeklyAverageLine,
+                                                        borderColor: '#1f5aa6',
                                                         borderWidth: 2,
                                                         pointRadius: 0,
                                                         lineTension: 0,
@@ -96,7 +215,7 @@
                                                         scaleLabel: { display: true, labelString: 'Stunden' }
                                                     }]
                                                 },
-                                                legend: { display: false },
+                                                legend: { display: true, position: 'bottom' },
                                                 tooltips: {
                                                     callbacks: {
                                                         label: function (tooltipItem, data) {

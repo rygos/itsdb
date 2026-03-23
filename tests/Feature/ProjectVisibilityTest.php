@@ -66,6 +66,8 @@ class ProjectVisibilityTest extends TestCase
         $response->assertOk();
         $response->assertSee('Own finished project');
         $response->assertDontSee('Other finished project');
+        $response->assertSee('Wochenende');
+        $response->assertSee('Wochendurchschnitt');
     }
 
     public function test_calendar_page_only_counts_and_lists_projects_of_authenticated_user(): void
