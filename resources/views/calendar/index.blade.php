@@ -144,13 +144,16 @@
                             </form>
                         </div>
                         <div class="calendar-vacations__hint">
-                            Urlaubstage werden ohne Wochenenden und ohne NRW-Feiertage berechnet.
+                            Abwesenheitstage werden ohne Wochenenden und ohne NRW-Feiertage berechnet. Start- und Endtag koennen auch als halbe Tage erfasst werden.
                         </div>
                         <table id="pouetbox_prodmain">
                             <thead>
                                 <tr id="prodheader">
+                                    <th>Typ</th>
                                     <th>Von</th>
                                     <th>Bis</th>
+                                    <th>Start</th>
+                                    <th>Ende</th>
                                     <th>Tage</th>
                                     <th>Aktion</th>
                                 </tr>
@@ -160,9 +163,12 @@
                                     <tr>
                                         @if(auth()->user()->hasPermission('calendar', 'editable'))
                                             {{ html()->form()->route('calendar.vacations.update', $vacation)->open() }}
+                                            <td>{{ html()->select('type', \App\Models\Vacation::typeOptions(), $vacation->type) }}</td>
                                             <td>{{ html()->input('date', 'start_date', $vacation->start_date->toDateString()) }}</td>
                                             <td>{{ html()->input('date', 'end_date', $vacation->end_date->toDateString()) }}</td>
-                                            <td>{{ $vacation->days }}</td>
+                                            <td>{{ html()->select('start_day_portion', \App\Models\Vacation::portionOptions(), $vacation->start_day_portion) }}</td>
+                                            <td>{{ html()->select('end_day_portion', \App\Models\Vacation::portionOptions(), $vacation->end_day_portion) }}</td>
+                                            <td>{{ $vacation->display_days }}</td>
                                             <td>
                                                 <div class="itsdb-actions">
                                                     {{ html()->submit('Speichern') }}
@@ -171,25 +177,31 @@
                                             </td>
                                             {{ html()->form()->close() }}
                                         @else
+                                            <td>{{ \App\Models\Vacation::typeOptions()[$vacation->type] ?? $vacation->type }}</td>
                                             <td>{{ $vacation->start_date->toDateString() }}</td>
                                             <td>{{ $vacation->end_date->toDateString() }}</td>
-                                            <td>{{ $vacation->days }}</td>
+                                            <td>{{ \App\Models\Vacation::portionOptions()[$vacation->start_day_portion] ?? $vacation->start_day_portion }}</td>
+                                            <td>{{ \App\Models\Vacation::portionOptions()[$vacation->end_day_portion] ?? $vacation->end_day_portion }}</td>
+                                            <td>{{ $vacation->display_days }}</td>
                                             <td>-</td>
                                         @endif
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4">Keine Urlaube fuer dieses Jahr vorhanden.</td>
+                                        <td colspan="7">Keine Abwesenheiten fuer dieses Jahr vorhanden.</td>
                                     </tr>
                                 @endforelse
 
                                 @if(auth()->user()->hasPermission('calendar', 'editable'))
                                     <tr>
                                         {{ html()->form()->route('calendar.vacations.store')->open() }}
+                                        <td>{{ html()->select('type', \App\Models\Vacation::typeOptions(), \App\Models\Vacation::TYPE_VACATION) }}</td>
                                         <td>{{ html()->input('date', 'start_date', $date->copy()->startOfMonth()->toDateString()) }}</td>
                                         <td>{{ html()->input('date', 'end_date', $date->copy()->startOfMonth()->toDateString()) }}</td>
+                                        <td>{{ html()->select('start_day_portion', \App\Models\Vacation::portionOptions(), \App\Models\Vacation::PORTION_FULL) }}</td>
+                                        <td>{{ html()->select('end_day_portion', \App\Models\Vacation::portionOptions(), \App\Models\Vacation::PORTION_FULL) }}</td>
                                         <td>Automatisch</td>
-                                        <td>{{ html()->submit('Urlaub hinzufuegen') }}</td>
+                                        <td>{{ html()->submit('Abwesenheit hinzufuegen') }}</td>
                                         {{ html()->form()->close() }}
                                     </tr>
                                 @endif

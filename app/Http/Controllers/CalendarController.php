@@ -99,15 +99,22 @@ class CalendarController extends Controller
     public function storeVacation(Request $request): RedirectResponse
     {
         $validated = $this->validateVacation($request);
+        $dayUnits = $this->countAbsenceDayUnits(
+            Carbon::parse($validated['start_date'])->startOfDay(),
+            Carbon::parse($validated['end_date'])->startOfDay(),
+            $validated['start_day_portion'],
+            $validated['end_day_portion']
+        );
 
         Vacation::query()->create([
             'user_id' => (int) $request->user()->id,
+            'type' => $validated['type'],
             'start_date' => Carbon::parse($validated['start_date'])->toDateString(),
             'end_date' => Carbon::parse($validated['end_date'])->toDateString(),
-            'days' => $this->countVacationDays(
-                Carbon::parse($validated['start_date'])->startOfDay(),
-                Carbon::parse($validated['end_date'])->startOfDay()
-            ),
+            'start_day_portion' => $validated['start_day_portion'],
+            'end_day_portion' => $validated['end_day_portion'],
+            'days' => intdiv($dayUnits, 2),
+            'day_units' => $dayUnits,
         ]);
 
         return redirect()->route('calendar.index', [
@@ -120,13 +127,20 @@ class CalendarController extends Controller
     {
         abort_unless($vacation->user_id === (int) $request->user()->id, 403);
         $validated = $this->validateVacation($request);
+        $dayUnits = $this->countAbsenceDayUnits(
+            Carbon::parse($validated['start_date'])->startOfDay(),
+            Carbon::parse($validated['end_date'])->startOfDay(),
+            $validated['start_day_portion'],
+            $validated['end_day_portion']
+        );
 
+        $vacation->type = $validated['type'];
         $vacation->start_date = Carbon::parse($validated['start_date'])->toDateString();
         $vacation->end_date = Carbon::parse($validated['end_date'])->toDateString();
-        $vacation->days = $this->countVacationDays(
-            Carbon::parse($validated['start_date'])->startOfDay(),
-            Carbon::parse($validated['end_date'])->startOfDay()
-        );
+        $vacation->start_day_portion = $validated['start_day_portion'];
+        $vacation->end_day_portion = $validated['end_day_portion'];
+        $vacation->days = intdiv($dayUnits, 2);
+        $vacation->day_units = $dayUnits;
         $vacation->save();
 
         return redirect()->route('calendar.index', [
@@ -152,28 +166,61 @@ class CalendarController extends Controller
     private function validateVacation(Request $request): array
     {
         return $request->validate([
+            'type' => ['required', 'in:'.implode(',', array_keys(Vacation::typeOptions()))],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'start_day_portion' => ['required', 'in:'.implode(',', array_keys(Vacation::portionOptions()))],
+            'end_day_portion' => ['required', 'in:'.implode(',', array_keys(Vacation::portionOptions()))],
         ]);
     }
 
-    private function countVacationDays(Carbon $startDate, Carbon $endDate): int
+    private function countAbsenceDayUnits(
+        Carbon $startDate,
+        Carbon $endDate,
+        string $startDayPortion,
+        string $endDayPortion
+    ): int
     {
         $holidays = $this->nrwHolidays((int) $startDate->year, (int) $endDate->year);
-        $days = 0;
+        $businessDates = [];
         $cursor = $startDate->copy()->startOfDay();
         $end = $endDate->copy()->startOfDay();
 
         while ($cursor->lte($end)) {
             $dateKey = $cursor->toDateString();
             if (!$cursor->isWeekend() && !in_array($dateKey, $holidays, true)) {
-                $days++;
+                $businessDates[] = $dateKey;
             }
 
             $cursor->addDay();
         }
 
-        return $days;
+        if (empty($businessDates)) {
+            return 0;
+        }
+
+        $dayUnits = count($businessDates) * 2;
+        $startDateKey = $startDate->toDateString();
+        $endDateKey = $endDate->toDateString();
+        $startCounts = in_array($startDateKey, $businessDates, true);
+
+        if ($startDateKey === $endDateKey) {
+            if (!$startCounts) {
+                return 0;
+            }
+
+            return ($startDayPortion === Vacation::PORTION_HALF || $endDayPortion === Vacation::PORTION_HALF) ? 1 : 2;
+        }
+
+        if ($startCounts && $startDayPortion === Vacation::PORTION_HALF) {
+            $dayUnits -= 1;
+        }
+
+        if (in_array($endDateKey, $businessDates, true) && $endDayPortion === Vacation::PORTION_HALF) {
+            $dayUnits -= 1;
+        }
+
+        return max(0, $dayUnits);
     }
 
     private function nrwHolidays(int $startYear, int $endYear): array
