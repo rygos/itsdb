@@ -88,6 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::controller(ProjectsController::class)->group(function () {
         // Projects use route-model binding on the detail page, but keep update/status endpoints
         // payload-based for compatibility with the existing forms.
+        Route::get('/projects/board', 'board')->middleware('area:projects,visible')->name('projects.board');
         Route::get('/projects/add', 'add')->middleware('area:projects,editable')->name('projects.add');
         Route::post('/projects/store', 'store')->middleware('area:projects,editable')->name('projects.store');
         Route::get('/projects/{project}', 'view')->middleware('area:projects,visible')->name('projects.view');

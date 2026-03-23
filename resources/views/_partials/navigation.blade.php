@@ -11,6 +11,9 @@
     @if(auth()->user()?->hasPermission('customers', 'visible'))
         <li><a href="{{ route('customers.index') }}">Customers</a></li>
     @endif
+    @if(auth()->user()?->hasPermission('projects', 'visible'))
+        <li><a href="{{ route('projects.board') }}">Projekte</a></li>
+    @endif
     @if(auth()->user()?->hasPermission('hours', 'visible'))
         <li><a href="{{ route('hours.index') }}">Stunden</a></li>
     @endif

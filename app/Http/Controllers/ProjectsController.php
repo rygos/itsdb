@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\LogHelper;
+use App\Helpers\StatusHelper;
 use App\Models\Customer;
 use App\Models\Project;
 use App\Models\Status;
@@ -13,6 +14,36 @@ use Illuminate\View\View;
 
 class ProjectsController extends Controller
 {
+    public function board(): View
+    {
+        $projects = Project::query()
+            ->with(['customer.city', 'status', 'user'])
+            ->ownedBy(auth()->id())
+            ->orderBy('end_date')
+            ->orderByDesc('id')
+            ->get();
+
+        $boardColumns = collect(StatusHelper::pipelineColumns())
+            ->mapWithKeys(function (string $label, string $column) use ($projects): array {
+                $items = $projects
+                    ->filter(fn (Project $project): bool => StatusHelper::pipelineColumn($project->status?->name) === $column)
+                    ->values();
+
+                return [$column => [
+                    'label' => $label,
+                    'projects' => $items,
+                    'count' => $items->count(),
+                    'hours' => (int) $items->sum(fn (Project $project): int => (int) ($project->hours ?? 0)),
+                ]];
+            });
+
+        return view('projects.board', [
+            'boardColumns' => $boardColumns,
+            'statusOptions' => Status::query()->orderBy('name')->pluck('name', 'id'),
+            'finishedStatusId' => Status::query()->where('name', 'FINISHED')->value('id'),
+        ]);
+    }
+
     public function view(Project $project): View
     {
         // Permissions are derived from ownership; eager loading keeps the detail page query count stable.
