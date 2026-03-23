@@ -31,6 +31,13 @@
             <tr>
                 <td>
                     <table style="width: 100%">
+                        @if(auth()->user()->hasPermission('projects', 'editable'))
+                            <tr>
+                                <td colspan="7" style="text-align: left; padding-bottom: 12px;">
+                                    <button type="button" data-modal-target="#project-create-modal">Projekt hinzufuegen</button>
+                                </td>
+                            </tr>
+                        @endif
                         <tr>
                             <th>Dynamics ID</th>
                             <th>Name</th>
@@ -561,6 +568,47 @@
             </div>
         </div>
     @endforeach
+
+    @if(auth()->user()->hasPermission('projects', 'editable'))
+        <div class="itsdb-modal" id="project-create-modal" aria-hidden="true">
+            <div class="itsdb-modal__dialog">
+                <div class="itsdb-modal__header">
+                    <div class="itsdb-modal__title">Projekt hinzufuegen</div>
+                    <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
+                </div>
+                <div class="itsdb-modal__body">
+                    {{ html()->form()->route('projects.store')->open() }}
+                    {{ html()->hidden('customer', $customer->id) }}
+                    <table class="itsdb-modal__grid">
+                        <tr>
+                            <td class="itsdb-modal__grid-label">Dynamics Nummer</td>
+                            <td>{{ html()->text('dynamics_id', old('dynamics_id')) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="itsdb-modal__grid-label">Projektname</td>
+                            <td>{{ html()->text('name', old('name')) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="itsdb-modal__grid-label">Startdatum</td>
+                            <td>{{ html()->input('date', 'start_date', old('start_date', now()->toDateString())) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="itsdb-modal__grid-label">Enddatum</td>
+                            <td>{{ html()->input('date', 'end_date', old('end_date', now()->toDateString())) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="itsdb-modal__grid-label">Stunden</td>
+                            <td>{{ html()->input('number', 'hours', old('hours'))->attribute('min', 0) }}</td>
+                        </tr>
+                    </table>
+                    <div class="itsdb-modal__footer">
+                        {{ html()->submit('Speichern') }}
+                    </div>
+                    {{ html()->form()->close() }}
+                </div>
+            </div>
+        </div>
+    @endif
 
     <div class="itsdb-modal" id="project-finished-end-date-modal" aria-hidden="true">
         <div class="itsdb-modal__dialog">

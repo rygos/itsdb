@@ -7,6 +7,7 @@ use App\Models\Credential;
 use App\Models\Customer;
 use App\Models\CustomerDocument;
 use App\Models\OperatingSystem;
+use App\Models\Status;
 use App\Models\Server;
 use App\Models\ServerKind;
 use App\Models\User;
@@ -159,6 +160,33 @@ class CustomersViewTest extends TestCase
             ->assertOk()
             ->assertSee(route('customers.edit', $customer), false)
             ->assertSee('Bearbeiten');
+    }
+
+    public function test_customer_view_shows_project_create_button_and_modal_form(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::query()->create([
+            'user_id' => $user->id,
+            'short_no' => 6073,
+            'sap_no' => '3031304',
+            'dynamics_no' => 'dyn-6073',
+            'name' => 'Projektkunde GmbH',
+            'city_id' => null,
+        ]);
+        Status::query()->create(['name' => 'OPEN']);
+
+        $this->actingAs($user)
+            ->get(route('customers.view', $customer))
+            ->assertOk()
+            ->assertSee('Projekt hinzufuegen')
+            ->assertSee('id="project-create-modal"', false)
+            ->assertSee('name="dynamics_id"', false)
+            ->assertSee('name="name"', false)
+            ->assertSee('name="start_date"', false)
+            ->assertSee('name="end_date"', false)
+            ->assertSee('name="hours"', false)
+            ->assertSee('name="customer"', false)
+            ->assertSee('value="'.$customer->id.'"', false);
     }
 
     public function test_editable_user_can_update_customer_master_data(): void
