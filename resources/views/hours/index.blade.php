@@ -24,6 +24,8 @@
         }
         .hours-legend__swatch--bar { background: #4a7a2a; }
         .hours-legend__swatch--weekend { background: rgba(102, 0, 0, 0.65); }
+        .hours-legend__swatch--vacation { background: rgba(0, 70, 0, 0.7); }
+        .hours-legend__swatch--sickness { background: rgba(184, 134, 11, 0.7); }
         .hours-legend__swatch--year-average {
             height: 0;
             border: 0;
@@ -69,6 +71,8 @@
                                 <div class="hours-legend">
                                     <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--bar"></span>Stunden pro Tag</span>
                                     <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--weekend"></span>Wochenende</span>
+                                    <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--vacation"></span>Urlaub</span>
+                                    <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--sickness"></span>Krankheit</span>
                                     <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--year-average"></span>Jahresdurchschnitt</span>
                                     <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--week-average"></span>Wochendurchschnitt</span>
                                     <span class="hours-legend__item"><span class="hours-legend__swatch hours-legend__swatch--minimum"></span>8h Minimum</span>
@@ -79,6 +83,8 @@
                                         var labels = @json($dailyHours->keys()->values());
                                         var hoursData = @json($dailyHours->values()->values());
                                         var projectCompletionDates = @json($projectCompletionDates);
+                                        var absenceChartData = @json($absenceChartData);
+                                        var excludedAverageDates = @json($excludedAverageDates);
                                         var average = {{ number_format($averageHours, 2, '.', '') }};
                                         var minHours = 8;
 
@@ -111,10 +117,14 @@
                                             return projectCompletionDates.indexOf(dateString) !== -1;
                                         }
 
+                                        function isExcludedAverageDate(dateString) {
+                                            return excludedAverageDates.indexOf(dateString) !== -1;
+                                        }
+
                                         labels.forEach(function (label, index) {
                                             var date = parseIsoDate(label);
                                             var day = date.getUTCDay();
-                                            if ((day === 0 || day === 6) && !hasWeekendProjectCompletion(label)) {
+                                            if (isExcludedAverageDate(label) || ((day === 0 || day === 6) && !hasWeekendProjectCompletion(label))) {
                                                 return;
                                             }
 
@@ -132,7 +142,7 @@
                                             var day = date.getUTCDay();
                                             var weekData = weeklyAverageMap[getIsoWeekKey(label)];
 
-                                            if (((day === 0 || day === 6) && !hasWeekendProjectCompletion(label)) || !weekData || weekData.count === 0) {
+                                            if (isExcludedAverageDate(label) || ((day === 0 || day === 6) && !hasWeekendProjectCompletion(label)) || !weekData || weekData.count === 0) {
                                                 weeklyAverageLine.push(null);
                                                 return;
                                             }
@@ -144,33 +154,54 @@
                                         if (!canvas) return;
                                         var ctx = canvas.getContext('2d');
 
-                                        var weekendBackgroundPlugin = {
+                                        function getDayBounds(meta, chartArea, index) {
+                                            var bar = meta.data[index];
+                                            var currentX = bar._model.x;
+                                            var previousX = index > 0 ? meta.data[index - 1]._model.x : null;
+                                            var nextX = index < meta.data.length - 1 ? meta.data[index + 1]._model.x : null;
+
+                                            return {
+                                                left: previousX === null ? chartArea.left : (previousX + currentX) / 2,
+                                                right: nextX === null ? chartArea.right : (currentX + nextX) / 2
+                                            };
+                                        }
+
+                                        var backgroundPlugin = {
                                             beforeDatasetsDraw: function (chart) {
                                                 var chartArea = chart.chartArea;
-                                                var xScale = chart.scales['x-axis-0'];
-                                                if (!chartArea || !xScale) return;
+                                                var yScale = chart.scales['y-axis-0'];
+                                                if (!chartArea || !yScale) return;
 
                                                 var meta = chart.getDatasetMeta(0);
                                                 if (!meta || !meta.data || !meta.data.length) return;
 
                                                 var context = chart.ctx;
                                                 context.save();
-                                                context.fillStyle = 'rgba(102, 0, 0, 0.65)';
 
                                                 meta.data.forEach(function (bar, index) {
                                                     var date = parseIsoDate(labels[index]);
                                                     var day = date.getUTCDay();
-                                                    if (day !== 0 && day !== 6) {
+                                                    var bounds = getDayBounds(meta, chartArea, index);
+
+                                                    if (day === 0 || day === 6) {
+                                                        context.fillStyle = 'rgba(102, 0, 0, 0.65)';
+                                                        context.fillRect(bounds.left, chartArea.top, bounds.right - bounds.left, chartArea.bottom - chartArea.top);
+                                                    }
+
+                                                    var absence = absenceChartData[labels[index]];
+                                                    if (!absence || (absence.type !== 'urlaub' && absence.type !== 'krankheit')) {
                                                         return;
                                                     }
 
-                                                    var currentX = bar._model.x;
-                                                    var previousX = index > 0 ? meta.data[index - 1]._model.x : null;
-                                                    var nextX = index < meta.data.length - 1 ? meta.data[index + 1]._model.x : null;
-                                                    var left = previousX === null ? chartArea.left : (previousX + currentX) / 2;
-                                                    var right = nextX === null ? chartArea.right : (currentX + nextX) / 2;
-
-                                                    context.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
+                                                    context.fillStyle = absence.type === 'urlaub'
+                                                        ? 'rgba(0, 70, 0, 0.7)'
+                                                        : 'rgba(184, 134, 11, 0.7)';
+                                                    context.fillRect(
+                                                        bounds.left,
+                                                        yScale.getPixelForValue(absence.hours),
+                                                        bounds.right - bounds.left,
+                                                        chartArea.bottom - yScale.getPixelForValue(absence.hours)
+                                                    );
                                                 });
 
                                                 context.restore();
@@ -179,7 +210,7 @@
 
                                         new Chart(ctx, {
                                             type: 'bar',
-                                            plugins: [weekendBackgroundPlugin],
+                                            plugins: [backgroundPlugin],
                                             data: {
                                                 labels: labels,
                                                 datasets: [

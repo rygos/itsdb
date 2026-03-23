@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Vacation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -37,6 +38,8 @@ class HoursController extends Controller
         $forecastServiceDays = 0;
         $daysConsideredForAverage = 0;
         $projectCompletionDates = [];
+        $absenceChartData = [];
+        $excludedAverageDates = [];
         if ($selectedYear) {
             // Only finished projects contribute to the hours overview.
             $projects = Project::query()
@@ -73,6 +76,12 @@ class HoursController extends Controller
             }
 
             $totalHours = $dailyHours->sum();
+            $absenceChartData = $this->buildAbsenceChartData($selectedYear);
+            $excludedAverageDates = collect($absenceChartData)
+                ->filter(fn (array $absence): bool => in_array($absence['type'], [Vacation::TYPE_VACATION, Vacation::TYPE_SICKNESS], true))
+                ->keys()
+                ->values()
+                ->all();
             $projectCompletionDates = $projects
                 ->pluck('end_date')
                 ->filter()
@@ -81,7 +90,7 @@ class HoursController extends Controller
                 ->values()
                 ->all();
 
-            $daysConsideredForAverage = $this->count_average_days($startDate, $endDate, $projectCompletionDates);
+            $daysConsideredForAverage = $this->count_average_days($startDate, $endDate, $projectCompletionDates, $excludedAverageDates);
             $averageHours = $daysConsideredForAverage > 0 ? $totalHours / $daysConsideredForAverage : 0;
             $maxDailyHours = max(1, (int) $dailyHours->max());
             if ((int) $selectedYear === (int) Carbon::now()->year) {
@@ -89,7 +98,8 @@ class HoursController extends Controller
                 $fullYearAverageDays = $this->count_average_days(
                     Carbon::create($selectedYear, 1, 1)->startOfDay(),
                     Carbon::create($selectedYear, 12, 31)->endOfDay(),
-                    $projectCompletionDates
+                    $projectCompletionDates,
+                    $excludedAverageDates
                 );
                 $forecastHours = $averageHours * $fullYearAverageDays;
                 $forecastServiceDays = $forecastHours / 8;
@@ -107,16 +117,69 @@ class HoursController extends Controller
             'averageHours' => $averageHours,
             'daysConsideredForAverage' => $daysConsideredForAverage,
             'projectCompletionDates' => $projectCompletionDates,
+            'absenceChartData' => $absenceChartData,
+            'excludedAverageDates' => $excludedAverageDates,
             'maxDailyHours' => $maxDailyHours,
             'forecastServiceDays' => $forecastServiceDays,
         ]);
     }
 
-    private function count_average_days(Carbon $startDate, Carbon $endDate, array $projectCompletionDates): int
+    private function buildAbsenceChartData(int|string $selectedYear): array
+    {
+        $startDate = Carbon::create((int) $selectedYear, 1, 1)->startOfDay();
+        $endDate = Carbon::create((int) $selectedYear, 12, 31)->endOfDay();
+        if ((int) $selectedYear === (int) Carbon::now()->year) {
+            $endDate = Carbon::now()->endOfDay();
+        }
+
+        $vacations = Vacation::query()
+            ->where('user_id', auth()->id())
+            ->whereDate('start_date', '<=', $endDate->toDateString())
+            ->whereDate('end_date', '>=', $startDate->toDateString())
+            ->orderBy('start_date')
+            ->get();
+
+        $chartData = [];
+        foreach ($vacations as $vacation) {
+            $cursor = Carbon::parse($vacation->start_date)->max($startDate)->startOfDay();
+            $vacationEnd = Carbon::parse($vacation->end_date)->min($endDate)->startOfDay();
+            $holidays = $this->nrw_holidays((int) $cursor->year, (int) $vacationEnd->year);
+
+            while ($cursor->lte($vacationEnd)) {
+                $dateKey = $cursor->toDateString();
+                if ($cursor->isWeekend() || in_array($dateKey, $holidays, true)) {
+                    $cursor->addDay();
+                    continue;
+                }
+
+                $hours = 8;
+                $isSingleDay = $vacation->start_date->toDateString() === $vacation->end_date->toDateString();
+                if ($isSingleDay) {
+                    $hours = ($vacation->start_day_portion === Vacation::PORTION_HALF || $vacation->end_day_portion === Vacation::PORTION_HALF) ? 4 : 8;
+                } elseif ($dateKey === $vacation->start_date->toDateString() && $vacation->start_day_portion === Vacation::PORTION_HALF) {
+                    $hours = 4;
+                } elseif ($dateKey === $vacation->end_date->toDateString() && $vacation->end_day_portion === Vacation::PORTION_HALF) {
+                    $hours = 4;
+                }
+
+                $chartData[$dateKey] = [
+                    'type' => $vacation->type,
+                    'hours' => $hours,
+                ];
+
+                $cursor->addDay();
+            }
+        }
+
+        return $chartData;
+    }
+
+    private function count_average_days(Carbon $startDate, Carbon $endDate, array $projectCompletionDates, array $excludedAverageDates): int
     {
         // Averages use weekdays plus weekend dates that actually had finished projects.
         $holidays = $this->nrw_holidays((int)$startDate->year, (int)$endDate->year);
         $projectCompletionDateLookup = array_fill_keys($projectCompletionDates, true);
+        $excludedAverageDateLookup = array_fill_keys($excludedAverageDates, true);
         $days = 0;
         $cursor = $startDate->copy()->startOfDay();
         $end = $endDate->copy()->startOfDay();
@@ -126,8 +189,9 @@ class HoursController extends Controller
             $isWeekend = $cursor->isWeekend();
             $isHoliday = in_array($dateKey, $holidays, true);
             $hasProjectCompletion = isset($projectCompletionDateLookup[$dateKey]);
+            $isExcludedAverageDate = isset($excludedAverageDateLookup[$dateKey]);
 
-            if ((!$isWeekend && !$isHoliday) || ($isWeekend && $hasProjectCompletion)) {
+            if (!$isExcludedAverageDate && ((!$isWeekend && !$isHoliday) || ($isWeekend && $hasProjectCompletion))) {
                 $days++;
             }
             $cursor->addDay();

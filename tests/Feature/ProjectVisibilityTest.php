@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Project;
 use App\Models\Status;
 use App\Models\User;
+use App\Models\Vacation;
 use App\Http\Middleware\VerifyCsrfToken;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,12 +62,36 @@ class ProjectVisibilityTest extends TestCase
             'hours' => 12,
         ]);
 
+        Vacation::create([
+            'user_id' => $user->id,
+            'type' => Vacation::TYPE_VACATION,
+            'start_date' => '2026-01-19',
+            'end_date' => '2026-01-19',
+            'start_day_portion' => Vacation::PORTION_HALF,
+            'end_day_portion' => Vacation::PORTION_FULL,
+            'days' => 0,
+            'day_units' => 1,
+        ]);
+
+        Vacation::create([
+            'user_id' => $user->id,
+            'type' => Vacation::TYPE_SICKNESS,
+            'start_date' => '2026-01-20',
+            'end_date' => '2026-01-20',
+            'start_day_portion' => Vacation::PORTION_FULL,
+            'end_day_portion' => Vacation::PORTION_FULL,
+            'days' => 1,
+            'day_units' => 2,
+        ]);
+
         $response = $this->actingAs($user)->get(route('hours.index', ['year' => 2026]));
 
         $response->assertOk();
         $response->assertSee('Own finished project');
         $response->assertDontSee('Other finished project');
         $response->assertSee('Wochenende');
+        $response->assertSee('Urlaub');
+        $response->assertSee('Krankheit');
         $response->assertSee('Wochendurchschnitt');
     }
 
