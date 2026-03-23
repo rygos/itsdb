@@ -38,7 +38,7 @@ class ComposeServiceExporter
         return $services;
     }
 
-    public function dumpServices(iterable $containers): string
+    public function dumpServices(iterable $containers, int $indent = 0): string
     {
         $services = $this->buildServicesPayload($containers);
 
@@ -46,6 +46,16 @@ class ComposeServiceExporter
             return '';
         }
 
-        return Yaml::dump($services, 8, 2);
+        $yaml = Yaml::dump($services, 8, 2);
+
+        if ($indent <= 0) {
+            return $yaml;
+        }
+
+        $prefix = str_repeat(' ', $indent);
+
+        return collect(preg_split("/\r\n|\n|\r/", $yaml) ?: [])
+            ->map(fn (string $line) => $line === '' ? $line : $prefix . $line)
+            ->implode("\n");
     }
 }

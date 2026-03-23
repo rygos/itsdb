@@ -35,7 +35,7 @@ class ProductMatrixController extends Controller
 
         $entries = $query->get();
         $entries->each(function (ProductMatrix $entry) {
-            $entry->copy_compose_services = $this->composeServiceExporter->dumpServices($entry->containers);
+            $entry->copy_compose_services = $this->composeServiceExporter->dumpServices($entry->containers, 2);
         });
 
         return view('product_matrix.index', [

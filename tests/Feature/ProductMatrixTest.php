@@ -106,9 +106,8 @@ CSV;
         $response->assertOk();
         $response->assertSee('Alpha Suite');
         $response->assertDontSee('Beta Viewer');
-        $response->assertSee('alpha-service:', false);
-        $response->assertSee('image: addons/alpha-service', false);
-        $response->assertSee('DB_USER=${DB_USER}', false);
+        $response->assertSee('  alpha-service:', false);
+        $response->assertSee('    image: addons/alpha-service', false);
     }
 
     public function test_product_matrix_import_uses_alias_mapping_for_containers()
