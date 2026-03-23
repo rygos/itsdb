@@ -79,6 +79,7 @@
                             <div class="admin-tabs admin-subtabs">
                                 <a href="{{ route('administration.index', ['tab' => 'administration', 'subtab' => 'import']) }}" class="{{ $subtab === 'import' ? 'active' : '' }}">Import</a>
                                 <a href="{{ route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']) }}" class="{{ $subtab === 'master-data' ? 'active' : '' }}">Stammdaten</a>
+                                <a href="{{ route('administration.index', ['tab' => 'administration', 'subtab' => 'quality']) }}" class="{{ $subtab === 'quality' ? 'active' : '' }}">Datenqualitaet</a>
                                 <a href="{{ route('administration.index', ['tab' => 'administration', 'subtab' => 'settings']) }}" class="{{ $subtab === 'settings' ? 'active' : '' }}">Einstellungen</a>
                             </div>
                         </td>
@@ -327,10 +328,52 @@
                         @endforelse
                     </tbody>
                 </table>
+            @elseif($subtab === 'quality')
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="2">Datenqualitaets-Center</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Kunden ohne Ort</td>
+                            <td>{{ $customersWithoutCity->count() }}</td>
+                        </tr>
+                        <tr>
+                            <td>Server ohne Betriebssystem</td>
+                            <td>{{ $serversWithoutOperatingSystem->count() }}</td>
+                        </tr>
+                        <tr>
+                            <td>Server ohne Serverart</td>
+                            <td>{{ $serversWithoutServerKind->count() }}</td>
+                        </tr>
+                        <tr>
+                            <td>Projekte ohne Stunden</td>
+                            <td>{{ $projectsWithoutHours->count() }}</td>
+                        </tr>
+                        <tr>
+                            <td>Doppelte SAP-Nummern</td>
+                            <td>{{ $duplicateSapCustomers->groupBy('sap_no')->count() }}</td>
+                        </tr>
+                        <tr>
+                            <td>Doppelte Short-Nummern</td>
+                            <td>{{ $duplicateShortCustomers->groupBy('short_no')->count() }}</td>
+                        </tr>
+                        <tr>
+                            <td>Credentials ohne Server</td>
+                            <td>{{ $credentialsWithoutServers->count() }}</td>
+                        </tr>
+                        <tr>
+                            <td>Compose-Dateien ohne Container-Zuordnung</td>
+                            <td>{{ $composeWithoutContainers->count() }}</td>
+                        </tr>
+                    </tbody>
+                </table>
                 <table id="missing-cities" class="pouetbox_prodmain">
                     <thead>
                         <tr id="prodheader">
-                            <th colspan="5">Ort fuer fehlende City-Zuordnungen anlegen oder zuweisen</th>
+                            <th colspan="5">Kunden ohne Ort</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -392,6 +435,203 @@
                         @empty
                             <tr>
                                 <td colspan="5">Keine Kunden ohne City-Zuordnung vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="5">Server ohne Betriebssystem</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>Server</th>
+                            <th>Kunde</th>
+                            <th>Typ</th>
+                            <th>IP</th>
+                            <th>Erstellt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($serversWithoutOperatingSystem as $server)
+                            <tr>
+                                <td><a href="{{ route('servers.view', $server->id) }}">{{ $server->servername ?: '-' }}</a></td>
+                                <td>{{ $server->customer?->name ?? '-' }}</td>
+                                <td>{{ $server->type ?: '-' }}</td>
+                                <td>{{ $server->int_ip ?: $server->ext_ip ?: '-' }}</td>
+                                <td>{{ optional($server->created_at)->format('Y-m-d H:i') ?? '-' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5">Keine Server ohne Betriebssystem vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="5">Server ohne Serverart</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>Server</th>
+                            <th>Kunde</th>
+                            <th>Typ</th>
+                            <th>IP</th>
+                            <th>Erstellt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($serversWithoutServerKind as $server)
+                            <tr>
+                                <td><a href="{{ route('servers.view', $server->id) }}">{{ $server->servername ?: '-' }}</a></td>
+                                <td>{{ $server->customer?->name ?? '-' }}</td>
+                                <td>{{ $server->type ?: '-' }}</td>
+                                <td>{{ $server->int_ip ?: $server->ext_ip ?: '-' }}</td>
+                                <td>{{ optional($server->created_at)->format('Y-m-d H:i') ?? '-' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5">Keine Server ohne Serverart vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="6">Projekte ohne Stunden</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>Projekt</th>
+                            <th>Kunde</th>
+                            <th>User</th>
+                            <th>Status</th>
+                            <th>Ende</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($projectsWithoutHours as $project)
+                            <tr>
+                                <td>{{ $project->name }}</td>
+                                <td>{{ $project->customer?->name ?? '-' }}</td>
+                                <td>{{ $project->user?->name ?? '-' }}</td>
+                                <td>{{ $project->status?->name ?? '-' }}</td>
+                                <td>{{ optional($project->end_date)->format('Y-m-d') ?? '-' }}</td>
+                                <td><a href="{{ route('projects.view', $project) }}">Projekt oeffnen</a></td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6">Keine Projekte ohne Stunden vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="4">Doppelte SAP-Nummern</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>SAP</th>
+                            <th>Short</th>
+                            <th>Kunde</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($duplicateSapCustomers as $customer)
+                            <tr>
+                                <td>{{ $customer->sap_no }}</td>
+                                <td>{{ $customer->short_no }}</td>
+                                <td>{{ $customer->name }}</td>
+                                <td><a href="{{ route('customers.view', $customer) }}">Kunde oeffnen</a></td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4">Keine doppelten SAP-Nummern vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="4">Doppelte Short-Nummern</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>Short</th>
+                            <th>SAP</th>
+                            <th>Kunde</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($duplicateShortCustomers as $customer)
+                            <tr>
+                                <td>{{ $customer->short_no }}</td>
+                                <td>{{ $customer->sap_no }}</td>
+                                <td>{{ $customer->name }}</td>
+                                <td><a href="{{ route('customers.view', $customer) }}">Kunde oeffnen</a></td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4">Keine doppelten Short-Nummern vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="4">Credentials ohne Server</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>Username</th>
+                            <th>Typ</th>
+                            <th>Kunden-ID</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($credentialsWithoutServers as $credential)
+                            <tr>
+                                <td>{{ $credential->username }}</td>
+                                <td>{{ $credential->type }}</td>
+                                <td>{{ $credential->customer_id }}</td>
+                                <td><a href="{{ route('customers.view', $credential->customer_id) }}">Kunde oeffnen</a></td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4">Keine Credentials ohne Server vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <table id="pouetbox_prodmain">
+                    <thead>
+                        <tr id="prodheader">
+                            <th colspan="4">Compose-Dateien ohne Container-Zuordnung</th>
+                        </tr>
+                        <tr id="prodheader">
+                            <th>Titel</th>
+                            <th>Datei</th>
+                            <th>Importdatum</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($composeWithoutContainers as $compose)
+                            <tr>
+                                <td>{{ $compose->title }}</td>
+                                <td>{{ $compose->compose_filename }}</td>
+                                <td>{{ optional($compose->orig_date)->format('Y-m-d H:i') ?? '-' }}</td>
+                                <td><a href="{{ route('compose.show', $compose->compose_filename) }}">Compose oeffnen</a></td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4">Keine Compose-Dateien ohne Container-Zuordnung vorhanden.</td>
                             </tr>
                         @endforelse
                     </tbody>

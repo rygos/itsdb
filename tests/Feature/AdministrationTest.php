@@ -4,7 +4,12 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\AppSetting;
+use App\Models\Composer;
+use App\Models\Credential;
+use App\Models\Customer;
 use App\Models\OperatingSystem;
+use App\Models\Project;
+use App\Models\Server;
 use App\Models\ServerKind;
 use App\Models\Status;
 use App\Models\User;
@@ -173,5 +178,79 @@ class AdministrationTest extends TestCase
         $this->assertFalse(AppSetting::getBoolean('registration_enabled'));
         auth()->logout();
         $this->get(route('register'))->assertNotFound();
+    }
+
+    public function test_quality_center_lists_data_quality_issues(): void
+    {
+        $admin = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $customerWithoutCity = Customer::query()->create([
+            'user_id' => $admin->id,
+            'short_no' => 1100,
+            'sap_no' => 'DUP-SAP',
+            'dynamics_no' => 'x',
+            'name' => 'Ohne Ort',
+            'city_id' => null,
+        ]);
+
+        Customer::query()->create([
+            'user_id' => $otherUser->id,
+            'short_no' => 1100,
+            'sap_no' => 'DUP-SAP',
+            'dynamics_no' => 'x',
+            'name' => 'Duplikat',
+            'city_id' => null,
+        ]);
+
+        $status = Status::query()->create([
+            'name' => 'OPEN',
+        ]);
+
+        Project::query()->create([
+            'dynamics_id' => 'QA-1',
+            'name' => 'Projekt ohne Stunden',
+            'customer_id' => $customerWithoutCity->id,
+            'user_id' => $admin->id,
+            'status_id' => $status->id,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDay(),
+            'hours' => null,
+        ]);
+
+        Server::query()->create([
+            'customer_id' => $customerWithoutCity->id,
+            'user_id' => $admin->id,
+            'servername' => 'srv-ohne-os-und-art',
+            'operating_system_id' => null,
+            'server_kind_id' => null,
+        ]);
+
+        $credential = new Credential;
+        $credential->customer_id = $customerWithoutCity->id;
+        $credential->user_id = $admin->id;
+        $credential->username = 'orphan-user';
+        $credential->password = 'secret';
+        $credential->type = 'Windows Misc';
+        $credential->save();
+
+        Composer::query()->create([
+            'title' => 'compose-ohne-container',
+            'compose_filename' => 'compose-ohne-container.yml',
+            'orig_url' => 'upload',
+            'orig_compose' => 'services: {}',
+            'orig_date' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('administration.index', ['tab' => 'administration', 'subtab' => 'quality']))
+            ->assertOk()
+            ->assertSee('Datenqualitaets-Center')
+            ->assertSee('Kunden ohne Ort')
+            ->assertSee('Projekt ohne Stunden')
+            ->assertSee('srv-ohne-os-und-art')
+            ->assertSee('DUP-SAP')
+            ->assertSee('orphan-user')
+            ->assertSee('compose-ohne-container');
     }
 }

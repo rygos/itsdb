@@ -5,8 +5,8 @@ namespace Tests\Feature;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\City;
 use App\Models\Customer;
-use App\Models\ServerKind;
 use App\Models\Server;
+use App\Models\ServerKind;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -250,7 +250,7 @@ CSV;
 
         $this->actingAs($admin)->post(route('administration.customers.city.update', $customer), [
             'city_id' => $city->id,
-        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']) . '#missing-cities');
+        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'quality']).'#missing-cities');
 
         $this->assertDatabaseHas('customers', [
             'id' => $customer->id,
@@ -265,7 +265,7 @@ CSV;
         $this->actingAs($admin)->post(route('administration.cities.store'), [
             'name' => 'Hamburg',
             'country_code' => 'DE',
-        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'master-data']) . '#missing-cities');
+        ])->assertRedirect(route('administration.index', ['tab' => 'administration', 'subtab' => 'quality']).'#missing-cities');
 
         $this->assertDatabaseHas('citys', [
             'name' => 'Hamburg',

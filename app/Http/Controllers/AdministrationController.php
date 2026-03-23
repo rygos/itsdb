@@ -4,16 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\AppSetting;
 use App\Models\City;
+use App\Models\Composer;
+use App\Models\Credential;
 use App\Models\Customer;
 use App\Models\OperatingSystem;
+use App\Models\Project;
 use App\Models\Server;
 use App\Models\ServerKind;
 use App\Models\Status;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -25,7 +28,7 @@ class AdministrationController extends Controller
 
     private function administrationRoute(string $subtab, ?string $anchor = null): string
     {
-        return route('administration.index', ['tab' => 'administration', 'subtab' => $subtab]) . ($anchor ?? '');
+        return route('administration.index', ['tab' => 'administration', 'subtab' => $subtab]).($anchor ?? '');
     }
 
     public function index(Request $request): View
@@ -44,6 +47,40 @@ class AdministrationController extends Controller
             'serverKinds' => ServerKind::query()->withCount('servers')->orderBy('name')->get(),
             'operatingSystems' => OperatingSystem::query()->withCount('servers')->orderBy('name')->get(),
             'customersWithoutCity' => Customer::query()->whereNull('city_id')->orderBy('short_no')->get(),
+            'serversWithoutOperatingSystem' => Server::query()
+                ->with('customer')
+                ->whereNull('operating_system_id')
+                ->orderBy('servername')
+                ->get(),
+            'serversWithoutServerKind' => Server::query()
+                ->with('customer')
+                ->whereNull('server_kind_id')
+                ->orderBy('servername')
+                ->get(),
+            'projectsWithoutHours' => Project::query()
+                ->with(['customer', 'status', 'user'])
+                ->whereNull('hours')
+                ->orderBy('name')
+                ->get(),
+            'duplicateSapCustomers' => Customer::query()
+                ->whereIn('sap_no', $this->duplicateCustomerValues('sap_no'))
+                ->orderBy('sap_no')
+                ->orderBy('short_no')
+                ->get(),
+            'duplicateShortCustomers' => Customer::query()
+                ->whereIn('short_no', $this->duplicateCustomerValues('short_no'))
+                ->orderBy('short_no')
+                ->orderBy('sap_no')
+                ->get(),
+            'credentialsWithoutServers' => Credential::query()
+                ->whereDoesntHave('servers')
+                ->orderBy('type')
+                ->orderBy('username')
+                ->get(),
+            'composeWithoutContainers' => Composer::query()
+                ->whereDoesntHave('rel')
+                ->orderBy('title')
+                ->get(),
             'registrationEnabled' => AppSetting::getBoolean('registration_enabled', config('app.registration_enabled')),
             'permissionAreas' => User::permissionAreas(),
             'permissionLevels' => User::permissionLevels(),
@@ -74,7 +111,7 @@ class AdministrationController extends Controller
         $user->name = $validated['name'];
         $user->email = $validated['email'];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
 
@@ -220,20 +257,23 @@ class AdministrationController extends Controller
 
             foreach ($rows as $row) {
                 $shortNo = trim((string) $this->csvValue($row, $headerMap, 'Kd.Nummer'));
-                if ($shortNo === '' || !is_numeric($shortNo)) {
+                if ($shortNo === '' || ! is_numeric($shortNo)) {
                     $skippedCount++;
+
                     continue;
                 }
 
                 $shortNo = (int) $shortNo;
                 if (isset($seenShortNumbers[$shortNo])) {
                     $skippedCount++;
+
                     continue;
                 }
                 $seenShortNumbers[$shortNo] = true;
 
                 if (Customer::query()->where('short_no', $shortNo)->exists()) {
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -242,7 +282,7 @@ class AdministrationController extends Controller
                     strtolower((string) $request->input('fallback_country_code', 'de'))
                 );
 
-                $customer = new Customer();
+                $customer = new Customer;
                 $customer->short_no = $shortNo;
                 $customer->user_id = $request->user()->id;
                 $customer->sap_no = trim((string) $this->csvValue($row, $headerMap, 'SAP-Nr.'));
@@ -257,7 +297,7 @@ class AdministrationController extends Controller
 
         return redirect()
             ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
-            ->with('status', $importedCount . ' Kunden importiert, ' . $skippedCount . ' uebersprungen.');
+            ->with('status', $importedCount.' Kunden importiert, '.$skippedCount.' uebersprungen.');
     }
 
     public function importOrbisUServers(Request $request): RedirectResponse
@@ -278,8 +318,9 @@ class AdministrationController extends Controller
                 $hostname = trim((string) $this->csvValue($row, $headerMap, 'VM-Hostname'));
                 $shortNo = $this->extractLeadingNumber((string) $this->csvValue($row, $headerMap, 'Kunde'));
 
-                if ($hostname === '' || !$shortNo) {
+                if ($hostname === '' || ! $shortNo) {
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -294,6 +335,7 @@ class AdministrationController extends Controller
 
                 if ($server && $importUpdatedAt && $server->updated_at && $importUpdatedAt->lessThanOrEqualTo($server->updated_at)) {
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -321,7 +363,7 @@ class AdministrationController extends Controller
 
         return redirect()
             ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
-            ->with('status', $importedCount . ' Server importiert, ' . $skippedCount . ' uebersprungen.');
+            ->with('status', $importedCount.' Server importiert, '.$skippedCount.' uebersprungen.');
     }
 
     public function importOasServers(Request $request): RedirectResponse
@@ -343,15 +385,17 @@ class AdministrationController extends Controller
                 $ipAddress = trim((string) $this->csvValue($row, $headerMap, 'IP-Adresse'));
                 $shortNo = $this->extractProjectShortNumber((string) $this->csvValue($row, $headerMap, 'Projekt / SAP Nr'));
 
-                if ($hostname === '' || $ipAddress === '' || !$shortNo) {
+                if ($hostname === '' || $ipAddress === '' || ! $shortNo) {
                     $skippedCount++;
+
                     continue;
                 }
 
                 $customer = Customer::query()->where('short_no', $shortNo)->first();
 
-                if (!$customer) {
+                if (! $customer) {
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -381,7 +425,7 @@ class AdministrationController extends Controller
 
         return redirect()
             ->route('administration.index', ['tab' => 'administration', 'subtab' => 'import'])
-            ->with('status', $importedCount . ' OAS-Server importiert, ' . $skippedCount . ' uebersprungen.');
+            ->with('status', $importedCount.' OAS-Server importiert, '.$skippedCount.' uebersprungen.');
     }
 
     public function updateCity(Request $request, City $city): RedirectResponse
@@ -431,7 +475,7 @@ class AdministrationController extends Controller
 
         $cityId = $validated['city_id'] ?? null;
 
-        if (!$cityId && !empty($validated['city_name'])) {
+        if (! $cityId && ! empty($validated['city_name'])) {
             $cityId = $this->findCityIdByName($validated['city_name']);
         }
 
@@ -448,7 +492,19 @@ class AdministrationController extends Controller
 
     private function administrationMasterDataUrlWithAnchor(): string
     {
-        return $this->administrationRoute('master-data', self::MISSING_CITIES_ANCHOR);
+        return $this->administrationRoute('quality', self::MISSING_CITIES_ANCHOR);
+    }
+
+    private function duplicateCustomerValues(string $column): array
+    {
+        return Customer::query()
+            ->select($column)
+            ->whereNotNull($column)
+            ->where($column, '!=', '')
+            ->groupBy($column)
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck($column)
+            ->all();
     }
 
     private function readCsvRows(UploadedFile $file): array
@@ -471,6 +527,7 @@ class AdministrationController extends Controller
 
             if ($header === []) {
                 $header = $row;
+
                 continue;
             }
 
@@ -640,7 +697,7 @@ class AdministrationController extends Controller
             'orbisu' => 'Orbis U',
         ][$normalized] ?? null;
 
-        if (!$serverKindName) {
+        if (! $serverKindName) {
             return null;
         }
 
