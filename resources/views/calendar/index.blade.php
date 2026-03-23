@@ -1,6 +1,31 @@
 @extends('layouts.app')
 @section('title', 'Calendar')
 @section('content')
+    <style>
+        .calendar-vacations {
+            margin-top: 18px;
+        }
+        .calendar-vacations__controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .calendar-vacations__hint {
+            margin: 6px 0 10px;
+            font-size: 12px;
+            color: #444;
+        }
+        .calendar-vacations table td,
+        .calendar-vacations table th {
+            text-align: left;
+        }
+        .calendar-vacations .itsdb-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    </style>
     <div id="prodpagecontainer">
         <table id="pouetbox_prodmain">
             <tr id="prodheader">
@@ -106,6 +131,71 @@
                             <div style="margin-top: 6px;"><em>Keine Projekte gefunden.</em></div>
                         @endif
                     @endif
+
+                    <div class="calendar-vacations">
+                        <div class="calendar-vacations__controls">
+                            <strong>Urlaub {{ $date->format('Y') }}</strong>
+                            <form method="GET" action="{{ route('calendar.index') }}">
+                                <select name="year" onchange="window.location='{{ url('/calendar') }}/'+this.value+'/{{ $date->format('m') }}'">
+                                    @foreach($years as $year)
+                                        <option value="{{ $year }}" @if((int) $year === (int) $date->format('Y')) selected @endif>{{ $year }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        </div>
+                        <div class="calendar-vacations__hint">
+                            Urlaubstage werden ohne Wochenenden und ohne NRW-Feiertage berechnet.
+                        </div>
+                        <table id="pouetbox_prodmain">
+                            <thead>
+                                <tr id="prodheader">
+                                    <th>Von</th>
+                                    <th>Bis</th>
+                                    <th>Tage</th>
+                                    <th>Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($vacations as $vacation)
+                                    <tr>
+                                        @if(auth()->user()->hasPermission('calendar', 'editable'))
+                                            {{ html()->form()->route('calendar.vacations.update', $vacation)->open() }}
+                                            <td>{{ html()->input('date', 'start_date', $vacation->start_date->toDateString()) }}</td>
+                                            <td>{{ html()->input('date', 'end_date', $vacation->end_date->toDateString()) }}</td>
+                                            <td>{{ $vacation->days }}</td>
+                                            <td>
+                                                <div class="itsdb-actions">
+                                                    {{ html()->submit('Speichern') }}
+                                                    <button type="submit" formaction="{{ route('calendar.vacations.delete', $vacation) }}">Loeschen</button>
+                                                </div>
+                                            </td>
+                                            {{ html()->form()->close() }}
+                                        @else
+                                            <td>{{ $vacation->start_date->toDateString() }}</td>
+                                            <td>{{ $vacation->end_date->toDateString() }}</td>
+                                            <td>{{ $vacation->days }}</td>
+                                            <td>-</td>
+                                        @endif
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4">Keine Urlaube fuer dieses Jahr vorhanden.</td>
+                                    </tr>
+                                @endforelse
+
+                                @if(auth()->user()->hasPermission('calendar', 'editable'))
+                                    <tr>
+                                        {{ html()->form()->route('calendar.vacations.store')->open() }}
+                                        <td>{{ html()->input('date', 'start_date', $date->copy()->startOfMonth()->toDateString()) }}</td>
+                                        <td>{{ html()->input('date', 'end_date', $date->copy()->startOfMonth()->toDateString()) }}</td>
+                                        <td>Automatisch</td>
+                                        <td>{{ html()->submit('Urlaub hinzufuegen') }}</td>
+                                        {{ html()->form()->close() }}
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
                 </td>
             </tr>
         </table>

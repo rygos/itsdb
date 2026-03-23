@@ -117,6 +117,9 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/calendar/{year?}/{month?}', [CalendarController::class, 'index'])->middleware('area:calendar,visible')->name('calendar.index');
+    Route::post('/calendar/vacations', [CalendarController::class, 'storeVacation'])->middleware('area:calendar,editable')->name('calendar.vacations.store');
+    Route::post('/calendar/vacations/{vacation}', [CalendarController::class, 'updateVacation'])->middleware('area:calendar,editable')->name('calendar.vacations.update');
+    Route::post('/calendar/vacations/{vacation}/delete', [CalendarController::class, 'deleteVacation'])->middleware('area:calendar,editable')->name('calendar.vacations.delete');
     Route::get('/logs', [LogsController::class, 'index'])->name('logs.index');
 
     Route::get('/env/generate/server/{server_id}', [EnvController::class, 'generate'])->name('env.generate');
