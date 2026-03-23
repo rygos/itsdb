@@ -2,6 +2,15 @@
 
 use Illuminate\Support\Str;
 
+$mysqlSslCaOption = null;
+if (extension_loaded('pdo_mysql')) {
+    if (class_exists(\Pdo\Mysql::class) && defined(\Pdo\Mysql::class.'::ATTR_SSL_CA')) {
+        $mysqlSslCaOption = constant(\Pdo\Mysql::class.'::ATTR_SSL_CA');
+    } elseif (PHP_VERSION_ID < 80400 && defined('PDO::MYSQL_ATTR_SSL_CA')) {
+        $mysqlSslCaOption = constant('PDO::MYSQL_ATTR_SSL_CA');
+    }
+}
+
 return [
 
     /*
@@ -58,9 +67,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            // PHP 8.5 deprecates the old constant access; this fallback keeps older runtimes working.
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (class_exists(\Pdo\Mysql::class) ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            // Prefer the new PDO MySQL constant on PHP 8.4+ while staying compatible with PHP 8.2 targets.
+            'options' => $mysqlSslCaOption !== null ? array_filter([
+                $mysqlSslCaOption => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
