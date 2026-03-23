@@ -36,6 +36,10 @@ class HoursController extends Controller
         $averageHours = 0;
         $maxDailyHours = 0;
         $forecastServiceDays = 0;
+        $serviceDaysTarget = 139;
+        $serviceDaysCompleted = 0;
+        $serviceDaysCompletionPercent = 0;
+        $serviceDaysRemaining = $serviceDaysTarget;
         $daysConsideredForAverage = 0;
         $projectCompletionDates = [];
         $absenceChartData = [];
@@ -76,6 +80,11 @@ class HoursController extends Controller
             }
 
             $totalHours = $dailyHours->sum();
+            $serviceDaysCompleted = $totalHours / 8;
+            $serviceDaysCompletionPercent = $serviceDaysTarget > 0
+                ? ($serviceDaysCompleted / $serviceDaysTarget) * 100
+                : 0;
+            $serviceDaysRemaining = max(0, $serviceDaysTarget - $serviceDaysCompleted);
             $absenceChartData = $this->buildAbsenceChartData($selectedYear);
             $excludedAverageDates = collect($absenceChartData)
                 ->filter(fn (array $absence): bool => in_array($absence['type'], [Vacation::TYPE_VACATION, Vacation::TYPE_SICKNESS], true))
@@ -115,6 +124,10 @@ class HoursController extends Controller
             'dailyHours' => $dailyHours,
             'totalHours' => $totalHours,
             'averageHours' => $averageHours,
+            'serviceDaysTarget' => $serviceDaysTarget,
+            'serviceDaysCompleted' => $serviceDaysCompleted,
+            'serviceDaysCompletionPercent' => $serviceDaysCompletionPercent,
+            'serviceDaysRemaining' => $serviceDaysRemaining,
             'daysConsideredForAverage' => $daysConsideredForAverage,
             'projectCompletionDates' => $projectCompletionDates,
             'absenceChartData' => $absenceChartData,

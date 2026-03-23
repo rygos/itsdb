@@ -60,9 +60,11 @@
                             </form>
                             <div class="hours-summary">
                                 <div><strong>Gesamtstunden {{ $selectedYear }}:</strong> {{ $totalHours }}</div>
-                                <div><strong>Dienstleistungstage (8h):</strong> {{ number_format($totalHours / 8, 2) }}</div>
+                                <div><strong>Dienstleistungstage (8h):</strong> {{ number_format($serviceDaysCompleted, 2) }}</div>
                                 <div><strong>Durchschnitt pro beruecksichtigtem Tag:</strong> {{ number_format($averageHours, 2) }}</div>
                                 <div><strong>Forecast Dienstleistungstage bis Jahresende:</strong> {{ number_format($forecastServiceDays, 2) }}</div>
+                                <div><strong>Anteil von {{ $serviceDaysTarget }} Dienstleistungstagen:</strong> {{ number_format($serviceDaysCompletionPercent, 2) }}%</div>
+                                <div><strong>Fehlende Dienstleistungstage bis {{ $serviceDaysTarget }}:</strong> {{ number_format($serviceDaysRemaining, 2) }}</div>
                             </div>
                             @if($dailyHours->isNotEmpty())
                                 <div class="hours-chart">
