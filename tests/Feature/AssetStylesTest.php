@@ -96,6 +96,9 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('event.preventDefault();', $view);
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
+        $this->assertStringContainsString('function reconcileWorkspaceMappings()', $view);
+        $this->assertStringContainsString('productContainerIds[productId].add(String(container.id));', $view);
+        $this->assertStringContainsString('containerProductIds[containerId].add(String(product.id));', $view);
         $this->assertStringContainsString('getCoveredProducts(baselineContainerIds, true)', $view);
     }
 

@@ -244,21 +244,100 @@
             var containerSearch = root.querySelector('[data-container-search]');
             var analyzeTimer = null;
 
-            containers.forEach(function(container) {
-                containerMap[container.id] = container;
-                containerTitleMap[normalizeKey(container.title)] = container;
-            });
-
-            products.forEach(function(product) {
-                productMap[product.id] = product;
-            });
-
             function normalizeKey(value) {
                 return (value || '')
                     .trim()
                     .replace(/^['"]|['"]$/g, '')
                     .toLowerCase();
             }
+
+            function uniqueValues(values) {
+                return Array.from(new Set((values || []).map(function(value) {
+                    return String(value);
+                })));
+            }
+
+            function reconcileWorkspaceMappings() {
+                var productContainerIds = {};
+                var containerProductIds = {};
+
+                products.forEach(function(product) {
+                    productContainerIds[product.id] = new Set(uniqueValues(product.container_ids));
+                });
+
+                containers.forEach(function(container) {
+                    containerProductIds[container.id] = new Set(uniqueValues(container.product_ids));
+                });
+
+                containers.forEach(function(container) {
+                    uniqueValues(container.product_ids).forEach(function(productId) {
+                        if (!productContainerIds[productId]) {
+                            productContainerIds[productId] = new Set();
+                        }
+
+                        productContainerIds[productId].add(String(container.id));
+                    });
+                });
+
+                products.forEach(function(product) {
+                    uniqueValues(product.container_ids).forEach(function(containerId) {
+                        if (!containerProductIds[containerId]) {
+                            containerProductIds[containerId] = new Set();
+                        }
+
+                        containerProductIds[containerId].add(String(product.id));
+                    });
+                });
+
+                products = products.map(function(product) {
+                    var containerIds = Array.from(productContainerIds[product.id] || []).sort(function(left, right) {
+                        var leftContainer = containerMap[left];
+                        var rightContainer = containerMap[right];
+                        var leftTitle = leftContainer ? leftContainer.title : left;
+                        var rightTitle = rightContainer ? rightContainer.title : right;
+
+                        return leftTitle.localeCompare(rightTitle);
+                    });
+
+                    return Object.assign({}, product, {
+                        container_ids: containerIds,
+                        container_titles: containerIds.map(function(containerId) {
+                            return containerMap[containerId] ? containerMap[containerId].title : containerId;
+                        }),
+                    });
+                }).filter(function(product) {
+                    return (product.container_ids || []).length > 0;
+                });
+
+                productMap = {};
+                products.forEach(function(product) {
+                    productMap[product.id] = product;
+                });
+
+                containers = containers.map(function(container) {
+                    var productIds = Array.from(containerProductIds[container.id] || []).filter(function(productId) {
+                        return !!productMap[productId];
+                    }).sort(function(left, right) {
+                        return productMap[left].label.localeCompare(productMap[right].label);
+                    });
+
+                    return Object.assign({}, container, {
+                        product_ids: productIds,
+                        product_labels: productIds.map(function(productId) {
+                            return productMap[productId].label;
+                        }),
+                    });
+                });
+
+                containerMap = {};
+                containerTitleMap = {};
+                containers.forEach(function(container) {
+                    containerMap[container.id] = container;
+                    containerTitleMap[normalizeKey(container.title)] = container;
+                });
+            }
+
+            reconcileWorkspaceMappings();
 
             function parseComposeServices(text) {
                 var services = [];
@@ -399,6 +478,12 @@
                 root.querySelectorAll('[data-product-item]').forEach(function(item) {
                     var productId = item.getAttribute('data-product-toggle');
                     var product = productMap[productId];
+                    if (!product) {
+                        item.classList.remove('is-selected', 'is-covered', 'is-baseline');
+                        item.setAttribute('aria-pressed', 'false');
+                        return;
+                    }
+
                     var coveredCount = (product.container_ids || []).filter(function(containerId) {
                         return targetIds.has(containerId);
                     }).length;
@@ -410,7 +495,11 @@
                     item.setAttribute('aria-pressed', selectedProductIds.has(productId) ? 'true' : 'false');
 
                     if (meta) {
-                        meta.textContent = coveredCount + '/' + product.container_ids.length + ' Container im Zielbild';
+                        if (product.container_ids.length === 0) {
+                            meta.textContent = 'Kein Container-Mapping';
+                        } else {
+                            meta.textContent = coveredCount + '/' + product.container_ids.length + ' Container im Zielbild';
+                        }
                     }
                 });
 
