@@ -7,12 +7,12 @@ use App\Models\Composer;
 use App\Models\Container;
 use App\Models\Env;
 use App\Models\OperatingSystem;
-use App\Models\ProductMatrix;
 use App\Models\Server;
 use App\Models\ServerKind;
 use App\Models\ServersComposersRel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Symfony\Component\Yaml\Yaml;
 
@@ -31,9 +31,30 @@ class ServerController extends Controller
     private function buildComposeWorkspaceData(Server $server, iterable $composeRelations): array
     {
         $containers = Container::query()
-            ->with('productMatrices')
             ->orderBy('title')
             ->get();
+
+        $containerProductRows = DB::table('container_product_matrix')
+            ->join('product_matrices', 'product_matrices.id', '=', 'container_product_matrix.product_matrix_id')
+            ->select([
+                'container_product_matrix.container_id',
+                'product_matrices.id as product_id',
+                'product_matrices.product as product_label',
+                'product_matrices.category as product_category',
+                'product_matrices.function_name as product_function',
+                'product_matrices.short_description as product_short_description',
+                'product_matrices.synonyms as product_synonyms',
+            ])
+            ->orderBy('product_matrices.category')
+            ->orderBy('product_matrices.function_name')
+            ->orderBy('product_matrices.product')
+            ->get();
+
+        $rowsByContainerId = $containerProductRows
+            ->groupBy(fn ($row) => (string) $row->container_id);
+
+        $rowsByProductId = $containerProductRows
+            ->groupBy(fn ($row) => (string) $row->product_id);
 
         $attachedCompose = collect($composeRelations)->map(function (ServersComposersRel $relation): array {
             $composer = $relation->composer;
@@ -48,52 +69,46 @@ class ServerController extends Controller
 
         $containerWorkspace = $containers->map(function (Container $container): array {
             $content = trim((string) ($container->content ?: $container->content_orig ?: ''));
-            $productMatrices = $container->productMatrices
-                ->sortBy(fn (ProductMatrix $productMatrix) => mb_strtolower($productMatrix->product))
+            $productRows = collect($rowsByContainerId->get((string) $container->id, []))
+                ->sortBy(fn ($row) => mb_strtolower((string) $row->product_label))
                 ->values();
 
             return [
                 'id' => (string) $container->id,
                 'title' => $container->title,
-                'search' => mb_strtolower($container->title.' '.$productMatrices->pluck('product')->implode(' ')),
+                'search' => mb_strtolower($container->title.' '.$productRows->pluck('product_label')->implode(' ')),
                 'snippet' => $this->buildComposeServiceSnippet($container->title, $content),
-                'product_ids' => $productMatrices->pluck('id')->map(fn ($id) => (string) $id)->all(),
-                'product_labels' => $productMatrices->map(fn (ProductMatrix $productMatrix) => $productMatrix->product)->all(),
+                'product_ids' => $productRows->pluck('product_id')->map(fn ($id) => (string) $id)->all(),
+                'product_labels' => $productRows->pluck('product_label')->all(),
             ];
         })->values();
 
-        $productWorkspace = $containers
-            ->flatMap(function (Container $container) {
-                return $container->productMatrices->map(function (ProductMatrix $productMatrix) use ($container): array {
-                    return [
-                        'id' => (string) $productMatrix->id,
-                        'label' => $productMatrix->product,
-                        'category' => $productMatrix->category,
-                        'function' => $productMatrix->function_name,
-                        'short_description' => $productMatrix->short_description,
-                        'synonyms' => $productMatrix->synonyms,
-                        'container_id' => (string) $container->id,
-                        'container_title' => $container->title,
-                    ];
-                });
-            })
-            ->groupBy('id')
-            ->map(function ($rows) {
-                $first = $rows->first();
-                $containerIds = $rows->pluck('container_id')->unique()->sort()->values()->all();
-                $containerTitles = $rows->pluck('container_title')->unique()->sort()->values()->all();
+        $containerTitleMap = $containers
+            ->mapWithKeys(fn (Container $container) => [(string) $container->id => $container->title]);
+
+        $productWorkspace = $rowsByProductId
+            ->map(function ($rows, string $productId) use ($containerTitleMap) {
+                $productRows = collect($rows)->values();
+                $first = $productRows->first();
+                $containerIds = $productRows->pluck('container_id')->map(fn ($id) => (string) $id)->unique()->sort()->values()->all();
+                $containerTitles = collect($containerIds)
+                    ->map(fn (string $containerId) => $containerTitleMap->get($containerId, $containerId))
+                    ->unique()
+                    ->sort()
+                    ->values()
+                    ->all();
 
                 return [
-                    'id' => $first['id'],
-                    'label' => $first['label'],
-                    'category' => $first['category'],
-                    'function' => $first['function'],
+                    'id' => $productId,
+                    'label' => (string) $first->product_label,
+                    'category' => (string) $first->product_category,
+                    'function' => (string) $first->product_function,
                     'search' => mb_strtolower(implode(' ', [
-                        $first['label'],
-                        $first['category'],
-                        $first['function'],
-                        $first['short_description'] ?? '',
-                        $first['synonyms'] ?? '',
+                        (string) $first->product_label,
+                        (string) $first->product_category,
+                        (string) $first->product_function,
+                        (string) ($first->product_short_description ?? ''),
+                        (string) ($first->product_synonyms ?? ''),
                         implode(' ', $containerTitles),
                     ])),
                     'container_ids' => $containerIds,
