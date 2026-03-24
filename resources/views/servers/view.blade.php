@@ -137,7 +137,14 @@
                     <tr>
                         <td class="itsdb-modal__grid-label">Server</td>
                         <td>
-                            {{ html()->select('server_ids[]', $server->customer->servers->pluck('servername', 'id')->toArray(), [(string) $server->id])->attribute('multiple', true)->attribute('size', max(3, $server->customer->servers->count())) }}
+                            <div class="itsdb-server-picker">
+                                @foreach($server->customer->servers as $serverOption)
+                                    <label class="itsdb-server-picker__option">
+                                        <input type="checkbox" name="server_ids[]" value="{{ $serverOption->id }}" @checked((string) $serverOption->id === (string) $server->id)>
+                                        <span>{{ $serverOption->servername }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -175,7 +182,15 @@
                         <tr>
                             <td class="itsdb-modal__grid-label">Server</td>
                             <td>
-                                {{ html()->select('server_ids[]', $server->customer->servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->map(function ($id) { return (string) $id; })->all())->attribute('multiple', true)->attribute('size', max(3, $server->customer->servers->count())) }}
+                                @php($selectedServerIds = $item->servers->pluck('id')->map(fn ($id) => (string) $id)->all())
+                                <div class="itsdb-server-picker">
+                                    @foreach($server->customer->servers as $serverOption)
+                                        <label class="itsdb-server-picker__option">
+                                            <input type="checkbox" name="server_ids[]" value="{{ $serverOption->id }}" @checked(in_array((string) $serverOption->id, $selectedServerIds, true))>
+                                            <span>{{ $serverOption->servername }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
                             </td>
                         </tr>
                     </table>

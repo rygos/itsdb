@@ -34,4 +34,34 @@ class AssetStylesTest extends TestCase
         $this->assertIsString($packageJson);
         $this->assertStringContainsString('"build": "cp resources/css/app.css public/css/app.css && vite build"', $packageJson);
     }
+
+    public function test_customer_credential_modals_use_checkbox_server_picker_markup(): void
+    {
+        $view = file_get_contents(resource_path('views/customers/view.blade.php'));
+
+        $this->assertIsString($view);
+        $this->assertStringContainsString('class="itsdb-server-picker"', $view);
+        $this->assertStringContainsString('type="checkbox" name="server_ids[]"', $view);
+        $this->assertStringContainsString('@checked(in_array((string) $serverOption->id, $selectedServerIds, true))', $view);
+    }
+
+    public function test_server_credential_modals_use_checkbox_server_picker_markup(): void
+    {
+        $view = file_get_contents(resource_path('views/servers/view.blade.php'));
+
+        $this->assertIsString($view);
+        $this->assertStringContainsString('class="itsdb-server-picker"', $view);
+        $this->assertStringContainsString('type="checkbox" name="server_ids[]"', $view);
+        $this->assertStringContainsString('@checked((string) $serverOption->id === (string) $server->id)', $view);
+    }
+
+    public function test_server_picker_styles_highlight_checked_items_without_focus(): void
+    {
+        $styles = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertIsString($styles);
+        $this->assertStringContainsString('.itsdb-server-picker__option input:checked + span {', $styles);
+        $this->assertStringContainsString('background-color: #2b628f;', $styles);
+        $this->assertStringContainsString('font-weight: bold;', $styles);
+    }
 }

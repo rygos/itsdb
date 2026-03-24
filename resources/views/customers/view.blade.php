@@ -474,7 +474,14 @@
                     <tr>
                         <td class="itsdb-modal__grid-label">Server</td>
                         <td>
-                            {{ html()->select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), null)->attribute('multiple', true)->attribute('size', max(3, $servers->count())) }}
+                            <div class="itsdb-server-picker">
+                                @foreach($servers as $serverOption)
+                                    <label class="itsdb-server-picker__option">
+                                        <input type="checkbox" name="server_ids[]" value="{{ $serverOption->id }}">
+                                        <span>{{ $serverOption->servername }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -512,7 +519,15 @@
                         <tr>
                             <td class="itsdb-modal__grid-label">Server</td>
                             <td>
-                                {{ html()->select('server_ids[]', $servers->pluck('servername', 'id')->toArray(), $item->servers->pluck('id')->map(function ($id) { return (string) $id; })->all())->attribute('multiple', true)->attribute('size', max(3, $servers->count())) }}
+                                @php($selectedServerIds = $item->servers->pluck('id')->map(fn ($id) => (string) $id)->all())
+                                <div class="itsdb-server-picker">
+                                    @foreach($servers as $serverOption)
+                                        <label class="itsdb-server-picker__option">
+                                            <input type="checkbox" name="server_ids[]" value="{{ $serverOption->id }}" @checked(in_array((string) $serverOption->id, $selectedServerIds, true))>
+                                            <span>{{ $serverOption->servername }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
                             </td>
                         </tr>
                     </table>

@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\City;
 use App\Models\Credential;
 use App\Models\Customer;
 use App\Models\CustomerDocument;
 use App\Models\OperatingSystem;
-use App\Models\Status;
 use App\Models\Server;
 use App\Models\ServerKind;
+use App\Models\Status;
 use App\Models\User;
-use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
