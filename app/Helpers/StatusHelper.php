@@ -4,6 +4,35 @@ namespace App\Helpers;
 
 class StatusHelper
 {
+    /**
+     * @return array{background: string, border: string, color: string}
+     */
+    public static function accent(?string $status): array
+    {
+        return match (self::pipelineColumn($status)) {
+            'new' => [
+                'background' => 'rgba(77, 109, 140, 0.22)',
+                'border' => '#4d6d8c',
+                'color' => '#d9ecff',
+            ],
+            'blocked' => [
+                'background' => 'rgba(143, 59, 82, 0.25)',
+                'border' => '#8f3b52',
+                'color' => '#ffd8e2',
+            ],
+            'finished' => [
+                'background' => 'rgba(47, 122, 87, 0.24)',
+                'border' => '#2f7a57',
+                'color' => '#dcffe8',
+            ],
+            default => [
+                'background' => 'rgba(47, 111, 159, 0.22)',
+                'border' => '#2f6f9f',
+                'color' => '#d7eeff',
+            ],
+        };
+    }
+
     public static function pipelineColumns(): array
     {
         return [
@@ -28,36 +57,16 @@ class StatusHelper
 
     public static function color(?string $status): string
     {
-        switch ($status) {
-            case 'WIP':
-                return 'orange';
-            case 'CHECK':
-                return 'blue';
-            case 'ON HOLD':
-                return 'red';
-            case 'WAIT FOR INFO':
-                return 'yellow';
-            case 'FINISHED':
-                return 'green';
-            case 'NEW':
-            default:
-                return 'none';
-        }
+        return self::accent($status)['background'];
     }
 
     public static function textColor(?string $status): string
     {
-        switch ($status) {
-            case 'CHECK':
-            case 'ON HOLD':
-            case 'FINISHED':
-                return 'white';
-            case 'WIP':
-            case 'WAIT FOR INFO':
-                return 'black';
-            case 'NEW':
-            default:
-                return 'inherit';
-        }
+        return self::accent($status)['color'];
+    }
+
+    public static function borderColor(?string $status): string
+    {
+        return self::accent($status)['border'];
     }
 }

@@ -150,13 +150,7 @@
                                     @forelse($column['projects'] as $project)
                                         @php
                                             $statusName = optional($project->status)->name;
-                                            $statusAccent = match ($statusName) {
-                                                'NEW', 'OPEN' => ['background' => 'rgba(77, 109, 140, 0.22)', 'border' => '#4d6d8c', 'color' => '#d9ecff'],
-                                                'WIP', 'CHECK' => ['background' => 'rgba(47, 111, 159, 0.22)', 'border' => '#2f6f9f', 'color' => '#d7eeff'],
-                                                'WAIT FOR INFO', 'ON HOLD', 'BLOCKED', 'BLOCKIERT' => ['background' => 'rgba(143, 59, 82, 0.25)', 'border' => '#8f3b52', 'color' => '#ffd8e2'],
-                                                'FINISHED', 'DONE', 'CLOSED', 'ERLEDIGT' => ['background' => 'rgba(47, 122, 87, 0.24)', 'border' => '#2f7a57', 'color' => '#dcffe8'],
-                                                default => ['background' => 'rgba(23, 57, 92, 0.55)', 'border' => '#295785', 'color' => '#ffffe0'],
-                                            };
+                                            $statusAccent = \App\Helpers\StatusHelper::accent($statusName);
                                         @endphp
                                         <article
                                             class="project-card"
