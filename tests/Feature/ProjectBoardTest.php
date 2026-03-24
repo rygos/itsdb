@@ -41,6 +41,7 @@ class ProjectBoardTest extends TestCase
 
         $newStatus = Status::query()->create(['name' => 'OPEN']);
         $wipStatus = Status::query()->create(['name' => 'WIP']);
+        $onHoldStatus = Status::query()->create(['name' => 'ON HOLD']);
         $blockedStatus = Status::query()->create(['name' => 'WAIT FOR INFO']);
         $finishedStatus = Status::query()->create(['name' => 'FINISHED']);
 
@@ -141,6 +142,10 @@ class ProjectBoardTest extends TestCase
             ->assertSee('Blockierte Aufgabe')
             ->assertSee('Fertige Aufgabe')
             ->assertSee('Nur Abschluesse der letzten 30 Tage')
+            ->assertSee('project-board-blocked-status-modal', false)
+            ->assertSee('project-board-finished-end-date-modal', false)
+            ->assertSee('WAIT FOR INFO')
+            ->assertSee('ON HOLD')
             ->assertDontSee('Alte fertige Aufgabe')
             ->assertDontSee('Fremde Aufgabe');
     }

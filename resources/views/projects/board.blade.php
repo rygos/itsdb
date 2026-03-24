@@ -163,6 +163,8 @@
                                             draggable="true"
                                             data-project-card="true"
                                             data-project-id="{{ $project->id }}"
+                                            data-current-end-date="{{ optional($project->end_date)->format('Y-m-d') }}"
+                                            data-current-end-date-display="{{ optional($project->end_date)->format('d.m.Y') }}"
                                         >
                                             <div class="project-card__title">
                                                 <a href="{{ route('projects.view', $project) }}">{{ $project->name }}</a>
@@ -190,7 +192,7 @@
                                             <form method="POST" action="{{ route('projects.change_status') }}" class="project-card__form" hidden>
                                                 @csrf
                                                 <input type="hidden" name="project_id" value="{{ $project->id }}">
-                                                <input type="hidden" name="finished_end_date_action" value="keep">
+                                                <input type="hidden" name="finished_end_date_action" value="keep" data-finished-end-date-action="true">
                                                 <input type="hidden" name="status" value="{{ $project->status_id }}" data-project-status-input="true">
                                             </form>
                                         </article>
@@ -206,6 +208,48 @@
             </tbody>
         </table>
     </div>
+    <div class="itsdb-modal" id="project-board-blocked-status-modal" aria-hidden="true">
+        <div class="itsdb-modal__dialog">
+            <div class="itsdb-modal__header">
+                <div class="itsdb-modal__title">Blockierten Status waehlen</div>
+                <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
+            </div>
+            <div class="itsdb-modal__body">
+                <p id="project-board-blocked-status-message" style="margin-bottom: 12px;">
+                    Bitte waehle den passenden blockierten Status.
+                </p>
+                <div style="margin-bottom: 12px;">
+                    <select id="project-board-blocked-status-select" style="width: 100%;">
+                        @foreach($blockedStatusOptions as $statusId => $statusName)
+                            <option value="{{ $statusId }}">{{ $statusName }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="itsdb-actions">
+                    <button type="button" id="project-board-blocked-status-confirm">Status setzen</button>
+                    <button type="button" data-modal-close>Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="itsdb-modal" id="project-board-finished-end-date-modal" aria-hidden="true">
+        <div class="itsdb-modal__dialog">
+            <div class="itsdb-modal__header">
+                <div class="itsdb-modal__title">Enddatum beim Abschluss anpassen</div>
+                <button type="button" class="itsdb-modal__close" data-modal-close>Schliessen</button>
+            </div>
+            <div class="itsdb-modal__body">
+                <p id="project-board-finished-end-date-message" style="margin-bottom: 12px;">
+                    Dieses Projekt hat aktuell ein anderes Enddatum als heute.
+                </p>
+                <div class="itsdb-actions">
+                    <button type="button" id="project-board-finished-end-date-confirm">Ja, auf aktuellen Tag setzen</button>
+                    <button type="button" id="project-board-finished-end-date-keep">Alten Tag lassen</button>
+                    <button type="button" data-modal-close>Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         (function () {
             var board = document.querySelector('.project-board');
@@ -214,7 +258,118 @@
             }
 
             var draggedCard = null;
+            var pendingCard = null;
             var columnStatusMap = @json($boardDropStatuses);
+            var blockedModal = document.getElementById('project-board-blocked-status-modal');
+            var blockedMessage = document.getElementById('project-board-blocked-status-message');
+            var blockedSelect = document.getElementById('project-board-blocked-status-select');
+            var blockedConfirmButton = document.getElementById('project-board-blocked-status-confirm');
+            var finishedModal = document.getElementById('project-board-finished-end-date-modal');
+            var finishedMessage = document.getElementById('project-board-finished-end-date-message');
+            var finishedConfirmButton = document.getElementById('project-board-finished-end-date-confirm');
+            var finishedKeepButton = document.getElementById('project-board-finished-end-date-keep');
+
+            function setModalState(modal, isOpen) {
+                if (!modal) {
+                    return;
+                }
+
+                modal.style.display = isOpen ? 'flex' : 'none';
+                modal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+            }
+
+            function resetPendingCard() {
+                pendingCard = null;
+            }
+
+            function cardForm(card) {
+                return card ? card.querySelector('.project-card__form') : null;
+            }
+
+            function cardStatusInput(card) {
+                return card ? card.querySelector('[data-project-status-input="true"]') : null;
+            }
+
+            function cardFinishedActionInput(card) {
+                return card ? card.querySelector('[data-finished-end-date-action="true"]') : null;
+            }
+
+            function submitCard(card, statusId, finishedEndDateAction) {
+                var form = cardForm(card);
+                var statusInput = cardStatusInput(card);
+                var finishedActionInput = cardFinishedActionInput(card);
+
+                if (!form || !statusInput) {
+                    return;
+                }
+
+                statusInput.value = statusId;
+
+                if (finishedActionInput) {
+                    finishedActionInput.value = finishedEndDateAction || 'keep';
+                }
+
+                form.submit();
+            }
+
+            function openBlockedModal(card) {
+                if (!blockedModal || !blockedMessage || !blockedSelect) {
+                    return;
+                }
+
+                pendingCard = card;
+
+                var projectName = card.querySelector('.project-card__title a');
+                blockedMessage.textContent = '"' + (projectName ? projectName.textContent.trim() : 'Das Projekt') + '" wurde auf Blockiert gezogen. Bitte waehle den passenden Status.';
+                setModalState(blockedModal, true);
+            }
+
+            function openFinishedModal(card) {
+                if (!finishedModal || !finishedMessage) {
+                    return;
+                }
+
+                pendingCard = card;
+
+                var currentEndDate = card.getAttribute('data-current-end-date');
+                var currentEndDateDisplay = card.getAttribute('data-current-end-date-display') || currentEndDate || '-';
+                var projectName = card.querySelector('.project-card__title a');
+                var today = new Date();
+                var todayDisplay = [
+                    String(today.getDate()).padStart(2, '0'),
+                    String(today.getMonth() + 1).padStart(2, '0'),
+                    today.getFullYear()
+                ].join('.');
+
+                finishedMessage.textContent = '"' + (projectName ? projectName.textContent.trim() : 'Das Projekt') + '" hat aktuell das Enddatum ' + currentEndDateDisplay + '. Soll das Enddatum beim Setzen auf FINISHED auf den heutigen Tag ' + todayDisplay + ' gesetzt werden?';
+                setModalState(finishedModal, true);
+            }
+
+            function closeModal(modal) {
+                setModalState(modal, false);
+                resetPendingCard();
+            }
+
+            function handleDrop(columnKey, card) {
+                var targetStatusId = columnStatusMap[columnKey];
+                if (!targetStatusId) {
+                    return;
+                }
+
+                if (columnKey === 'blocked') {
+                    openBlockedModal(card);
+
+                    return;
+                }
+
+                if (columnKey === 'finished') {
+                    openFinishedModal(card);
+
+                    return;
+                }
+
+                submitCard(card, targetStatusId, 'keep');
+            }
 
             function attachDragEvents(card) {
                 card.addEventListener('dragstart', function () {
@@ -252,20 +407,76 @@
                     }
 
                     var columnKey = column.getAttribute('data-project-column');
-                    var targetStatusId = columnStatusMap[columnKey];
-                    if (!targetStatusId) {
-                        return;
-                    }
-
-                    var form = draggedCard.querySelector('.project-card__form');
-                    var statusInput = draggedCard.querySelector('[data-project-status-input="true"]');
-                    if (!form || !statusInput) {
-                        return;
-                    }
-
-                    statusInput.value = targetStatusId;
-                    form.submit();
+                    handleDrop(columnKey, draggedCard);
                 });
+            });
+
+            if (blockedConfirmButton && blockedSelect) {
+                blockedConfirmButton.addEventListener('click', function () {
+                    if (!pendingCard) {
+                        return;
+                    }
+
+                    setModalState(blockedModal, false);
+                    submitCard(pendingCard, blockedSelect.value, 'keep');
+                    resetPendingCard();
+                });
+            }
+
+            if (finishedConfirmButton) {
+                finishedConfirmButton.addEventListener('click', function () {
+                    if (!pendingCard) {
+                        return;
+                    }
+
+                    setModalState(finishedModal, false);
+                    submitCard(pendingCard, columnStatusMap.finished, 'set_today');
+                    resetPendingCard();
+                });
+            }
+
+            if (finishedKeepButton) {
+                finishedKeepButton.addEventListener('click', function () {
+                    if (!pendingCard) {
+                        return;
+                    }
+
+                    setModalState(finishedModal, false);
+                    submitCard(pendingCard, columnStatusMap.finished, 'keep');
+                    resetPendingCard();
+                });
+            }
+
+            [blockedModal, finishedModal].forEach(function (modal) {
+                if (!modal) {
+                    return;
+                }
+
+                modal.querySelectorAll('[data-modal-close]').forEach(function (trigger) {
+                    trigger.addEventListener('click', function () {
+                        closeModal(modal);
+                    });
+                });
+
+                modal.addEventListener('click', function (event) {
+                    if (event.target === modal) {
+                        closeModal(modal);
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key !== 'Escape') {
+                    return;
+                }
+
+                if (blockedModal && blockedModal.getAttribute('aria-hidden') === 'false') {
+                    closeModal(blockedModal);
+                }
+
+                if (finishedModal && finishedModal.getAttribute('aria-hidden') === 'false') {
+                    closeModal(finishedModal);
+                }
             });
         })();
     </script>

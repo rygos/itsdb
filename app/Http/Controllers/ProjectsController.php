@@ -53,6 +53,7 @@ class ProjectsController extends Controller
         return view('projects.board', [
             'boardColumns' => $boardColumns,
             'statusOptions' => Status::query()->orderBy('name')->pluck('name', 'id'),
+            'blockedStatusOptions' => $this->blockedStatusOptions(),
             'finishedStatusId' => Status::query()->where('name', 'FINISHED')->value('id'),
             'boardDropStatuses' => $this->boardDropStatuses(),
         ]);
@@ -184,5 +185,15 @@ class ProjectsController extends Controller
             'blocked' => (string) ($statusOptions->search('WAIT FOR INFO') ?: $statusOptions->search('ON HOLD') ?: $statusOptions->keys()->first()),
             'finished' => (string) ($statusOptions->search('FINISHED') ?: $statusOptions->keys()->first()),
         ];
+    }
+
+    private function blockedStatusOptions(): array
+    {
+        return Status::query()
+            ->orderBy('name')
+            ->get()
+            ->filter(fn (Status $status): bool => StatusHelper::pipelineColumn($status->name) === 'blocked')
+            ->mapWithKeys(fn (Status $status): array => [(string) $status->id => $status->name])
+            ->all();
     }
 }
