@@ -185,7 +185,10 @@ class ServerController extends Controller
             $added_compose[] = $item->composer_id;
         }
 
-        $comp_data = Composer::whereNotIn('id', $added_compose)->get();
+        $comp_data = Composer::query()
+            ->whereNotIn('id', $added_compose)
+            ->orderBy('title')
+            ->get();
         $comp_select = [];
         foreach ($comp_data as $item) {
             if (! is_null($item->title_alternatives)) {

@@ -97,4 +97,13 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('.server-compose-chip--success {', $styles);
         $this->assertStringContainsString('.server-compose-workspace__summary-grid {', $styles);
     }
+
+    public function test_server_controller_sorts_available_compose_entries_alphabetically(): void
+    {
+        $controller = file_get_contents(app_path('Http/Controllers/ServerController.php'));
+
+        $this->assertIsString($controller);
+        $this->assertStringContainsString("->whereNotIn('id', \$added_compose)", $controller);
+        $this->assertStringContainsString("->orderBy('title')", $controller);
+    }
 }
