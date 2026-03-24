@@ -91,6 +91,8 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('window.setTimeout(initServerComposeWorkspace, 50);', $view);
         $this->assertStringContainsString("root.addEventListener('input', function(event) {", $view);
         $this->assertStringContainsString("root.addEventListener('change', function(event) {", $view);
+        $this->assertStringContainsString("var productItem = event.target.closest('[data-product-item]');", $view);
+        $this->assertStringContainsString("var containerItem = event.target.closest('[data-container-item]');", $view);
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
         $this->assertStringContainsString('getCoveredProducts(baselineContainerIds, true)', $view);
