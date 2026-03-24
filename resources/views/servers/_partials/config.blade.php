@@ -3,7 +3,8 @@
 </tr>
 <tr>
     <td>
-        <div class="server-compose-workspace" data-compose-workspace='@json($composeWorkspaceData)'>
+        <div class="server-compose-workspace" data-compose-workspace>
+            <script type="application/json" data-compose-workspace-json>@json($composeWorkspaceData)</script>
             <aside class="server-compose-workspace__sidebar">
                 <section class="server-compose-card">
                     <div class="server-compose-card__header">
@@ -54,6 +55,12 @@
                             <h3>Produkte hinzufuegen</h3>
                             <p>Produktauswahl zieht automatisch alle zugeordneten Container in den Diff.</p>
                         </div>
+                    </div>
+
+                    <div class="server-compose-hint">
+                        1. Optional Compose analysieren oder gespeicherte Compose laden.
+                        2. Dann Produkte oder Container auswaehlen.
+                        3. Rechts nur die neu hinzukommenden Services kopieren.
                     </div>
 
                     <input type="text" class="server-compose-search" placeholder="Produkt suchen" data-product-search>
@@ -113,6 +120,10 @@
                             <button type="button" data-compose-clear>Leeren</button>
                             <a href="{{ route('compose.generate', $server->id) }}">Compose generieren</a>
                         </div>
+                    </div>
+
+                    <div class="server-compose-hint">
+                        Hinweise: Die Analyse erkennt Services aus dem `services:`-Block. Produkte in der Basis gelten nur dann als erkannt, wenn alle zugeordneten Container vorhanden sind.
                     </div>
 
                     {{ html()->textarea('docker_compose', $server->docker_compose_raw)->class('server-compose-editor__textarea')->attribute('data-compose-input', 'true') }}

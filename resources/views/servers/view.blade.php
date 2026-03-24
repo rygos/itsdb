@@ -212,7 +212,19 @@
                 return;
             }
 
-            var data = JSON.parse(root.getAttribute('data-compose-workspace') || '{}');
+            var dataElement = root.querySelector('[data-compose-workspace-json]');
+            if (!dataElement) {
+                return;
+            }
+
+            var data = {};
+            try {
+                data = JSON.parse(dataElement.textContent || '{}');
+            } catch (error) {
+                console.error('Compose workspace data could not be parsed.', error);
+                return;
+            }
+
             var containers = data.containers || [];
             var products = data.products || [];
             var containerMap = {};
@@ -336,7 +348,7 @@
                 });
             }
 
-            function getCoveredProducts(targetIds) {
+            function getCoveredProducts(targetIds, requireFullCoverage) {
                 return products
                     .map(function(product) {
                         var covered = (product.container_ids || []).filter(function(containerId) {
@@ -351,6 +363,14 @@
                         };
                     })
                     .filter(function(product) {
+                        if (product.total === 0) {
+                            return false;
+                        }
+
+                        if (requireFullCoverage) {
+                            return product.covered === product.total;
+                        }
+
                         return product.covered > 0;
                     });
             }
@@ -416,8 +436,21 @@
             function updateSummaries() {
                 var targetIds = getTargetContainerIds();
                 var addedContainerIds = getAddedContainerIds(targetIds);
-                var coveredProducts = getCoveredProducts(targetIds);
-                var baselineProducts = getCoveredProducts(baselineContainerIds);
+                var coveredProducts = getCoveredProducts(targetIds, false);
+                var baselineProducts = getCoveredProducts(baselineContainerIds, true);
+                var selectedProducts = products.filter(function(product) {
+                    return selectedProductIds.has(product.id);
+                }).map(function(product) {
+                    var covered = (product.container_ids || []).filter(function(containerId) {
+                        return targetIds.has(containerId);
+                    }).length;
+
+                    return {
+                        label: product.label,
+                        covered: covered,
+                        total: product.container_ids.length,
+                    };
+                });
                 var diffText = buildDiffText(addedContainerIds);
                 var baselineServiceCount = parseComposeServices(composeInput.value).length;
 
@@ -428,12 +461,12 @@
                 root.querySelector('[data-baseline-product-count]').textContent = String(baselineProducts.length);
                 root.querySelector('[data-added-service-count]').textContent = String(addedContainerIds.length);
                 root.querySelector('[data-selected-container-count]').textContent = String(targetIds.size);
-                root.querySelector('[data-selected-product-count]').textContent = String(coveredProducts.length);
+                root.querySelector('[data-selected-product-count]').textContent = String(selectedProducts.length);
 
                 renderChipList(
                     root.querySelector('[data-baseline-products]'),
                     baselineProducts.map(function(product) {
-                        return product.label + ' (' + product.covered + '/' + product.total + ')';
+                        return product.label;
                     }),
                     'info',
                     'Keine Produkte erkannt'
@@ -450,7 +483,7 @@
 
                 renderChipList(
                     root.querySelector('[data-selected-products]'),
-                    coveredProducts.map(function(product) {
+                    selectedProducts.map(function(product) {
                         return product.label + ' (' + product.covered + '/' + product.total + ')';
                     }),
                     'success',

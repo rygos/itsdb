@@ -1637,6 +1637,15 @@ td.date {
     padding: 12px;
 }
 
+.server-compose-hint {
+    margin-bottom: 10px;
+    border-left: 3px solid rgba(255, 223, 122, 0.55);
+    background: rgba(8, 14, 28, 0.78);
+    color: #d8d8bf;
+    padding: 10px 12px;
+    line-height: 1.5;
+}
+
 .server-compose-search {
     width: 100%;
     margin-bottom: 10px;

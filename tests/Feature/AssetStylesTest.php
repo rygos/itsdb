@@ -71,10 +71,12 @@ class AssetStylesTest extends TestCase
 
         $this->assertIsString($view);
         $this->assertStringContainsString('data-compose-workspace', $view);
+        $this->assertStringContainsString('data-compose-workspace-json', $view);
         $this->assertStringContainsString('data-product-toggle', $view);
         $this->assertStringContainsString('data-container-toggle', $view);
         $this->assertStringContainsString('data-compose-diff-output', $view);
         $this->assertStringContainsString('docker-compose Analyse', $view);
+        $this->assertStringContainsString('1. Optional Compose analysieren oder gespeicherte Compose laden.', $view);
     }
 
     public function test_server_view_contains_compose_workspace_script(): void
@@ -83,8 +85,10 @@ class AssetStylesTest extends TestCase
 
         $this->assertIsString($view);
         $this->assertStringContainsString('parseComposeServices', $view);
+        $this->assertStringContainsString('JSON.parse(dataElement.textContent || \'{}\')', $view);
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
+        $this->assertStringContainsString('getCoveredProducts(baselineContainerIds, true)', $view);
     }
 
     public function test_server_compose_workspace_styles_exist(): void
@@ -93,6 +97,7 @@ class AssetStylesTest extends TestCase
 
         $this->assertIsString($styles);
         $this->assertStringContainsString('.server-compose-workspace {', $styles);
+        $this->assertStringContainsString('.server-compose-hint {', $styles);
         $this->assertStringContainsString('.server-compose-picker__item.is-added .server-compose-picker__body {', $styles);
         $this->assertStringContainsString('.server-compose-chip--success {', $styles);
         $this->assertStringContainsString('.server-compose-workspace__summary-grid {', $styles);
