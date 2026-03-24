@@ -397,16 +397,17 @@
 
             function updatePickerStates(targetIds, addedContainerIds) {
                 root.querySelectorAll('[data-product-item]').forEach(function(item) {
-                    var input = item.querySelector('[data-product-toggle]');
-                    var product = productMap[input.value];
+                    var productId = item.getAttribute('data-product-toggle');
+                    var product = productMap[productId];
                     var coveredCount = (product.container_ids || []).filter(function(containerId) {
                         return targetIds.has(containerId);
                     }).length;
                     var meta = item.querySelector('[data-product-meta="' + product.id + '"]');
 
-                    item.classList.toggle('is-selected', selectedProductIds.has(product.id));
+                    item.classList.toggle('is-selected', selectedProductIds.has(productId));
                     item.classList.toggle('is-covered', coveredCount > 0);
-                    item.classList.toggle('is-baseline', coveredCount > 0 && !selectedProductIds.has(product.id));
+                    item.classList.toggle('is-baseline', coveredCount > 0 && !selectedProductIds.has(productId));
+                    item.setAttribute('aria-pressed', selectedProductIds.has(productId) ? 'true' : 'false');
 
                     if (meta) {
                         meta.textContent = coveredCount + '/' + product.container_ids.length + ' Container im Zielbild';
@@ -414,15 +415,16 @@
                 });
 
                 root.querySelectorAll('[data-container-item]').forEach(function(item) {
-                    var input = item.querySelector('[data-container-toggle]');
-                    var container = containerMap[input.value];
+                    var containerId = item.getAttribute('data-container-toggle');
+                    var container = containerMap[containerId];
                     var meta = item.querySelector('[data-container-meta="' + container.id + '"]');
                     var isBaseline = baselineContainerIds.has(container.id);
                     var isAdded = addedContainerIds.indexOf(container.id) !== -1;
 
-                    item.classList.toggle('is-selected', selectedContainerIds.has(container.id));
+                    item.classList.toggle('is-selected', selectedContainerIds.has(containerId));
                     item.classList.toggle('is-baseline', isBaseline);
                     item.classList.toggle('is-added', isAdded);
+                    item.setAttribute('aria-pressed', selectedContainerIds.has(containerId) ? 'true' : 'false');
 
                     if (meta) {
                         if (isAdded) {
@@ -576,30 +578,6 @@
                 }, 1200);
             }
 
-            root.addEventListener('change', function(event) {
-                var target = event.target;
-
-                if (target.matches('[data-product-toggle]')) {
-                    if (target.checked) {
-                        selectedProductIds.add(target.value);
-                    } else {
-                        selectedProductIds.delete(target.value);
-                    }
-
-                    updateSummaries();
-                }
-
-                if (target.matches('[data-container-toggle]')) {
-                    if (target.checked) {
-                        selectedContainerIds.add(target.value);
-                    } else {
-                        selectedContainerIds.delete(target.value);
-                    }
-
-                    updateSummaries();
-                }
-            });
-
             root.addEventListener('input', function(event) {
                 var target = event.target;
 
@@ -620,41 +598,31 @@
             });
 
             root.addEventListener('click', function(event) {
-                var productItem = event.target.closest('[data-product-item]');
-                if (productItem && !event.target.closest('input')) {
+                var productItem = event.target.closest('[data-product-toggle]');
+                if (productItem) {
                     event.preventDefault();
-
-                    var productInput = productItem.querySelector('[data-product-toggle]');
-                    if (productInput) {
-                        productInput.checked = !productInput.checked;
-                        if (productInput.checked) {
-                            selectedProductIds.add(productInput.value);
-                        } else {
-                            selectedProductIds.delete(productInput.value);
-                        }
-
-                        updateSummaries();
+                    var productId = productItem.getAttribute('data-product-toggle');
+                    if (selectedProductIds.has(productId)) {
+                        selectedProductIds.delete(productId);
+                    } else {
+                        selectedProductIds.add(productId);
                     }
 
+                    updateSummaries();
                     return;
                 }
 
-                var containerItem = event.target.closest('[data-container-item]');
-                if (containerItem && !event.target.closest('input')) {
+                var containerItem = event.target.closest('[data-container-toggle]');
+                if (containerItem) {
                     event.preventDefault();
-
-                    var containerInput = containerItem.querySelector('[data-container-toggle]');
-                    if (containerInput) {
-                        containerInput.checked = !containerInput.checked;
-                        if (containerInput.checked) {
-                            selectedContainerIds.add(containerInput.value);
-                        } else {
-                            selectedContainerIds.delete(containerInput.value);
-                        }
-
-                        updateSummaries();
+                    var containerId = containerItem.getAttribute('data-container-toggle');
+                    if (selectedContainerIds.has(containerId)) {
+                        selectedContainerIds.delete(containerId);
+                    } else {
+                        selectedContainerIds.add(containerId);
                     }
 
+                    updateSummaries();
                     return;
                 }
 

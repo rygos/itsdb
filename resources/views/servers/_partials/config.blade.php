@@ -67,14 +67,13 @@
 
                     <div class="server-compose-picker" data-product-list>
                         @foreach($composeWorkspaceData['products'] as $product)
-                            <label class="server-compose-picker__item" data-product-item data-search="{{ $product['search'] }}">
-                                <input type="checkbox" value="{{ $product['id'] }}" data-product-toggle>
+                            <button type="button" class="server-compose-picker__item" data-product-item data-product-toggle="{{ $product['id'] }}" data-search="{{ $product['search'] }}">
                                 <span class="server-compose-picker__body">
                                     <strong>{{ $product['label'] }}</strong>
                                     <small>{{ $product['category'] }} / {{ $product['function'] }}</small>
                                     <small data-product-meta="{{ $product['id'] }}">{{ count($product['container_ids']) }} Container</small>
                                 </span>
-                            </label>
+                            </button>
                         @endforeach
                     </div>
                 </section>
@@ -91,14 +90,13 @@
 
                     <div class="server-compose-picker" data-container-list>
                         @foreach($composeWorkspaceData['containers'] as $container)
-                            <label class="server-compose-picker__item" data-container-item data-search="{{ $container['search'] }}">
-                                <input type="checkbox" value="{{ $container['id'] }}" data-container-toggle>
+                            <button type="button" class="server-compose-picker__item" data-container-item data-container-toggle="{{ $container['id'] }}" data-search="{{ $container['search'] }}">
                                 <span class="server-compose-picker__body">
                                     <strong>{{ $container['title'] }}</strong>
                                     <small>{{ implode(', ', $container['product_labels']) ?: 'Kein Produkt-Mapping' }}</small>
                                     <small data-container-meta="{{ $container['id'] }}">{{ count($container['product_ids']) }} Produkte</small>
                                 </span>
-                            </label>
+                            </button>
                         @endforeach
                     </div>
                 </section>

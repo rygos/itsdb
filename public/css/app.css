@@ -1662,12 +1662,11 @@ td.date {
 
 .server-compose-picker__item {
     display: block;
-}
-
-.server-compose-picker__item input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
 }
 
 .server-compose-picker__body {
@@ -1716,7 +1715,7 @@ td.date {
     background: rgba(30, 79, 121, 0.9);
 }
 
-.server-compose-picker__item input:focus + .server-compose-picker__body {
+.server-compose-picker__item:focus .server-compose-picker__body {
     outline: 1px solid #ffbf00;
     outline-offset: 1px;
 }

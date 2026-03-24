@@ -72,8 +72,8 @@ class AssetStylesTest extends TestCase
         $this->assertIsString($view);
         $this->assertStringContainsString('data-compose-workspace', $view);
         $this->assertStringContainsString('data-compose-workspace-json', $view);
-        $this->assertStringContainsString('data-product-toggle', $view);
-        $this->assertStringContainsString('data-container-toggle', $view);
+        $this->assertStringContainsString('data-product-toggle="', $view);
+        $this->assertStringContainsString('data-container-toggle="', $view);
         $this->assertStringContainsString('data-compose-diff-output', $view);
         $this->assertStringContainsString('docker-compose Analyse', $view);
         $this->assertStringContainsString('1. Optional Compose analysieren oder gespeicherte Compose laden.', $view);
@@ -90,9 +90,9 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString("window.addEventListener('load', initServerComposeWorkspace);", $view);
         $this->assertStringContainsString('window.setTimeout(initServerComposeWorkspace, 50);', $view);
         $this->assertStringContainsString("root.addEventListener('input', function(event) {", $view);
-        $this->assertStringContainsString("root.addEventListener('change', function(event) {", $view);
-        $this->assertStringContainsString("var productItem = event.target.closest('[data-product-item]');", $view);
-        $this->assertStringContainsString("var containerItem = event.target.closest('[data-container-item]');", $view);
+        $this->assertStringNotContainsString("root.addEventListener('change', function(event) {", $view);
+        $this->assertStringContainsString("var productItem = event.target.closest('[data-product-toggle]');", $view);
+        $this->assertStringContainsString("var containerItem = event.target.closest('[data-container-toggle]');", $view);
         $this->assertStringContainsString('event.preventDefault();', $view);
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
