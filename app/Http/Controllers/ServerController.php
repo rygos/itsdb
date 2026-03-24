@@ -31,7 +31,7 @@ class ServerController extends Controller
     private function buildComposeWorkspaceData(Server $server, iterable $composeRelations): array
     {
         $containers = Container::query()
-            ->with('productMatrices:id,product,category,function_name')
+            ->with('productMatrices')
             ->orderBy('title')
             ->get();
 
