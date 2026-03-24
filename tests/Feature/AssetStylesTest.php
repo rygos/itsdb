@@ -88,6 +88,9 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('JSON.parse(dataElement.textContent || \'{}\')', $view);
         $this->assertStringContainsString('data-compose-workspace-initialized', $view);
         $this->assertStringContainsString("window.addEventListener('load', initServerComposeWorkspace);", $view);
+        $this->assertStringContainsString('window.setTimeout(initServerComposeWorkspace, 50);', $view);
+        $this->assertStringContainsString("root.addEventListener('input', function(event) {", $view);
+        $this->assertStringContainsString("root.addEventListener('change', function(event) {", $view);
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
         $this->assertStringContainsString('getCoveredProducts(baselineContainerIds, true)', $view);
