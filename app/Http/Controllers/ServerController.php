@@ -36,7 +36,7 @@ class ServerController extends Controller
             ->get();
 
         $products = ProductMatrix::query()
-            ->with('containers:id,title')
+            ->with('containers')
             ->whereHas('containers')
             ->orderBy('category')
             ->orderBy('function_name')
