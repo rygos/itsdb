@@ -207,10 +207,13 @@
 @section('scripts')
     <script>
         (function() {
+            function initServerComposeWorkspace() {
             var root = document.querySelector('[data-compose-workspace]');
-            if (!root) {
+            if (!root || root.getAttribute('data-compose-workspace-initialized') === 'true') {
                 return;
             }
+
+            root.setAttribute('data-compose-workspace-initialized', 'true');
 
             var dataElement = root.querySelector('[data-compose-workspace-json]');
             if (!dataElement) {
@@ -637,6 +640,15 @@
             });
 
             analyzeCompose();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initServerComposeWorkspace);
+            } else {
+                initServerComposeWorkspace();
+            }
+
+            window.addEventListener('load', initServerComposeWorkspace);
         })();
     </script>
 @endsection

@@ -15,7 +15,6 @@
         Pouet.isMobile = false;
         //-->
     </script>
-    <script src="/js/app.js"></script>
     @unless(request()->routeIs('customers_projects.add'))
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js"></script>
     @endunless

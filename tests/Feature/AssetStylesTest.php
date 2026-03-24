@@ -24,7 +24,7 @@ class AssetStylesTest extends TestCase
 
         $this->assertIsString($layout);
         $this->assertStringContainsString('href="/css/app.css"', $layout);
-        $this->assertStringContainsString('src="/js/app.js"', $layout);
+        $this->assertStringNotContainsString('src="/js/app.js"', $layout);
     }
 
     public function test_build_script_copies_resource_css_to_public_css(): void
@@ -86,6 +86,8 @@ class AssetStylesTest extends TestCase
         $this->assertIsString($view);
         $this->assertStringContainsString('parseComposeServices', $view);
         $this->assertStringContainsString('JSON.parse(dataElement.textContent || \'{}\')', $view);
+        $this->assertStringContainsString('data-compose-workspace-initialized', $view);
+        $this->assertStringContainsString("window.addEventListener('load', initServerComposeWorkspace);", $view);
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
         $this->assertStringContainsString('getCoveredProducts(baselineContainerIds, true)', $view);
