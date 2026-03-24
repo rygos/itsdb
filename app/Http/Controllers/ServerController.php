@@ -35,14 +35,6 @@ class ServerController extends Controller
             ->orderBy('title')
             ->get();
 
-        $products = ProductMatrix::query()
-            ->with('containers')
-            ->whereHas('containers')
-            ->orderBy('category')
-            ->orderBy('function_name')
-            ->orderBy('product')
-            ->get();
-
         $attachedCompose = collect($composeRelations)->map(function (ServersComposersRel $relation): array {
             $composer = $relation->composer;
 
@@ -54,41 +46,73 @@ class ServerController extends Controller
             ];
         })->values()->all();
 
+        $containerWorkspace = $containers->map(function (Container $container): array {
+            $content = trim((string) ($container->content ?: $container->content_orig ?: ''));
+            $productMatrices = $container->productMatrices
+                ->sortBy(fn (ProductMatrix $productMatrix) => mb_strtolower($productMatrix->product))
+                ->values();
+
+            return [
+                'id' => (string) $container->id,
+                'title' => $container->title,
+                'search' => mb_strtolower($container->title.' '.$productMatrices->pluck('product')->implode(' ')),
+                'snippet' => $this->buildComposeServiceSnippet($container->title, $content),
+                'product_ids' => $productMatrices->pluck('id')->map(fn ($id) => (string) $id)->all(),
+                'product_labels' => $productMatrices->map(fn (ProductMatrix $productMatrix) => $productMatrix->product)->all(),
+            ];
+        })->values();
+
+        $productWorkspace = $containers
+            ->flatMap(function (Container $container) {
+                return $container->productMatrices->map(function (ProductMatrix $productMatrix) use ($container): array {
+                    return [
+                        'id' => (string) $productMatrix->id,
+                        'label' => $productMatrix->product,
+                        'category' => $productMatrix->category,
+                        'function' => $productMatrix->function_name,
+                        'short_description' => $productMatrix->short_description,
+                        'synonyms' => $productMatrix->synonyms,
+                        'container_id' => (string) $container->id,
+                        'container_title' => $container->title,
+                    ];
+                });
+            })
+            ->groupBy('id')
+            ->map(function ($rows) {
+                $first = $rows->first();
+                $containerIds = $rows->pluck('container_id')->unique()->sort()->values()->all();
+                $containerTitles = $rows->pluck('container_title')->unique()->sort()->values()->all();
+
+                return [
+                    'id' => $first['id'],
+                    'label' => $first['label'],
+                    'category' => $first['category'],
+                    'function' => $first['function'],
+                    'search' => mb_strtolower(implode(' ', [
+                        $first['label'],
+                        $first['category'],
+                        $first['function'],
+                        $first['short_description'] ?? '',
+                        $first['synonyms'] ?? '',
+                        implode(' ', $containerTitles),
+                    ])),
+                    'container_ids' => $containerIds,
+                    'container_titles' => $containerTitles,
+                ];
+            })
+            ->sortBy([
+                ['category', 'asc'],
+                ['function', 'asc'],
+                ['label', 'asc'],
+            ])
+            ->values()
+            ->all();
+
         return [
             'saved_compose_raw' => (string) ($server->docker_compose_raw ?? ''),
             'baseline_service_titles' => $this->extractComposeServiceTitles($server->docker_compose_raw),
-            'containers' => $containers->map(function (Container $container): array {
-                $content = trim((string) ($container->content ?: $container->content_orig ?: ''));
-                $productMatrices = $container->productMatrices
-                    ->sortBy(fn (ProductMatrix $productMatrix) => mb_strtolower($productMatrix->product))
-                    ->values();
-
-                return [
-                    'id' => (string) $container->id,
-                    'title' => $container->title,
-                    'search' => mb_strtolower($container->title.' '.$productMatrices->pluck('product')->implode(' ')),
-                    'snippet' => $this->buildComposeServiceSnippet($container->title, $content),
-                    'product_ids' => $productMatrices->pluck('id')->map(fn ($id) => (string) $id)->all(),
-                    'product_labels' => $productMatrices->map(fn (ProductMatrix $productMatrix) => $productMatrix->product)->all(),
-                ];
-            })->values()->all(),
-            'products' => $products->map(function (ProductMatrix $productMatrix): array {
-                return [
-                    'id' => (string) $productMatrix->id,
-                    'label' => $productMatrix->product,
-                    'category' => $productMatrix->category,
-                    'function' => $productMatrix->function_name,
-                    'search' => mb_strtolower(implode(' ', [
-                        $productMatrix->product,
-                        $productMatrix->category,
-                        $productMatrix->function_name,
-                        $productMatrix->short_description ?? '',
-                        $productMatrix->synonyms ?? '',
-                    ])),
-                    'container_ids' => $productMatrix->containers->pluck('id')->map(fn ($id) => (string) $id)->all(),
-                    'container_titles' => $productMatrix->containers->pluck('title')->all(),
-                ];
-            })->values()->all(),
+            'containers' => $containerWorkspace->all(),
+            'products' => $productWorkspace,
             'attached_compose' => $attachedCompose,
         ];
     }
