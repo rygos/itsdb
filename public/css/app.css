@@ -1554,6 +1554,299 @@ td.date {
     outline-offset: 1px;
 }
 
+.server-compose-workspace {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+    margin-top: 12px;
+}
+
+.server-compose-workspace__sidebar,
+.server-compose-workspace__main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.server-compose-card {
+    border: 1px solid #17395c;
+    background: linear-gradient(180deg, rgba(17, 34, 64, 0.96) 0%, rgba(0, 0, 26, 0.98) 100%);
+    padding: 14px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 224, 0.04);
+}
+
+.server-compose-card__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 12px;
+}
+
+.server-compose-card__header h3 {
+    margin: 0;
+    color: #ffdf7a;
+}
+
+.server-compose-card__header p {
+    margin: 4px 0 0;
+    color: #d8d8bf;
+}
+
+.server-compose-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.server-compose-source-form,
+.server-compose-editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.server-compose-source-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.server-compose-source-list__item {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    border: 1px solid rgba(23, 57, 92, 0.9);
+    background: rgba(0, 0, 26, 0.65);
+    padding: 10px;
+}
+
+.server-compose-source-list__item strong,
+.server-compose-source-list__item div,
+.server-compose-source-list__item small {
+    display: block;
+}
+
+.server-compose-empty-state {
+    border: 1px dashed rgba(255, 223, 122, 0.35);
+    background: rgba(8, 14, 28, 0.75);
+    color: #d8d8bf;
+    padding: 12px;
+}
+
+.server-compose-search {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.server-compose-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.server-compose-picker__item {
+    display: block;
+}
+
+.server-compose-picker__item input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.server-compose-picker__body {
+    display: block;
+    padding: 10px 12px;
+    border: 1px solid rgba(23, 57, 92, 0.95);
+    background: rgba(0, 0, 26, 0.72);
+    cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease, transform 120ms ease;
+}
+
+.server-compose-picker__body strong,
+.server-compose-picker__body small {
+    display: block;
+}
+
+.server-compose-picker__body strong {
+    color: #ffffe0;
+}
+
+.server-compose-picker__body small {
+    color: #c3c3ab;
+    margin-top: 4px;
+}
+
+.server-compose-picker__item:hover .server-compose-picker__body {
+    border-color: #2b628f;
+    transform: translateY(-1px);
+}
+
+.server-compose-picker__item.is-selected .server-compose-picker__body {
+    border-color: #4ba0da;
+    background: rgba(23, 57, 92, 0.92);
+}
+
+.server-compose-picker__item.is-covered .server-compose-picker__body {
+    box-shadow: inset 0 0 0 1px rgba(255, 223, 122, 0.18);
+}
+
+.server-compose-picker__item.is-baseline .server-compose-picker__body {
+    border-color: rgba(255, 223, 122, 0.4);
+}
+
+.server-compose-picker__item.is-added .server-compose-picker__body {
+    border-color: #2b628f;
+    background: rgba(30, 79, 121, 0.9);
+}
+
+.server-compose-picker__item input:focus + .server-compose-picker__body {
+    outline: 1px solid #ffbf00;
+    outline-offset: 1px;
+}
+
+.server-compose-editor__textarea,
+.server-compose-diff__textarea {
+    width: 100%;
+    min-height: 320px;
+    resize: vertical;
+    font-family: "DejaVu Sans Mono", "Fira Code", monospace;
+    line-height: 1.45;
+}
+
+.server-compose-editor__textarea--env {
+    min-height: 220px;
+}
+
+.server-compose-workspace__summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.server-compose-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.server-compose-stat {
+    border: 1px solid rgba(23, 57, 92, 0.95);
+    background: rgba(0, 0, 26, 0.72);
+    padding: 10px;
+}
+
+.server-compose-stat strong,
+.server-compose-stat span {
+    display: block;
+}
+
+.server-compose-stat strong {
+    color: #ffdf7a;
+    font-size: 16px;
+}
+
+.server-compose-stat span {
+    color: #d8d8bf;
+    margin-top: 4px;
+}
+
+.server-compose-summary-group + .server-compose-summary-group {
+    margin-top: 12px;
+}
+
+.server-compose-summary-group h4 {
+    margin: 0 0 8px;
+    color: #ffdf7a;
+}
+
+.server-compose-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.server-compose-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid rgba(23, 57, 92, 0.95);
+    background: rgba(0, 0, 26, 0.72);
+    color: #ffffe0;
+}
+
+.server-compose-chip--info {
+    border-color: rgba(255, 223, 122, 0.45);
+}
+
+.server-compose-chip--success {
+    border-color: #2b628f;
+    background: rgba(30, 79, 121, 0.9);
+}
+
+.server-compose-chip--warning {
+    border-color: #c66a24;
+    background: rgba(90, 39, 4, 0.9);
+}
+
+.server-compose-chip--muted {
+    opacity: 0.75;
+}
+
+.server-compose-diff__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.server-compose-savebar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.server-compose-env-table {
+    width: 100%;
+}
+
+.server-compose-env-table td,
+.server-compose-env-table th {
+    padding: 4px;
+    text-align: left;
+}
+
+@media screen and (max-width: 1100px) {
+    .server-compose-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .server-compose-workspace__summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media screen and (max-width: 720px) {
+    .server-compose-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .server-compose-card__header {
+        flex-direction: column;
+    }
+
+    .server-compose-toolbar {
+        justify-content: flex-start;
+    }
+}
+
 .itsdb-modal[aria-hidden="false"] {
     display: flex !important;
 }

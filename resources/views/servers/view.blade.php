@@ -203,3 +203,407 @@
         </div>
     @endforeach
 @endsection
+
+@section('scripts')
+    <script>
+        (function() {
+            var root = document.querySelector('[data-compose-workspace]');
+            if (!root) {
+                return;
+            }
+
+            var data = JSON.parse(root.getAttribute('data-compose-workspace') || '{}');
+            var containers = data.containers || [];
+            var products = data.products || [];
+            var containerMap = {};
+            var productMap = {};
+            var containerTitleMap = {};
+            var selectedProductIds = new Set();
+            var selectedContainerIds = new Set();
+            var baselineContainerIds = new Set();
+            var unknownServices = [];
+            var composeInput = root.querySelector('[data-compose-input]');
+            var diffOutput = root.querySelector('[data-compose-diff-output]');
+            var diffCopyButton = root.querySelector('[data-compose-diff-copy]');
+            var productSearch = root.querySelector('[data-product-search]');
+            var containerSearch = root.querySelector('[data-container-search]');
+            var analyzeTimer = null;
+
+            containers.forEach(function(container) {
+                containerMap[container.id] = container;
+                containerTitleMap[normalizeKey(container.title)] = container;
+            });
+
+            products.forEach(function(product) {
+                productMap[product.id] = product;
+            });
+
+            function normalizeKey(value) {
+                return (value || '')
+                    .trim()
+                    .replace(/^['"]|['"]$/g, '')
+                    .toLowerCase();
+            }
+
+            function parseComposeServices(text) {
+                var services = [];
+                var lines = (text || '').split(/\r\n|\n|\r/);
+                var inServices = false;
+                var servicesIndent = 0;
+
+                lines.forEach(function(line) {
+                    var trimmed = (line || '').trim();
+                    if (trimmed === '' || trimmed.indexOf('#') === 0) {
+                        return;
+                    }
+
+                    var indent = line.length - line.replace(/^\s+/, '').length;
+
+                    if (!inServices && trimmed === 'services:') {
+                        inServices = true;
+                        servicesIndent = indent;
+                        return;
+                    }
+
+                    if (!inServices) {
+                        return;
+                    }
+
+                    if (indent <= servicesIndent) {
+                        inServices = false;
+                        return;
+                    }
+
+                    if (indent === servicesIndent + 2) {
+                        var match = trimmed.match(/^['"]?([A-Za-z0-9._-]+)['"]?:\s*$/);
+                        if (match) {
+                            services.push(match[1]);
+                        }
+                    }
+                });
+
+                return services;
+            }
+
+            function createChip(label, variant) {
+                var chip = document.createElement('span');
+                chip.className = 'server-compose-chip';
+                if (variant) {
+                    chip.classList.add('server-compose-chip--' + variant);
+                }
+                chip.textContent = label;
+
+                return chip;
+            }
+
+            function renderChipList(target, labels, variant, emptyText) {
+                target.innerHTML = '';
+
+                if (!labels.length) {
+                    target.appendChild(createChip(emptyText || 'Keine Eintraege', 'muted'));
+                    return;
+                }
+
+                labels.forEach(function(label) {
+                    target.appendChild(createChip(label, variant));
+                });
+            }
+
+            function getTargetContainerIds() {
+                var targetIds = new Set(Array.from(baselineContainerIds));
+
+                selectedContainerIds.forEach(function(containerId) {
+                    targetIds.add(containerId);
+                });
+
+                selectedProductIds.forEach(function(productId) {
+                    var product = productMap[productId];
+                    if (!product) {
+                        return;
+                    }
+
+                    (product.container_ids || []).forEach(function(containerId) {
+                        targetIds.add(containerId);
+                    });
+                });
+
+                return targetIds;
+            }
+
+            function getAddedContainerIds(targetIds) {
+                return Array.from(targetIds).filter(function(containerId) {
+                    return !baselineContainerIds.has(containerId);
+                });
+            }
+
+            function getCoveredProducts(targetIds) {
+                return products
+                    .map(function(product) {
+                        var covered = (product.container_ids || []).filter(function(containerId) {
+                            return targetIds.has(containerId);
+                        }).length;
+
+                        return {
+                            id: product.id,
+                            label: product.label,
+                            covered: covered,
+                            total: (product.container_ids || []).length,
+                        };
+                    })
+                    .filter(function(product) {
+                        return product.covered > 0;
+                    });
+            }
+
+            function buildDiffText(addedContainerIds) {
+                return addedContainerIds
+                    .map(function(containerId) {
+                        return containerMap[containerId];
+                    })
+                    .filter(function(container) {
+                        return container && container.snippet;
+                    })
+                    .sort(function(left, right) {
+                        return left.title.localeCompare(right.title);
+                    })
+                    .map(function(container) {
+                        return container.snippet;
+                    })
+                    .join("\n\n");
+            }
+
+            function updatePickerStates(targetIds, addedContainerIds) {
+                root.querySelectorAll('[data-product-item]').forEach(function(item) {
+                    var input = item.querySelector('[data-product-toggle]');
+                    var product = productMap[input.value];
+                    var coveredCount = (product.container_ids || []).filter(function(containerId) {
+                        return targetIds.has(containerId);
+                    }).length;
+                    var meta = item.querySelector('[data-product-meta="' + product.id + '"]');
+
+                    item.classList.toggle('is-selected', selectedProductIds.has(product.id));
+                    item.classList.toggle('is-covered', coveredCount > 0);
+                    item.classList.toggle('is-baseline', coveredCount > 0 && !selectedProductIds.has(product.id));
+
+                    if (meta) {
+                        meta.textContent = coveredCount + '/' + product.container_ids.length + ' Container im Zielbild';
+                    }
+                });
+
+                root.querySelectorAll('[data-container-item]').forEach(function(item) {
+                    var input = item.querySelector('[data-container-toggle]');
+                    var container = containerMap[input.value];
+                    var meta = item.querySelector('[data-container-meta="' + container.id + '"]');
+                    var isBaseline = baselineContainerIds.has(container.id);
+                    var isAdded = addedContainerIds.indexOf(container.id) !== -1;
+
+                    item.classList.toggle('is-selected', selectedContainerIds.has(container.id));
+                    item.classList.toggle('is-baseline', isBaseline);
+                    item.classList.toggle('is-added', isAdded);
+
+                    if (meta) {
+                        if (isAdded) {
+                            meta.textContent = 'Neu im Diff';
+                        } else if (isBaseline) {
+                            meta.textContent = 'Bereits in der Basis';
+                        } else {
+                            meta.textContent = (container.product_ids || []).length + ' Produkte';
+                        }
+                    }
+                });
+            }
+
+            function updateSummaries() {
+                var targetIds = getTargetContainerIds();
+                var addedContainerIds = getAddedContainerIds(targetIds);
+                var coveredProducts = getCoveredProducts(targetIds);
+                var baselineProducts = getCoveredProducts(baselineContainerIds);
+                var diffText = buildDiffText(addedContainerIds);
+                var baselineServiceCount = parseComposeServices(composeInput.value).length;
+
+                updatePickerStates(targetIds, addedContainerIds);
+
+                root.querySelector('[data-baseline-service-count]').textContent = String(baselineServiceCount);
+                root.querySelector('[data-baseline-container-count]').textContent = String(baselineContainerIds.size);
+                root.querySelector('[data-baseline-product-count]').textContent = String(baselineProducts.length);
+                root.querySelector('[data-added-service-count]').textContent = String(addedContainerIds.length);
+                root.querySelector('[data-selected-container-count]').textContent = String(targetIds.size);
+                root.querySelector('[data-selected-product-count]').textContent = String(coveredProducts.length);
+
+                renderChipList(
+                    root.querySelector('[data-baseline-products]'),
+                    baselineProducts.map(function(product) {
+                        return product.label + ' (' + product.covered + '/' + product.total + ')';
+                    }),
+                    'info',
+                    'Keine Produkte erkannt'
+                );
+
+                renderChipList(
+                    root.querySelector('[data-baseline-containers]'),
+                    Array.from(baselineContainerIds).map(function(containerId) {
+                        return containerMap[containerId] ? containerMap[containerId].title : containerId;
+                    }),
+                    'muted',
+                    'Keine Container erkannt'
+                );
+
+                renderChipList(
+                    root.querySelector('[data-selected-products]'),
+                    coveredProducts.map(function(product) {
+                        return product.label + ' (' + product.covered + '/' + product.total + ')';
+                    }),
+                    'success',
+                    'Noch nichts zusaetzlich ausgewaehlt'
+                );
+
+                renderChipList(
+                    root.querySelector('[data-added-containers]'),
+                    addedContainerIds.map(function(containerId) {
+                        return containerMap[containerId] ? containerMap[containerId].title : containerId;
+                    }),
+                    'success',
+                    'Keine neuen Container'
+                );
+
+                renderChipList(
+                    root.querySelector('[data-unknown-services]'),
+                    unknownServices,
+                    'warning',
+                    'Keine unbekannten Services'
+                );
+
+                root.querySelector('[data-unknown-services-group]').hidden = unknownServices.length === 0;
+
+                diffOutput.value = diffText;
+                diffCopyButton.setAttribute('data-copy-value', diffText);
+                diffCopyButton.disabled = diffText.trim() === '';
+            }
+
+            function analyzeCompose() {
+                var parsedServices = parseComposeServices(composeInput.value);
+
+                baselineContainerIds = new Set();
+                unknownServices = [];
+
+                parsedServices.forEach(function(serviceTitle) {
+                    var matchedContainer = containerTitleMap[normalizeKey(serviceTitle)];
+
+                    if (matchedContainer) {
+                        baselineContainerIds.add(matchedContainer.id);
+                    } else {
+                        unknownServices.push(serviceTitle);
+                    }
+                });
+
+                updateSummaries();
+            }
+
+            function filterPicker(searchInput, selector) {
+                var query = normalizeKey(searchInput.value);
+
+                root.querySelectorAll(selector).forEach(function(item) {
+                    var haystack = normalizeKey(item.getAttribute('data-search'));
+                    item.hidden = query !== '' && haystack.indexOf(query) === -1;
+                });
+            }
+
+            function copyText(value) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    return navigator.clipboard.writeText(value);
+                }
+
+                return new Promise(function(resolve, reject) {
+                    var textarea = document.createElement('textarea');
+                    textarea.value = value;
+                    textarea.setAttribute('readonly', 'readonly');
+                    textarea.style.position = 'absolute';
+                    textarea.style.left = '-9999px';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+
+                    try {
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        resolve();
+                    } catch (error) {
+                        document.body.removeChild(textarea);
+                        reject(error);
+                    }
+                });
+            }
+
+            function flashCopyState(button) {
+                button.classList.add('is-copied', 'show-copy-tooltip');
+                window.setTimeout(function() {
+                    button.classList.remove('is-copied', 'show-copy-tooltip');
+                }, 1200);
+            }
+
+            root.querySelectorAll('[data-product-toggle]').forEach(function(input) {
+                input.addEventListener('change', function() {
+                    if (input.checked) {
+                        selectedProductIds.add(input.value);
+                    } else {
+                        selectedProductIds.delete(input.value);
+                    }
+
+                    updateSummaries();
+                });
+            });
+
+            root.querySelectorAll('[data-container-toggle]').forEach(function(input) {
+                input.addEventListener('change', function() {
+                    if (input.checked) {
+                        selectedContainerIds.add(input.value);
+                    } else {
+                        selectedContainerIds.delete(input.value);
+                    }
+
+                    updateSummaries();
+                });
+            });
+
+            productSearch.addEventListener('input', function() {
+                filterPicker(productSearch, '[data-product-item]');
+            });
+
+            containerSearch.addEventListener('input', function() {
+                filterPicker(containerSearch, '[data-container-item]');
+            });
+
+            root.querySelector('[data-compose-analyze]').addEventListener('click', function() {
+                analyzeCompose();
+            });
+
+            root.querySelector('[data-compose-reset]').addEventListener('click', function() {
+                composeInput.value = data.saved_compose_raw || '';
+                analyzeCompose();
+            });
+
+            root.querySelector('[data-compose-clear]').addEventListener('click', function() {
+                composeInput.value = '';
+                analyzeCompose();
+            });
+
+            composeInput.addEventListener('input', function() {
+                window.clearTimeout(analyzeTimer);
+                analyzeTimer = window.setTimeout(function() {
+                    analyzeCompose();
+                }, 250);
+            });
+
+            diffCopyButton.addEventListener('click', function() {
+                if ((diffOutput.value || '').trim() === '') {
+                    return;
+                }
+
+                copyText(diffOutput.value).then(function() {
+                    flashCopyState(diffCopyButton);
+                });
+            });
+
+            analyzeCompose();
+        })();
+    </script>
+@endsection

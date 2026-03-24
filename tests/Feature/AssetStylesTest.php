@@ -64,4 +64,37 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('background-color: #2b628f;', $styles);
         $this->assertStringContainsString('font-weight: bold;', $styles);
     }
+
+    public function test_server_view_contains_compose_workspace_markup(): void
+    {
+        $view = file_get_contents(resource_path('views/servers/_partials/config.blade.php'));
+
+        $this->assertIsString($view);
+        $this->assertStringContainsString('data-compose-workspace', $view);
+        $this->assertStringContainsString('data-product-toggle', $view);
+        $this->assertStringContainsString('data-container-toggle', $view);
+        $this->assertStringContainsString('data-compose-diff-output', $view);
+        $this->assertStringContainsString('docker-compose Analyse', $view);
+    }
+
+    public function test_server_view_contains_compose_workspace_script(): void
+    {
+        $view = file_get_contents(resource_path('views/servers/view.blade.php'));
+
+        $this->assertIsString($view);
+        $this->assertStringContainsString('parseComposeServices', $view);
+        $this->assertStringContainsString('data-compose-analyze', $view);
+        $this->assertStringContainsString('buildDiffText', $view);
+    }
+
+    public function test_server_compose_workspace_styles_exist(): void
+    {
+        $styles = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertIsString($styles);
+        $this->assertStringContainsString('.server-compose-workspace {', $styles);
+        $this->assertStringContainsString('.server-compose-picker__item.is-added .server-compose-picker__body {', $styles);
+        $this->assertStringContainsString('.server-compose-chip--success {', $styles);
+        $this->assertStringContainsString('.server-compose-workspace__summary-grid {', $styles);
+    }
 }
