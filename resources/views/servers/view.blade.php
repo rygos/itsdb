@@ -257,6 +257,15 @@
                 })));
             }
 
+            containers.forEach(function(container) {
+                containerMap[container.id] = container;
+                containerTitleMap[normalizeKey(container.title)] = container;
+            });
+
+            products.forEach(function(product) {
+                productMap[product.id] = product;
+            });
+
             function reconcileWorkspaceMappings() {
                 var productContainerIds = {};
                 var containerProductIds = {};
@@ -506,9 +515,15 @@
                 root.querySelectorAll('[data-container-item]').forEach(function(item) {
                     var containerId = item.getAttribute('data-container-toggle');
                     var container = containerMap[containerId];
-                    var meta = item.querySelector('[data-container-meta="' + container.id + '"]');
-                    var isBaseline = baselineContainerIds.has(container.id);
-                    var isAdded = addedContainerIds.indexOf(container.id) !== -1;
+                    if (!container) {
+                        item.classList.remove('is-selected', 'is-baseline', 'is-added');
+                        item.setAttribute('aria-pressed', 'false');
+                        return;
+                    }
+
+                    var meta = item.querySelector('[data-container-meta="' + containerId + '"]');
+                    var isBaseline = baselineContainerIds.has(containerId);
+                    var isAdded = addedContainerIds.indexOf(containerId) !== -1;
 
                     item.classList.toggle('is-selected', selectedContainerIds.has(containerId));
                     item.classList.toggle('is-baseline', isBaseline);

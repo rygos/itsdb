@@ -97,8 +97,11 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
         $this->assertStringContainsString('function reconcileWorkspaceMappings()', $view);
+        $this->assertStringContainsString('containers.forEach(function(container) {', $view);
         $this->assertStringContainsString('productContainerIds[productId].add(String(container.id));', $view);
         $this->assertStringContainsString('containerProductIds[containerId].add(String(product.id));', $view);
+        $this->assertStringContainsString('if (!container) {', $view);
+        $this->assertStringContainsString('var meta = item.querySelector(\'[data-container-meta="\' + containerId + \'"]\');', $view);
         $this->assertStringContainsString('getCoveredProducts(baselineContainerIds, true)', $view);
     }
 
