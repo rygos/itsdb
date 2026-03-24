@@ -63,8 +63,11 @@ select[multiple="multiple"] {
 
 select[multiple="multiple"] option:checked,
 select[multiple="multiple"] option[selected] {
-    background: #17395c linear-gradient(0deg, #17395c 0%, #17395c 100%);
+    background: #2b628f linear-gradient(0deg, #2b628f 0%, #2b628f 100%);
+    box-shadow: inset 0 0 0 9999px #2b628f;
     color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
+    font-weight: bold;
 }
 
 select[multiple="multiple"]:focus {
@@ -173,7 +176,7 @@ nav li {
 nav li:first-child {
     background:
         url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAAA1BMVEX8/vwlkMVqAAAACklEQVR4XmOAAgAACAABnWENdQAAAABJRU5ErkJggg==) center left no-repeat,
-        url(../assets/li-first-child-right.png) center right no-repeat;
+        url(/assets/li-first-child-right.png) center right no-repeat;
     padding-left: 9px;
 }
 nav li a:first-letter {

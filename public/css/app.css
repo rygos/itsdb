@@ -63,8 +63,11 @@ select[multiple="multiple"] {
 
 select[multiple="multiple"] option:checked,
 select[multiple="multiple"] option[selected] {
-    background: #17395c linear-gradient(0deg, #17395c 0%, #17395c 100%);
+    background: #2b628f linear-gradient(0deg, #2b628f 0%, #2b628f 100%);
+    box-shadow: inset 0 0 0 9999px #2b628f;
     color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
+    font-weight: bold;
 }
 
 select[multiple="multiple"]:focus {
@@ -173,7 +176,7 @@ nav li {
 nav li:first-child {
     background:
         url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAAA1BMVEX8/vwlkMVqAAAACklEQVR4XmOAAgAACAABnWENdQAAAABJRU5ErkJggg==) center left no-repeat,
-        url(../assets/li-first-child-right.png) center right no-repeat;
+        url(/assets/li-first-child-right.png) center right no-repeat;
     padding-left: 9px;
 }
 nav li a:first-letter {
@@ -324,6 +327,257 @@ nav li a {
     width: 100%;
     margin-top: -1px;
     margin-bottom: 0px;
+}
+
+.itsdb-secret-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.itsdb-copy-button,
+.itsdb-secret-toggle {
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid #17395c;
+    cursor: pointer;
+}
+
+.itsdb-copy-button {
+    position: relative;
+    padding: 2px 6px;
+    min-width: 78px;
+    text-align: left;
+}
+
+.itsdb-copy-button.is-copied {
+    border-color: #4a7a2a;
+    color: #b7ff99;
+}
+
+.itsdb-copy-button::after {
+    content: attr(data-copy-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    padding: 2px 6px;
+    border: 1px solid #17395c;
+    background: #17395c;
+    color: #ffffe0;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.itsdb-copy-button.show-copy-tooltip::after {
+    opacity: 1;
+}
+
+.itsdb-action-control,
+input[type="submit"],
+button[type="submit"],
+button[type="button"]:not(.itsdb-copy-button):not(.itsdb-secret-toggle):not(.admin-city-autocomplete__toggle):not(.admin-city-autocomplete__option):not(.itsdb-modal__close) {
+    display: inline-block;
+    padding: 3px 9px;
+    border: 1px solid #17395c;
+    background: transparent;
+    color: #ffbf00;
+    font: inherit;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.itsdb-action-control:hover,
+.itsdb-action-control:focus,
+input[type="submit"]:hover,
+input[type="submit"]:focus,
+button[type="submit"]:hover,
+button[type="submit"]:focus,
+button[type="button"]:not(.itsdb-copy-button):not(.itsdb-secret-toggle):not(.admin-city-autocomplete__toggle):not(.admin-city-autocomplete__option):not(.itsdb-modal__close):hover,
+button[type="button"]:not(.itsdb-copy-button):not(.itsdb-secret-toggle):not(.admin-city-autocomplete__toggle):not(.admin-city-autocomplete__option):not(.itsdb-modal__close):focus {
+    color: #ffdf00;
+    border-color: #2a5c86;
+    text-decoration: none;
+}
+
+.itsdb-action-control:focus,
+input[type="submit"]:focus,
+button[type="submit"]:focus,
+button[type="button"]:not(.itsdb-copy-button):not(.itsdb-secret-toggle):not(.admin-city-autocomplete__toggle):not(.admin-city-autocomplete__option):not(.itsdb-modal__close):focus {
+    outline: 1px solid #ffbf00;
+    outline-offset: 1px;
+}
+
+.admin-page .admin-table-shell {
+    margin-bottom: 12px;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+}
+
+.admin-tabs a {
+    border: 1px solid #17395c;
+    padding: 4px 8px;
+    color: #ffffe0;
+}
+
+.admin-tabs a.active {
+    background-color: #17395c;
+}
+
+.admin-subtabs {
+    margin-bottom: 0;
+}
+
+.admin-status-message,
+.admin-error-message {
+    text-align: left;
+    padding: 6px 8px;
+    margin-top: 8px;
+}
+
+.admin-status-message {
+    background-color: #214d21;
+}
+
+.admin-error-message {
+    background-color: #6b1d1d;
+}
+
+.admin-imports {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.admin-import-card {
+    border: 1px solid #17395c;
+    padding: 12px;
+    text-align: left;
+    background: rgba(23, 57, 92, 0.12);
+}
+
+.admin-import-card h3 {
+    margin-bottom: 6px;
+}
+
+.admin-import-card p {
+    margin-bottom: 10px;
+}
+
+.admin-import-card__form {
+    display: grid;
+    gap: 8px;
+}
+
+.admin-import-card__field {
+    display: grid;
+    gap: 4px;
+}
+
+.admin-import-card__field label {
+    font-weight: bold;
+}
+
+.admin-city-autocomplete {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    min-width: 260px;
+}
+
+.admin-city-autocomplete input[data-city-input] {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.admin-city-autocomplete__toggle {
+    min-width: 28px;
+    padding: 2px 6px;
+    border: 1px solid #17395c;
+    border-left: 0;
+    background: #17395c;
+    color: #ffffe0;
+    cursor: pointer;
+}
+
+.admin-city-autocomplete__menu {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #17395c;
+    background: #00001a;
+    z-index: 20;
+}
+
+.admin-city-autocomplete__option {
+    display: block;
+    width: 100%;
+    padding: 4px 6px;
+    border: 0;
+    background: transparent;
+    color: #ffffe0;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-city-autocomplete__option:hover {
+    background: #17395c;
+}
+
+.customer-document-paste-box {
+    margin-top: 6px;
+    padding: 8px;
+    border: 1px dashed #17395c;
+    text-align: left;
+    cursor: text;
+}
+
+.customer-document-paste-box:focus {
+    outline: 1px solid #ffbf00;
+    border-color: #ffbf00;
+}
+
+.customer-document-paste-status {
+    min-height: 16px;
+    margin-top: 4px;
+    text-align: left;
+}
+
+.customer-document-paste-status.is-success {
+    color: #b7ff99;
+}
+
+.customer-document-paste-status.is-error {
+    color: #ff9f9f;
+}
+
+.itsdb-secret-toggle {
+    position: relative;
+    padding: 2px 6px;
+    line-height: 1;
+}
+
+.itsdb-secret-toggle.is-visible::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 50%;
+    border-top: 1px solid #ffffe0;
+    transform: rotate(-35deg);
 }
 
 .pouettbl .boxtable + .foot,
@@ -1202,6 +1456,10 @@ td.date {
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
 }
 
+.itsdb-modal__dialog--image-preview {
+    width: min(1100px, 100%);
+}
+
 .itsdb-modal__header {
     display: flex;
     justify-content: space-between;
@@ -1218,6 +1476,14 @@ td.date {
 .itsdb-modal__body {
     padding: 12px;
     background: #00001a;
+}
+
+.itsdb-modal__body--image-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: calc(100vh - 160px);
+    overflow: auto;
 }
 
 .itsdb-modal__close {
@@ -1251,6 +1517,16 @@ td.date {
 .itsdb-modal[aria-hidden="false"] {
     display: flex !important;
 }
+
+.customer-document-preview-image {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100vh - 200px);
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+}
+
 tr.sortable th {
     text-align: left;
 }
@@ -2109,138 +2385,4 @@ Calendar CSS
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.itsdb-secret-field {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.itsdb-copy-button,
-.itsdb-secret-toggle {
-    font: inherit;
-    color: inherit;
-    background: transparent;
-    border: 1px solid #17395c;
-    cursor: pointer;
-}
-
-.itsdb-copy-button {
-    position: relative;
-    padding: 2px 6px;
-    min-width: 78px;
-    text-align: left;
-}
-
-.itsdb-copy-button.is-copied {
-    border-color: #4a7a2a;
-    color: #b7ff99;
-}
-
-.itsdb-copy-button::after {
-    content: attr(data-copy-tooltip);
-    position: absolute;
-    left: 50%;
-    bottom: calc(100% + 6px);
-    transform: translateX(-50%);
-    padding: 2px 6px;
-    border: 1px solid #17395c;
-    background: #17395c;
-    color: #ffffe0;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
-}
-
-.itsdb-copy-button.show-copy-tooltip::after {
-    opacity: 1;
-}
-
-.itsdb-action-control,
-input[type="submit"],
-button[type="submit"],
-button[type="button"]:not(.itsdb-copy-button):not(.itsdb-secret-toggle):not(.admin-city-autocomplete__toggle):not(.admin-city-autocomplete__option):not(.itsdb-modal__close) {
-    display: inline-block;
-    padding: 3px 9px;
-    border: 1px solid #17395c;
-    background: transparent;
-    color: #ffbf00;
-    font: inherit;
-    line-height: 1.2;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.itsdb-action-control:hover,
-.itsdb-action-control:focus,
-input[type="submit"]:hover,
-input[type="submit"]:focus,
-button[type="submit"]:hover,
-button[type="submit"]:focus,
-button[type="button"]:not(.itsdb-copy-button):not(.itsdb-secret-toggle):not(.admin-city-autocomplete__toggle):not(.admin-city-autocomplete__option):not(.itsdb-modal__close):hover,
-button[type="button"]:not(.itsdb-copy-button):not(.itsdb-secret-toggle):not(.admin-city-autocomplete__toggle):not(.admin-city-autocomplete__option):not(.itsdb-modal__close):focus {
-    color: #ffdf00;
-    border-color: #2a5c86;
-    text-decoration: none;
-}
-
-.itsdb-action-control:focus,
-input[type="submit"]:focus,
-button[type="submit"]:focus,
-button[type="button"]:not(.itsdb-copy-button):not(.itsdb-secret-toggle):not(.admin-city-autocomplete__toggle):not(.admin-city-autocomplete__option):not(.itsdb-modal__close):focus {
-    outline: 1px solid #ffbf00;
-    outline-offset: 1px;
-}
-
-.admin-imports {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 12px;
-}
-
-.admin-import-card {
-    border: 1px solid #17395c;
-    padding: 12px;
-    text-align: left;
-    background: rgba(23, 57, 92, 0.12);
-}
-
-.admin-import-card h3 {
-    margin-bottom: 6px;
-}
-
-.admin-import-card p {
-    margin-bottom: 10px;
-}
-
-.admin-import-card__form {
-    display: grid;
-    gap: 8px;
-}
-
-.admin-import-card__field {
-    display: grid;
-    gap: 4px;
-}
-
-.admin-import-card__field label {
-    font-weight: bold;
-}
-
-.itsdb-secret-toggle {
-    position: relative;
-    padding: 2px 6px;
-    line-height: 1;
-}
-
-.itsdb-secret-toggle.is-visible::after {
-    content: '';
-    position: absolute;
-    left: 4px;
-    right: 4px;
-    top: 50%;
-    border-top: 1px solid #ffffe0;
-    transform: rotate(-35deg);
 }

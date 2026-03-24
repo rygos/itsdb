@@ -2,7 +2,7 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "cp resources/css/app.css public/css/app.css && vite build"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.6",
