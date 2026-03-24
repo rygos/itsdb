@@ -75,6 +75,7 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('data-product-toggle="', $view);
         $this->assertStringContainsString('data-product-containers="', $view);
         $this->assertStringContainsString('data-container-toggle="', $view);
+        $this->assertStringContainsString('data-container-products="', $view);
         $this->assertStringContainsString('data-compose-diff-output', $view);
         $this->assertStringContainsString('data-compose-debug', $view);
         $this->assertStringContainsString('docker-compose Analyse', $view);
@@ -100,7 +101,10 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('buildDiffText', $view);
         $this->assertStringContainsString('getSelectedProductContainerIds', $view);
         $this->assertStringContainsString('getProductDefinitionFromItem', $view);
+        $this->assertStringContainsString('getContainerDefinitionFromItem', $view);
         $this->assertStringContainsString("parseCsvValues(item.getAttribute('data-product-containers'))", $view);
+        $this->assertStringContainsString("item.querySelector('[data-container-products]')", $view);
+        $this->assertStringContainsString('productContainerIdsFromContainers', $view);
         $this->assertStringContainsString('debugOutput.textContent = [', $view);
         $this->assertStringContainsString('function reconcileWorkspaceMappings()', $view);
         $this->assertStringContainsString('containers.forEach(function(container) {', $view);

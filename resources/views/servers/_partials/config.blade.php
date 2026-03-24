@@ -101,6 +101,7 @@
                     <div class="server-compose-picker" data-container-list>
                         @foreach($composeWorkspaceData['containers'] as $container)
                             <button type="button" class="server-compose-picker__item" data-container-item data-container-toggle="{{ $container['id'] }}" data-search="{{ $container['search'] }}">
+                                <span hidden data-container-products="{{ implode(',', $container['product_ids']) }}" data-container-title="{{ $container['title'] }}"></span>
                                 <span class="server-compose-picker__body">
                                     <strong>{{ $container['title'] }}</strong>
                                     <small>{{ implode(', ', $container['product_labels']) ?: 'Kein Produkt-Mapping' }}</small>
