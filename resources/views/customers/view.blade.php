@@ -59,19 +59,13 @@
                                     $endDate = \Carbon\Carbon::parse($item->end_date)->startOfDay();
                                     $today = \Carbon\Carbon::today();
                                     $daysRemaining = $today->diffInDays($endDate, false);
-                                    if ($daysRemaining > 0) {
-                                        $endBg = 'green';
-                                    } elseif ($daysRemaining === 0) {
-                                        $endBg = 'orange';
-                                    } else {
-                                        $endBg = 'red';
-                                    }
+                                    $deadlineAccent = \App\Helpers\StatusHelper::deadlineAccent($daysRemaining);
                                 @endphp
                                 <td style="text-align: left; background-color: {{ $color }}; color: {{ $textColor }};">{{ $item->dynamics_id }}</td>
                                 <td style="text-align: left;"><a href="{{ route('projects.view', $item->id) }}">{{ $item->name }}</a></td>
                                 <td style="text-align: left;">{{ $item->user->name }}</td>
                                 <td style="text-align: left;">{{ \Carbon\Carbon::parse($item->start_date)->toDateString() }}</td>
-                                <td style="text-align: left; background-color: {{ $endBg }};">
+                                <td style="text-align: left; background-color: {{ $deadlineAccent['background'] }}; color: {{ $deadlineAccent['color'] }}; box-shadow: inset 0 0 0 1px {{ $deadlineAccent['border'] }};">
                                     {{ \Carbon\Carbon::parse($item->end_date)->toDateString() }} ({{ $daysRemaining }})
                                 </td>
                                 <td style="text-align: left;">{{ $item->hours ?? '-' }}</td>

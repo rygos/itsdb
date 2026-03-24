@@ -36,17 +36,11 @@
                     $endDate = \Carbon\Carbon::parse($i->end_date)->startOfDay();
                     $today = \Carbon\Carbon::today();
                     $daysRemaining = $today->diffInDays($endDate, false);
-                    if ($daysRemaining > 0) {
-                        $endBg = 'green';
-                    } elseif ($daysRemaining === 0) {
-                        $endBg = 'orange';
-                    } else {
-                        $endBg = 'red';
-                    }
+                    $deadlineAccent = \App\Helpers\StatusHelper::deadlineAccent($daysRemaining);
                 @endphp
                 <td style="text-align: left">{{ $i->name }}</td>
                 <td style="text-align: left;">{{ \Carbon\Carbon::parse($i->start_date)->toDateString() }}</td>
-                <td style="text-align: left; background-color: {{ $endBg }};">
+                <td style="text-align: left; background-color: {{ $deadlineAccent['background'] }}; color: {{ $deadlineAccent['color'] }}; box-shadow: inset 0 0 0 1px {{ $deadlineAccent['border'] }};">
                     {{ \Carbon\Carbon::parse($i->end_date)->toDateString() }} ({{ $daysRemaining }})
                 </td>
                 <td style="text-align: left;">{{ $i->hours ?? '-' }}</td>

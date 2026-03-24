@@ -69,4 +69,32 @@ class StatusHelper
     {
         return self::accent($status)['border'];
     }
+
+    /**
+     * @return array{background: string, border: string, color: string}
+     */
+    public static function deadlineAccent(int $daysRemaining): array
+    {
+        if ($daysRemaining > 0) {
+            return [
+                'background' => 'rgba(47, 122, 87, 0.36)',
+                'border' => '#4da77b',
+                'color' => '#ecfff2',
+            ];
+        }
+
+        if ($daysRemaining === 0) {
+            return [
+                'background' => 'rgba(191, 140, 0, 0.36)',
+                'border' => '#d4a62a',
+                'color' => '#fff8df',
+            ];
+        }
+
+        return [
+            'background' => 'rgba(143, 59, 82, 0.38)',
+            'border' => '#b85c79',
+            'color' => '#ffe8ef',
+        ];
+    }
 }

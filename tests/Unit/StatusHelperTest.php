@@ -42,4 +42,25 @@ class StatusHelperTest extends TestCase
         $this->assertSame($accent['border'], StatusHelper::borderColor('CHECK'));
         $this->assertSame($accent['color'], StatusHelper::textColor('CHECK'));
     }
+
+    public function test_deadline_accent_palette_matches_project_date_colors(): void
+    {
+        $this->assertSame([
+            'background' => 'rgba(47, 122, 87, 0.36)',
+            'border' => '#4da77b',
+            'color' => '#ecfff2',
+        ], StatusHelper::deadlineAccent(5));
+
+        $this->assertSame([
+            'background' => 'rgba(191, 140, 0, 0.36)',
+            'border' => '#d4a62a',
+            'color' => '#fff8df',
+        ], StatusHelper::deadlineAccent(0));
+
+        $this->assertSame([
+            'background' => 'rgba(143, 59, 82, 0.38)',
+            'border' => '#b85c79',
+            'color' => '#ffe8ef',
+        ], StatusHelper::deadlineAccent(-3));
+    }
 }

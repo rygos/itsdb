@@ -344,15 +344,9 @@
                                 $endDate = \Carbon\Carbon::parse($project->end_date)->startOfDay();
                                 $today = \Carbon\Carbon::today();
                                 $daysRemaining = $today->diffInDays($endDate, false);
-                                if ($daysRemaining > 0) {
-                                    $endBg = 'green';
-                                } elseif ($daysRemaining === 0) {
-                                    $endBg = 'orange';
-                                } else {
-                                    $endBg = 'red';
-                                }
+                                $deadlineAccent = \App\Helpers\StatusHelper::deadlineAccent($daysRemaining);
                             @endphp
-                            <td style="background-color: {{ $endBg }};">
+                            <td style="background-color: {{ $deadlineAccent['background'] }}; color: {{ $deadlineAccent['color'] }}; box-shadow: inset 0 0 0 1px {{ $deadlineAccent['border'] }};">
                                 {{ $endDate->toDateString() }} ({{ $daysRemaining }})
                             </td>
                             <td>{{ $project->hours ?? '-' }}</td>
