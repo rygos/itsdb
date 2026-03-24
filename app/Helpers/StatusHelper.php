@@ -77,24 +77,24 @@ class StatusHelper
     {
         if ($daysRemaining > 0) {
             return [
-                'background' => 'rgba(47, 122, 87, 0.36)',
+                'background' => '#355f4e',
                 'border' => '#4da77b',
-                'color' => '#ecfff2',
+                'color' => '#f3fff7',
             ];
         }
 
         if ($daysRemaining === 0) {
             return [
-                'background' => 'rgba(191, 140, 0, 0.36)',
+                'background' => '#8a6a12',
                 'border' => '#d4a62a',
                 'color' => '#fff8df',
             ];
         }
 
         return [
-            'background' => 'rgba(143, 59, 82, 0.38)',
+            'background' => '#7b3248',
             'border' => '#b85c79',
-            'color' => '#ffe8ef',
+            'color' => '#fff0f4',
         ];
     }
 }
