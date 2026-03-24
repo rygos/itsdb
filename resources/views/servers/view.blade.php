@@ -240,6 +240,7 @@
             var composeInput = root.querySelector('[data-compose-input]');
             var diffOutput = root.querySelector('[data-compose-diff-output]');
             var diffCopyButton = root.querySelector('[data-compose-diff-copy]');
+            var debugOutput = root.querySelector('[data-compose-debug]');
             var productSearch = root.querySelector('[data-product-search]');
             var containerSearch = root.querySelector('[data-container-search]');
             var analyzeTimer = null;
@@ -433,6 +434,23 @@
                 return targetIds;
             }
 
+            function getSelectedProductContainerIds() {
+                var selectedProductContainerIds = new Set();
+
+                selectedProductIds.forEach(function(productId) {
+                    var product = productMap[productId];
+                    if (!product) {
+                        return;
+                    }
+
+                    (product.container_ids || []).forEach(function(containerId) {
+                        selectedProductContainerIds.add(containerId);
+                    });
+                });
+
+                return selectedProductContainerIds;
+            }
+
             function getAddedContainerIds(targetIds) {
                 return Array.from(targetIds).filter(function(containerId) {
                     return !baselineContainerIds.has(containerId);
@@ -543,6 +561,7 @@
             }
 
             function updateSummaries() {
+                var selectedProductContainerIds = getSelectedProductContainerIds();
                 var targetIds = getTargetContainerIds();
                 var addedContainerIds = getAddedContainerIds(targetIds);
                 var coveredProducts = getCoveredProducts(targetIds, false);
@@ -571,6 +590,16 @@
                 root.querySelector('[data-added-service-count]').textContent = String(addedContainerIds.length);
                 root.querySelector('[data-selected-container-count]').textContent = String(targetIds.size);
                 root.querySelector('[data-selected-product-count]').textContent = String(selectedProducts.length);
+
+                if (debugOutput) {
+                    debugOutput.textContent = [
+                        'Auswahl: ' + selectedProducts.length + ' Produkte',
+                        selectedContainerIds.size + ' Container direkt',
+                        selectedProductContainerIds.size + ' Container aus Produkten',
+                        addedContainerIds.length + ' neue Container',
+                        diffText.length + ' YAML-Zeichen',
+                    ].join(', ');
+                }
 
                 renderChipList(
                     root.querySelector('[data-baseline-products]'),

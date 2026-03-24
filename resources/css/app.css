@@ -1767,6 +1767,17 @@ td.date {
     margin-top: 4px;
 }
 
+.server-compose-debug {
+    margin-bottom: 12px;
+    border: 1px dashed rgba(75, 160, 218, 0.55);
+    background: rgba(8, 14, 28, 0.78);
+    color: #d8f0ff;
+    padding: 10px 12px;
+    font-family: "DejaVu Sans Mono", "Fira Code", monospace;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
 .server-compose-summary-group + .server-compose-summary-group {
     margin-top: 12px;
 }

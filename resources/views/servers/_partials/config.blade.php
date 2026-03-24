@@ -190,6 +190,10 @@
                             </article>
                         </div>
 
+                        <div class="server-compose-debug" data-compose-debug>
+                            Auswahl: 0 Produkte, 0 Container, 0 neue Container, 0 YAML-Zeichen
+                        </div>
+
                         <div class="server-compose-summary-group">
                             <h4>Ausgewaehlte Produkte</h4>
                             <div class="server-compose-chip-list" data-selected-products></div>

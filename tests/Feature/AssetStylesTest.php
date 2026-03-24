@@ -75,6 +75,7 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('data-product-toggle="', $view);
         $this->assertStringContainsString('data-container-toggle="', $view);
         $this->assertStringContainsString('data-compose-diff-output', $view);
+        $this->assertStringContainsString('data-compose-debug', $view);
         $this->assertStringContainsString('docker-compose Analyse', $view);
         $this->assertStringContainsString('1. Optional Compose analysieren oder gespeicherte Compose laden.', $view);
     }
@@ -96,6 +97,8 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('event.preventDefault();', $view);
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
+        $this->assertStringContainsString('getSelectedProductContainerIds', $view);
+        $this->assertStringContainsString('debugOutput.textContent = [', $view);
         $this->assertStringContainsString('function reconcileWorkspaceMappings()', $view);
         $this->assertStringContainsString('containers.forEach(function(container) {', $view);
         $this->assertStringContainsString('productContainerIds[productId].add(String(container.id));', $view);
@@ -112,6 +115,7 @@ class AssetStylesTest extends TestCase
         $this->assertIsString($styles);
         $this->assertStringContainsString('.server-compose-workspace {', $styles);
         $this->assertStringContainsString('.server-compose-hint {', $styles);
+        $this->assertStringContainsString('.server-compose-debug {', $styles);
         $this->assertStringContainsString('.server-compose-picker__item.is-added .server-compose-picker__body {', $styles);
         $this->assertStringContainsString('.server-compose-chip--success {', $styles);
         $this->assertStringContainsString('.server-compose-workspace__summary-grid {', $styles);
