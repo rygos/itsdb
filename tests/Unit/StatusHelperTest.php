@@ -10,27 +10,27 @@ class StatusHelperTest extends TestCase
     public function test_accent_palette_matches_project_board_colors(): void
     {
         $this->assertSame([
-            'background' => 'rgba(77, 109, 140, 0.22)',
-            'border' => '#4d6d8c',
-            'color' => '#d9ecff',
+            'background' => 'rgba(77, 109, 140, 0.36)',
+            'border' => '#6f93b6',
+            'color' => '#eef7ff',
         ], StatusHelper::accent('OPEN'));
 
         $this->assertSame([
-            'background' => 'rgba(47, 111, 159, 0.22)',
-            'border' => '#2f6f9f',
-            'color' => '#d7eeff',
+            'background' => 'rgba(47, 111, 159, 0.36)',
+            'border' => '#5f95bf',
+            'color' => '#eef8ff',
         ], StatusHelper::accent('WIP'));
 
         $this->assertSame([
-            'background' => 'rgba(143, 59, 82, 0.25)',
-            'border' => '#8f3b52',
-            'color' => '#ffd8e2',
+            'background' => 'rgba(143, 59, 82, 0.38)',
+            'border' => '#b85c79',
+            'color' => '#ffe8ef',
         ], StatusHelper::accent('WAIT FOR INFO'));
 
         $this->assertSame([
-            'background' => 'rgba(47, 122, 87, 0.24)',
-            'border' => '#2f7a57',
-            'color' => '#dcffe8',
+            'background' => 'rgba(47, 122, 87, 0.36)',
+            'border' => '#4da77b',
+            'color' => '#ecfff2',
         ], StatusHelper::accent('FINISHED'));
     }
 
