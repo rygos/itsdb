@@ -258,6 +258,33 @@
                 })));
             }
 
+            function parseCsvValues(value) {
+                return uniqueValues((value || '').split(',').map(function(entry) {
+                    return entry.trim();
+                }).filter(function(entry) {
+                    return entry !== '';
+                }));
+            }
+
+            function getProductDefinitionFromItem(item) {
+                if (!item) {
+                    return null;
+                }
+
+                var productId = String(item.getAttribute('data-product-toggle') || '');
+                if (productId === '') {
+                    return null;
+                }
+
+                return {
+                    id: productId,
+                    label: item.getAttribute('data-product-label') || productId,
+                    category: item.getAttribute('data-product-category') || '',
+                    function: item.getAttribute('data-product-function') || '',
+                    container_ids: parseCsvValues(item.getAttribute('data-product-containers')),
+                };
+            }
+
             containers.forEach(function(container) {
                 containerMap[container.id] = container;
                 containerTitleMap[normalizeKey(container.title)] = container;
@@ -348,6 +375,32 @@
             }
 
             reconcileWorkspaceMappings();
+
+            root.querySelectorAll('[data-product-item]').forEach(function(item) {
+                var product = getProductDefinitionFromItem(item);
+                if (!product) {
+                    return;
+                }
+
+                productMap[product.id] = Object.assign({}, productMap[product.id] || {}, product, {
+                    container_ids: product.container_ids,
+                });
+            });
+
+            products = root.querySelectorAll('[data-product-item]').length
+                ? Array.from(root.querySelectorAll('[data-product-item]')).map(function(item) {
+                    var product = getProductDefinitionFromItem(item);
+                    if (!product) {
+                        return null;
+                    }
+
+                    return Object.assign({}, productMap[product.id] || {}, product, {
+                        container_ids: product.container_ids,
+                    });
+                }).filter(function(product) {
+                    return product !== null;
+                })
+                : products;
 
             function parseComposeServices(text) {
                 var services = [];
@@ -735,6 +788,14 @@
                 if (productItem) {
                     event.preventDefault();
                     var productId = productItem.getAttribute('data-product-toggle');
+                    var productDefinition = getProductDefinitionFromItem(productItem);
+
+                    if (productDefinition) {
+                        productMap[productId] = Object.assign({}, productMap[productId] || {}, productDefinition, {
+                            container_ids: productDefinition.container_ids,
+                        });
+                    }
+
                     if (selectedProductIds.has(productId)) {
                         selectedProductIds.delete(productId);
                     } else {

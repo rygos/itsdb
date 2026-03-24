@@ -67,7 +67,17 @@
 
                     <div class="server-compose-picker" data-product-list>
                         @foreach($composeWorkspaceData['products'] as $product)
-                            <button type="button" class="server-compose-picker__item" data-product-item data-product-toggle="{{ $product['id'] }}" data-search="{{ $product['search'] }}">
+                            <button
+                                type="button"
+                                class="server-compose-picker__item"
+                                data-product-item
+                                data-product-toggle="{{ $product['id'] }}"
+                                data-product-label="{{ $product['label'] }}"
+                                data-product-category="{{ $product['category'] }}"
+                                data-product-function="{{ $product['function'] }}"
+                                data-product-containers="{{ implode(',', $product['container_ids']) }}"
+                                data-search="{{ $product['search'] }}"
+                            >
                                 <span class="server-compose-picker__body">
                                     <strong>{{ $product['label'] }}</strong>
                                     <small>{{ $product['category'] }} / {{ $product['function'] }}</small>

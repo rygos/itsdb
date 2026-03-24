@@ -73,6 +73,7 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('data-compose-workspace', $view);
         $this->assertStringContainsString('data-compose-workspace-json', $view);
         $this->assertStringContainsString('data-product-toggle="', $view);
+        $this->assertStringContainsString('data-product-containers="', $view);
         $this->assertStringContainsString('data-container-toggle="', $view);
         $this->assertStringContainsString('data-compose-diff-output', $view);
         $this->assertStringContainsString('data-compose-debug', $view);
@@ -98,6 +99,8 @@ class AssetStylesTest extends TestCase
         $this->assertStringContainsString('data-compose-analyze', $view);
         $this->assertStringContainsString('buildDiffText', $view);
         $this->assertStringContainsString('getSelectedProductContainerIds', $view);
+        $this->assertStringContainsString('getProductDefinitionFromItem', $view);
+        $this->assertStringContainsString("parseCsvValues(item.getAttribute('data-product-containers'))", $view);
         $this->assertStringContainsString('debugOutput.textContent = [', $view);
         $this->assertStringContainsString('function reconcileWorkspaceMappings()', $view);
         $this->assertStringContainsString('containers.forEach(function(container) {', $view);
