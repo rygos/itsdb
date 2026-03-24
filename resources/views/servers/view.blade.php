@@ -622,6 +622,8 @@
             root.addEventListener('click', function(event) {
                 var productItem = event.target.closest('[data-product-item]');
                 if (productItem && !event.target.closest('input')) {
+                    event.preventDefault();
+
                     var productInput = productItem.querySelector('[data-product-toggle]');
                     if (productInput) {
                         productInput.checked = !productInput.checked;
@@ -639,6 +641,8 @@
 
                 var containerItem = event.target.closest('[data-container-item]');
                 if (containerItem && !event.target.closest('input')) {
+                    event.preventDefault();
+
                     var containerInput = containerItem.querySelector('[data-container-toggle]');
                     if (containerInput) {
                         containerInput.checked = !containerInput.checked;
