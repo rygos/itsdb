@@ -18,6 +18,22 @@ use Symfony\Component\Yaml\Yaml;
 
 class ServerController extends Controller
 {
+    private function composeWorkspaceProductLabel(
+        ?string $productLabel,
+        ?string $productCategory,
+        ?string $productFunction
+    ): string {
+        $label = trim((string) $productLabel);
+        if ($label !== '') {
+            return $label;
+        }
+
+        return trim(implode(' / ', array_filter([
+            trim((string) $productCategory),
+            trim((string) $productFunction),
+        ])));
+    }
+
     private function serverKindOptions(): array
     {
         return ['' => ''] + ServerKind::query()->orderBy('name')->pluck('name', 'id')->toArray();
@@ -67,19 +83,31 @@ class ServerController extends Controller
             ];
         })->values()->all();
 
-        $containerWorkspace = $containers->map(function (Container $container): array {
+        $containerWorkspace = $containers->map(function (Container $container) use ($rowsByContainerId): array {
             $content = trim((string) ($container->content ?: $container->content_orig ?: ''));
             $productRows = collect($rowsByContainerId->get((string) $container->id, []))
-                ->sortBy(fn ($row) => mb_strtolower((string) $row->product_label))
+                ->sortBy(fn ($row) => mb_strtolower($this->composeWorkspaceProductLabel(
+                    $row->product_label,
+                    $row->product_category,
+                    $row->product_function
+                )))
                 ->values();
 
             return [
                 'id' => (string) $container->id,
                 'title' => $container->title,
-                'search' => mb_strtolower($container->title.' '.$productRows->pluck('product_label')->implode(' ')),
+                'search' => mb_strtolower($container->title.' '.$productRows->map(fn ($row) => $this->composeWorkspaceProductLabel(
+                    $row->product_label,
+                    $row->product_category,
+                    $row->product_function
+                ))->implode(' ')),
                 'snippet' => $this->buildComposeServiceSnippet($container->title, $content),
                 'product_ids' => $productRows->pluck('product_id')->map(fn ($id) => (string) $id)->all(),
-                'product_labels' => $productRows->pluck('product_label')->all(),
+                'product_labels' => $productRows->map(fn ($row) => $this->composeWorkspaceProductLabel(
+                    $row->product_label,
+                    $row->product_category,
+                    $row->product_function
+                ))->filter()->values()->all(),
             ];
         })->values();
 
@@ -101,6 +129,11 @@ class ServerController extends Controller
                 return [
                     'id' => $productId,
                     'label' => (string) $first->product_label,
+                    'display_label' => $this->composeWorkspaceProductLabel(
+                        $first->product_label,
+                        $first->product_category,
+                        $first->product_function
+                    ),
                     'category' => (string) $first->product_category,
                     'function' => (string) $first->product_function,
                     'search' => mb_strtolower(implode(' ', [

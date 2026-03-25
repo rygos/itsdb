@@ -208,716 +208,511 @@
     <script>
         (function() {
             function initServerComposeWorkspace() {
-            var root = document.querySelector('[data-compose-workspace]');
-            if (!root || root.getAttribute('data-compose-workspace-initialized') === 'true') {
-                return;
-            }
-
-            root.setAttribute('data-compose-workspace-initialized', 'true');
-
-            var dataElement = root.querySelector('[data-compose-workspace-json]');
-            if (!dataElement) {
-                return;
-            }
-
-            var data = {};
-            try {
-                data = JSON.parse(dataElement.textContent || '{}');
-            } catch (error) {
-                console.error('Compose workspace data could not be parsed.', error);
-                return;
-            }
-
-            var containers = data.containers || [];
-            var products = data.products || [];
-            var containerMap = {};
-            var productMap = {};
-            var containerTitleMap = {};
-            var selectedProductIds = new Set();
-            var selectedContainerIds = new Set();
-            var baselineContainerIds = new Set();
-            var unknownServices = [];
-            var composeInput = root.querySelector('[data-compose-input]');
-            var diffOutput = root.querySelector('[data-compose-diff-output]');
-            var diffCopyButton = root.querySelector('[data-compose-diff-copy]');
-            var debugOutput = root.querySelector('[data-compose-debug]');
-            var productSearch = root.querySelector('[data-product-search]');
-            var containerSearch = root.querySelector('[data-container-search]');
-            var analyzeTimer = null;
-
-            function normalizeKey(value) {
-                return (value || '')
-                    .trim()
-                    .replace(/^['"]|['"]$/g, '')
-                    .toLowerCase();
-            }
-
-            function uniqueValues(values) {
-                return Array.from(new Set((values || []).map(function(value) {
-                    return String(value);
-                })));
-            }
-
-            function parseCsvValues(value) {
-                return uniqueValues((value || '').split(',').map(function(entry) {
-                    return entry.trim();
-                }).filter(function(entry) {
-                    return entry !== '';
-                }));
-            }
-
-            function getProductDefinitionFromItem(item) {
-                if (!item) {
-                    return null;
+                var root = document.querySelector('[data-compose-workspace]');
+                if (!root || root.getAttribute('data-compose-workspace-initialized') === 'true') {
+                    return;
                 }
 
-                var productId = String(item.getAttribute('data-product-toggle') || '');
-                if (productId === '') {
-                    return null;
+                root.setAttribute('data-compose-workspace-initialized', 'true');
+
+                var dataElement = root.querySelector('[data-compose-workspace-json]');
+                if (!dataElement) {
+                    return;
                 }
 
-                return {
-                    id: productId,
-                    label: item.getAttribute('data-product-label') || productId,
-                    category: item.getAttribute('data-product-category') || '',
-                    function: item.getAttribute('data-product-function') || '',
-                    container_ids: parseCsvValues(item.getAttribute('data-product-containers')),
-                };
-            }
-
-            function getContainerDefinitionFromItem(item) {
-                if (!item) {
-                    return null;
+                var data = {};
+                try {
+                    data = JSON.parse(dataElement.textContent || '{}');
+                } catch (error) {
+                    console.error('Compose workspace data could not be parsed.', error);
+                    return;
                 }
 
-                var containerId = String(item.getAttribute('data-container-toggle') || '');
-                if (containerId === '') {
-                    return null;
+                var composeInput = root.querySelector('[data-compose-input]');
+                var diffOutput = root.querySelector('[data-compose-diff-output]');
+                var diffCopyButton = root.querySelector('[data-compose-diff-copy]');
+                var debugOutput = root.querySelector('[data-compose-debug]');
+                var productSearch = root.querySelector('[data-product-search]');
+                var containerSearch = root.querySelector('[data-container-search]');
+                var analyzeTimer = null;
+
+                function normalizeId(value) {
+                    return String(value || '');
                 }
 
-                var productMeta = item.querySelector('[data-container-products]');
+                function normalizeKey(value) {
+                    return String(value || '')
+                        .trim()
+                        .replace(/^['"]|['"]$/g, '')
+                        .toLowerCase();
+                }
 
-                return {
-                    id: containerId,
-                    title: item.getAttribute('data-container-title') || (productMeta ? productMeta.getAttribute('data-container-title') : '') || containerId,
-                    product_ids: parseCsvValues(productMeta ? productMeta.getAttribute('data-container-products') : ''),
-                };
-            }
+                function uniqueValues(values) {
+                    return Array.from(new Set((values || []).map(function(value) {
+                        return normalizeId(value);
+                    }).filter(function(value) {
+                        return value !== '';
+                    })));
+                }
 
-            containers.forEach(function(container) {
-                containerMap[container.id] = container;
-                containerTitleMap[normalizeKey(container.title)] = container;
-            });
+                function getProductDisplayLabel(product) {
+                    var label = String(product.label || '').trim();
+                    if (label !== '') {
+                        return label;
+                    }
 
-            products.forEach(function(product) {
-                productMap[product.id] = product;
-            });
+                    var subtitleParts = [product.category || '', product.function || ''].filter(function(part) {
+                        return String(part).trim() !== '';
+                    });
 
-            function reconcileWorkspaceMappings() {
-                var productContainerIds = {};
-                var containerProductIds = {};
+                    if (subtitleParts.length > 0) {
+                        return subtitleParts.join(' / ');
+                    }
 
-                products.forEach(function(product) {
-                    productContainerIds[product.id] = new Set(uniqueValues(product.container_ids));
-                });
+                    return normalizeId(product.id);
+                }
 
-                containers.forEach(function(container) {
-                    containerProductIds[container.id] = new Set(uniqueValues(container.product_ids));
-                });
+                function parseComposeServices(text) {
+                    var services = [];
+                    var lines = String(text || '').split(/\r\n|\n|\r/);
+                    var inServices = false;
+                    var servicesIndent = 0;
 
-                containers.forEach(function(container) {
-                    uniqueValues(container.product_ids).forEach(function(productId) {
-                        if (!productContainerIds[productId]) {
-                            productContainerIds[productId] = new Set();
+                    lines.forEach(function(line) {
+                        var trimmed = String(line || '').trim();
+                        if (trimmed === '' || trimmed.indexOf('#') === 0) {
+                            return;
                         }
 
-                        productContainerIds[productId].add(String(container.id));
-                    });
-                });
+                        var indent = line.length - line.replace(/^\s+/, '').length;
 
-                products.forEach(function(product) {
-                    uniqueValues(product.container_ids).forEach(function(containerId) {
-                        if (!containerProductIds[containerId]) {
-                            containerProductIds[containerId] = new Set();
+                        if (!inServices && trimmed === 'services:') {
+                            inServices = true;
+                            servicesIndent = indent;
+                            return;
                         }
 
-                        containerProductIds[containerId].add(String(product.id));
-                    });
-                });
+                        if (!inServices) {
+                            return;
+                        }
 
-                products = products.map(function(product) {
-                    var containerIds = Array.from(productContainerIds[product.id] || []).sort(function(left, right) {
-                        var leftContainer = containerMap[left];
-                        var rightContainer = containerMap[right];
-                        var leftTitle = leftContainer ? leftContainer.title : left;
-                        var rightTitle = rightContainer ? rightContainer.title : right;
+                        if (indent <= servicesIndent) {
+                            inServices = false;
+                            return;
+                        }
+
+                        if (indent === servicesIndent + 2) {
+                            var match = trimmed.match(/^['"]?([A-Za-z0-9._-]+)['"]?:\s*$/);
+                            if (match) {
+                                services.push(match[1]);
+                            }
+                        }
+                    });
+
+                    return uniqueValues(services);
+                }
+
+                function createChip(label, variant) {
+                    var chip = document.createElement('span');
+                    chip.className = 'server-compose-chip';
+                    if (variant) {
+                        chip.classList.add('server-compose-chip--' + variant);
+                    }
+                    chip.textContent = label;
+
+                    return chip;
+                }
+
+                function renderChipList(target, labels, variant, emptyText) {
+                    target.innerHTML = '';
+
+                    if (!labels.length) {
+                        target.appendChild(createChip(emptyText || 'Keine Eintraege', 'muted'));
+                        return;
+                    }
+
+                    labels.forEach(function(label) {
+                        target.appendChild(createChip(label, variant));
+                    });
+                }
+
+                function sortByTitle(ids, itemMap) {
+                    return ids.sort(function(left, right) {
+                        var leftTitle = itemMap[left] ? itemMap[left].title || itemMap[left].display_label || left : left;
+                        var rightTitle = itemMap[right] ? itemMap[right].title || itemMap[right].display_label || right : right;
 
                         return leftTitle.localeCompare(rightTitle);
                     });
+                }
 
-                    return Object.assign({}, product, {
-                        container_ids: containerIds,
-                        container_titles: containerIds.map(function(containerId) {
-                            return containerMap[containerId] ? containerMap[containerId].title : containerId;
+                var containers = (data.containers || []).map(function(container) {
+                    return {
+                        id: normalizeId(container.id),
+                        title: String(container.title || ''),
+                        search: String(container.search || ''),
+                        snippet: String(container.snippet || ''),
+                        product_ids: uniqueValues(container.product_ids),
+                        product_labels: (container.product_labels || []).map(function(label) {
+                            return String(label || '');
                         }),
-                    });
-                }).filter(function(product) {
-                    return (product.container_ids || []).length > 0;
+                    };
                 });
 
-                productMap = {};
-                products.forEach(function(product) {
-                    productMap[product.id] = product;
+                var products = (data.products || []).map(function(product) {
+                    return {
+                        id: normalizeId(product.id),
+                        label: String(product.label || ''),
+                        category: String(product.category || ''),
+                        function: String(product.function || ''),
+                        search: String(product.search || ''),
+                        container_ids: uniqueValues(product.container_ids),
+                    };
+                }).map(function(product) {
+                    product.display_label = getProductDisplayLabel(product);
+
+                    return product;
                 });
 
-                containers = containers.map(function(container) {
-                    var productIds = Array.from(containerProductIds[container.id] || []).filter(function(productId) {
-                        return !!productMap[productId];
-                    }).sort(function(left, right) {
-                        return productMap[left].label.localeCompare(productMap[right].label);
-                    });
-
-                    return Object.assign({}, container, {
-                        product_ids: productIds,
-                        product_labels: productIds.map(function(productId) {
-                            return productMap[productId].label;
-                        }),
-                    });
-                });
-
-                containerMap = {};
-                containerTitleMap = {};
+                var containerMap = {};
+                var containerTitleMap = {};
                 containers.forEach(function(container) {
                     containerMap[container.id] = container;
                     containerTitleMap[normalizeKey(container.title)] = container;
                 });
-            }
 
-            reconcileWorkspaceMappings();
+                var productMap = {};
+                products.forEach(function(product) {
+                    productMap[product.id] = product;
+                });
 
-            root.querySelectorAll('[data-product-item]').forEach(function(item) {
-                var product = getProductDefinitionFromItem(item);
-                if (!product) {
-                    return;
+                var selectedContainerIds = new Set();
+                var baselineContainerIds = new Set();
+                var unknownServices = [];
+
+                function getSelectedProductIds() {
+                    return new Set(
+                        Array.from(root.querySelectorAll('[data-product-checkbox]:checked')).map(function(input) {
+                            return normalizeId(input.value || input.getAttribute('data-product-checkbox'));
+                        })
+                    );
                 }
 
-                productMap[product.id] = Object.assign({}, productMap[product.id] || {}, product, {
-                    container_ids: product.container_ids,
-                });
-            });
-
-            products = root.querySelectorAll('[data-product-item]').length
-                ? Array.from(root.querySelectorAll('[data-product-item]')).map(function(item) {
-                    var product = getProductDefinitionFromItem(item);
-                    if (!product) {
-                        return null;
-                    }
-
-                    return Object.assign({}, productMap[product.id] || {}, product, {
-                        container_ids: product.container_ids,
+                function getSelectedProducts() {
+                    return sortByTitle(Array.from(getSelectedProductIds()), productMap).map(function(productId) {
+                        return productMap[productId];
+                    }).filter(function(product) {
+                        return !!product;
                     });
-                }).filter(function(product) {
-                    return product !== null;
-                })
-                : products;
-
-            root.querySelectorAll('[data-container-item]').forEach(function(item) {
-                var container = getContainerDefinitionFromItem(item);
-                if (!container) {
-                    return;
                 }
 
-                containerMap[container.id] = Object.assign({}, containerMap[container.id] || {}, container, {
-                    product_ids: container.product_ids,
-                });
-            });
+                function getSelectedProductContainerIds(selectedProducts) {
+                    var selectedIds = new Set();
 
-            var productContainerIdsFromContainers = {};
-            Object.keys(containerMap).forEach(function(containerId) {
-                var container = containerMap[containerId];
-                (container.product_ids || []).forEach(function(productId) {
-                    if (!productContainerIdsFromContainers[productId]) {
-                        productContainerIdsFromContainers[productId] = new Set();
-                    }
+                    selectedProducts.forEach(function(product) {
+                        (product.container_ids || []).forEach(function(containerId) {
+                            if (containerMap[containerId]) {
+                                selectedIds.add(containerId);
+                            }
+                        });
+                    });
 
-                    productContainerIdsFromContainers[productId].add(containerId);
-                });
-            });
+                    return selectedIds;
+                }
 
-            products = products.map(function(product) {
-                var fallbackContainerIds = Array.from(productContainerIdsFromContainers[product.id] || []);
-                var containerIds = uniqueValues((product.container_ids || []).concat(fallbackContainerIds));
+                function getTargetContainerIds(selectedProducts) {
+                    var targetIds = new Set(Array.from(baselineContainerIds));
 
-                return Object.assign({}, product, {
-                    container_ids: containerIds,
-                });
-            });
-
-            productMap = {};
-            products.forEach(function(product) {
-                productMap[product.id] = product;
-            });
-
-            function parseComposeServices(text) {
-                var services = [];
-                var lines = (text || '').split(/\r\n|\n|\r/);
-                var inServices = false;
-                var servicesIndent = 0;
-
-                lines.forEach(function(line) {
-                    var trimmed = (line || '').trim();
-                    if (trimmed === '' || trimmed.indexOf('#') === 0) {
-                        return;
-                    }
-
-                    var indent = line.length - line.replace(/^\s+/, '').length;
-
-                    if (!inServices && trimmed === 'services:') {
-                        inServices = true;
-                        servicesIndent = indent;
-                        return;
-                    }
-
-                    if (!inServices) {
-                        return;
-                    }
-
-                    if (indent <= servicesIndent) {
-                        inServices = false;
-                        return;
-                    }
-
-                    if (indent === servicesIndent + 2) {
-                        var match = trimmed.match(/^['"]?([A-Za-z0-9._-]+)['"]?:\s*$/);
-                        if (match) {
-                            services.push(match[1]);
+                    selectedContainerIds.forEach(function(containerId) {
+                        if (containerMap[containerId]) {
+                            targetIds.add(containerId);
                         }
-                    }
-                });
+                    });
 
-                return services;
-            }
-
-            function createChip(label, variant) {
-                var chip = document.createElement('span');
-                chip.className = 'server-compose-chip';
-                if (variant) {
-                    chip.classList.add('server-compose-chip--' + variant);
-                }
-                chip.textContent = label;
-
-                return chip;
-            }
-
-            function renderChipList(target, labels, variant, emptyText) {
-                target.innerHTML = '';
-
-                if (!labels.length) {
-                    target.appendChild(createChip(emptyText || 'Keine Eintraege', 'muted'));
-                    return;
-                }
-
-                labels.forEach(function(label) {
-                    target.appendChild(createChip(label, variant));
-                });
-            }
-
-            function getTargetContainerIds() {
-                var targetIds = new Set(Array.from(baselineContainerIds));
-
-                selectedContainerIds.forEach(function(containerId) {
-                    targetIds.add(containerId);
-                });
-
-                selectedProductIds.forEach(function(productId) {
-                    var product = productMap[productId];
-                    if (!product) {
-                        return;
-                    }
-
-                    (product.container_ids || []).forEach(function(containerId) {
+                    getSelectedProductContainerIds(selectedProducts).forEach(function(containerId) {
                         targetIds.add(containerId);
                     });
-                });
 
-                return targetIds;
-            }
+                    return targetIds;
+                }
 
-            function getSelectedProductContainerIds() {
-                var selectedProductContainerIds = new Set();
-
-                selectedProductIds.forEach(function(productId) {
-                    var product = productMap[productId];
-                    if (!product) {
-                        return;
-                    }
-
-                    (product.container_ids || []).forEach(function(containerId) {
-                        selectedProductContainerIds.add(containerId);
-                    });
-                });
-
-                return selectedProductContainerIds;
-            }
-
-            function getAddedContainerIds(targetIds) {
-                return Array.from(targetIds).filter(function(containerId) {
-                    return !baselineContainerIds.has(containerId);
-                });
-            }
-
-            function getCoveredProducts(targetIds, requireFullCoverage) {
-                return products
-                    .map(function(product) {
+                function getCoveredProducts(targetIds, requireFullCoverage) {
+                    return products.map(function(product) {
                         var covered = (product.container_ids || []).filter(function(containerId) {
                             return targetIds.has(containerId);
                         }).length;
 
                         return {
-                            id: product.id,
-                            label: product.label,
+                            label: product.display_label,
                             covered: covered,
-                            total: (product.container_ids || []).length,
+                            total: product.container_ids.length,
                         };
-                    })
-                    .filter(function(product) {
+                    }).filter(function(product) {
                         if (product.total === 0) {
                             return false;
                         }
 
-                        if (requireFullCoverage) {
-                            return product.covered === product.total;
-                        }
-
-                        return product.covered > 0;
+                        return requireFullCoverage ? product.covered === product.total : product.covered > 0;
                     });
-            }
-
-            function buildDiffText(addedContainerIds) {
-                return addedContainerIds
-                    .map(function(containerId) {
-                        return containerMap[containerId];
-                    })
-                    .filter(function(container) {
-                        return container && container.snippet;
-                    })
-                    .sort(function(left, right) {
-                        return left.title.localeCompare(right.title);
-                    })
-                    .map(function(container) {
-                        return container.snippet;
-                    })
-                    .join("\n\n");
-            }
-
-            function updatePickerStates(targetIds, addedContainerIds) {
-                root.querySelectorAll('[data-product-item]').forEach(function(item) {
-                    var productId = item.getAttribute('data-product-toggle');
-                    var product = productMap[productId];
-                    if (!product) {
-                        item.classList.remove('is-selected', 'is-covered', 'is-baseline');
-                        item.setAttribute('aria-pressed', 'false');
-                        return;
-                    }
-
-                    var coveredCount = (product.container_ids || []).filter(function(containerId) {
-                        return targetIds.has(containerId);
-                    }).length;
-                    var meta = item.querySelector('[data-product-meta="' + product.id + '"]');
-
-                    item.classList.toggle('is-selected', selectedProductIds.has(productId));
-                    item.classList.toggle('is-covered', coveredCount > 0);
-                    item.classList.toggle('is-baseline', coveredCount > 0 && !selectedProductIds.has(productId));
-                    item.setAttribute('aria-pressed', selectedProductIds.has(productId) ? 'true' : 'false');
-
-                    if (meta) {
-                        if (product.container_ids.length === 0) {
-                            meta.textContent = 'Kein Container-Mapping';
-                        } else {
-                            meta.textContent = coveredCount + '/' + product.container_ids.length + ' Container im Zielbild';
-                        }
-                    }
-                });
-
-                root.querySelectorAll('[data-container-item]').forEach(function(item) {
-                    var containerId = item.getAttribute('data-container-toggle');
-                    var container = containerMap[containerId];
-                    if (!container) {
-                        item.classList.remove('is-selected', 'is-baseline', 'is-added');
-                        item.setAttribute('aria-pressed', 'false');
-                        return;
-                    }
-
-                    var meta = item.querySelector('[data-container-meta="' + containerId + '"]');
-                    var isBaseline = baselineContainerIds.has(containerId);
-                    var isAdded = addedContainerIds.indexOf(containerId) !== -1;
-
-                    item.classList.toggle('is-selected', selectedContainerIds.has(containerId));
-                    item.classList.toggle('is-baseline', isBaseline);
-                    item.classList.toggle('is-added', isAdded);
-                    item.setAttribute('aria-pressed', selectedContainerIds.has(containerId) ? 'true' : 'false');
-
-                    if (meta) {
-                        if (isAdded) {
-                            meta.textContent = 'Neu im Diff';
-                        } else if (isBaseline) {
-                            meta.textContent = 'Bereits in der Basis';
-                        } else {
-                            meta.textContent = (container.product_ids || []).length + ' Produkte';
-                        }
-                    }
-                });
-            }
-
-            function updateSummaries() {
-                var selectedProductContainerIds = getSelectedProductContainerIds();
-                var targetIds = getTargetContainerIds();
-                var addedContainerIds = getAddedContainerIds(targetIds);
-                var coveredProducts = getCoveredProducts(targetIds, false);
-                var baselineProducts = getCoveredProducts(baselineContainerIds, true);
-                var selectedProducts = products.filter(function(product) {
-                    return selectedProductIds.has(product.id);
-                }).map(function(product) {
-                    var covered = (product.container_ids || []).filter(function(containerId) {
-                        return targetIds.has(containerId);
-                    }).length;
-
-                    return {
-                        label: product.label,
-                        covered: covered,
-                        total: product.container_ids.length,
-                    };
-                });
-                var diffText = buildDiffText(addedContainerIds);
-                var baselineServiceCount = parseComposeServices(composeInput.value).length;
-
-                updatePickerStates(targetIds, addedContainerIds);
-
-                root.querySelector('[data-baseline-service-count]').textContent = String(baselineServiceCount);
-                root.querySelector('[data-baseline-container-count]').textContent = String(baselineContainerIds.size);
-                root.querySelector('[data-baseline-product-count]').textContent = String(baselineProducts.length);
-                root.querySelector('[data-added-service-count]').textContent = String(addedContainerIds.length);
-                root.querySelector('[data-selected-container-count]').textContent = String(targetIds.size);
-                root.querySelector('[data-selected-product-count]').textContent = String(selectedProducts.length);
-
-                if (debugOutput) {
-                    debugOutput.textContent = [
-                        'Auswahl: ' + selectedProducts.length + ' Produkte',
-                        selectedContainerIds.size + ' Container direkt',
-                        selectedProductContainerIds.size + ' Container aus Produkten',
-                        addedContainerIds.length + ' neue Container',
-                        diffText.length + ' YAML-Zeichen',
-                    ].join(', ');
                 }
 
-                renderChipList(
-                    root.querySelector('[data-baseline-products]'),
-                    baselineProducts.map(function(product) {
+                function buildDiffText(addedContainerIds) {
+                    return addedContainerIds
+                        .map(function(containerId) {
+                            return containerMap[containerId];
+                        })
+                        .filter(function(container) {
+                            return container && container.snippet.trim() !== '';
+                        })
+                        .map(function(container) {
+                            return container.snippet;
+                        })
+                        .join("\n\n");
+                }
+
+                function filterPicker(input, selector) {
+                    var query = normalizeKey(input.value);
+
+                    root.querySelectorAll(selector).forEach(function(item) {
+                        var haystack = normalizeKey(item.getAttribute('data-search'));
+                        item.style.display = query !== '' && haystack.indexOf(query) === -1 ? 'none' : '';
+                    });
+                }
+
+                function copyText(value) {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        return navigator.clipboard.writeText(value);
+                    }
+
+                    return new Promise(function(resolve, reject) {
+                        var textarea = document.createElement('textarea');
+                        textarea.value = value;
+                        textarea.setAttribute('readonly', 'readonly');
+                        textarea.style.position = 'absolute';
+                        textarea.style.left = '-9999px';
+                        document.body.appendChild(textarea);
+                        textarea.select();
+
+                        try {
+                            document.execCommand('copy');
+                            document.body.removeChild(textarea);
+                            resolve();
+                        } catch (error) {
+                            document.body.removeChild(textarea);
+                            reject(error);
+                        }
+                    });
+                }
+
+                function flashCopyState(button) {
+                    button.classList.add('is-copied', 'show-copy-tooltip');
+                    window.setTimeout(function() {
+                        button.classList.remove('is-copied', 'show-copy-tooltip');
+                    }, 1200);
+                }
+
+                function updatePickerStates(targetIds, selectedProductIds, addedContainerIds) {
+                    root.querySelectorAll('[data-product-item]').forEach(function(item) {
+                        var productId = normalizeId(item.getAttribute('data-product-toggle'));
+                        var product = productMap[productId];
+                        var coveredCount = product ? (product.container_ids || []).filter(function(containerId) {
+                            return targetIds.has(containerId);
+                        }).length : 0;
+                        var meta = item.querySelector('[data-product-meta="' + productId + '"]');
+
+                        item.classList.toggle('is-selected', selectedProductIds.has(productId));
+                        item.classList.toggle('is-covered', coveredCount > 0);
+                        item.classList.toggle('is-baseline', coveredCount > 0 && !selectedProductIds.has(productId));
+
+                        if (meta && product) {
+                            meta.textContent = product.container_ids.length === 0
+                                ? 'Kein Container-Mapping'
+                                : coveredCount + '/' + product.container_ids.length + ' Container im Zielbild';
+                        }
+                    });
+
+                    root.querySelectorAll('[data-container-item]').forEach(function(item) {
+                        var containerId = normalizeId(item.getAttribute('data-container-toggle'));
+                        var meta = item.querySelector('[data-container-meta="' + containerId + '"]');
+                        var isBaseline = baselineContainerIds.has(containerId);
+                        var isAdded = addedContainerIds.indexOf(containerId) !== -1;
+
+                        item.classList.toggle('is-selected', selectedContainerIds.has(containerId));
+                        item.classList.toggle('is-baseline', isBaseline);
+                        item.classList.toggle('is-added', isAdded);
+
+                        if (meta) {
+                            if (isAdded) {
+                                meta.textContent = 'Neu im Diff';
+                            } else if (isBaseline) {
+                                meta.textContent = 'Bereits in der Basis';
+                            } else {
+                                meta.textContent = (containerMap[containerId] && containerMap[containerId].product_ids.length > 0)
+                                    ? containerMap[containerId].product_ids.length + ' Produkte'
+                                    : 'Kein Produkt-Mapping';
+                            }
+                        }
+                    });
+                }
+
+                function updateSummaries() {
+                    var selectedProducts = getSelectedProducts();
+                    var selectedProductIds = new Set(selectedProducts.map(function(product) {
+                        return product.id;
+                    }));
+                    var selectedProductContainerIds = getSelectedProductContainerIds(selectedProducts);
+                    var targetIds = getTargetContainerIds(selectedProducts);
+                    var addedContainerIds = sortByTitle(Array.from(targetIds).filter(function(containerId) {
+                        return !baselineContainerIds.has(containerId);
+                    }), containerMap);
+                    var selectedProductSummaries = selectedProducts.map(function(product) {
+                        var covered = (product.container_ids || []).filter(function(containerId) {
+                            return targetIds.has(containerId);
+                        }).length;
+
+                        return product.display_label + ' (' + covered + '/' + product.container_ids.length + ')';
+                    });
+                    var baselineProducts = getCoveredProducts(baselineContainerIds, true).map(function(product) {
                         return product.label;
-                    }),
-                    'info',
-                    'Keine Produkte erkannt'
-                );
+                    });
+                    var diffText = buildDiffText(addedContainerIds);
 
-                renderChipList(
-                    root.querySelector('[data-baseline-containers]'),
-                    Array.from(baselineContainerIds).map(function(containerId) {
-                        return containerMap[containerId] ? containerMap[containerId].title : containerId;
-                    }),
-                    'muted',
-                    'Keine Container erkannt'
-                );
+                    updatePickerStates(targetIds, selectedProductIds, addedContainerIds);
 
-                renderChipList(
-                    root.querySelector('[data-selected-products]'),
-                    selectedProducts.map(function(product) {
-                        return product.label + ' (' + product.covered + '/' + product.total + ')';
-                    }),
-                    'success',
-                    'Noch nichts zusaetzlich ausgewaehlt'
-                );
+                    root.querySelector('[data-baseline-service-count]').textContent = String(parseComposeServices(composeInput.value).length);
+                    root.querySelector('[data-baseline-container-count]').textContent = String(baselineContainerIds.size);
+                    root.querySelector('[data-baseline-product-count]').textContent = String(baselineProducts.length);
+                    root.querySelector('[data-added-service-count]').textContent = String(addedContainerIds.length);
+                    root.querySelector('[data-selected-container-count]').textContent = String(targetIds.size);
+                    root.querySelector('[data-selected-product-count]').textContent = String(selectedProducts.length);
 
-                renderChipList(
-                    root.querySelector('[data-added-containers]'),
-                    addedContainerIds.map(function(containerId) {
-                        return containerMap[containerId] ? containerMap[containerId].title : containerId;
-                    }),
-                    'success',
-                    'Keine neuen Container'
-                );
+                    if (debugOutput) {
+                        debugOutput.textContent = [
+                            'Auswahl: ' + selectedProducts.length + ' Produkte',
+                            selectedContainerIds.size + ' Container direkt',
+                            selectedProductContainerIds.size + ' Container aus Produkten',
+                            addedContainerIds.length + ' neue Container',
+                            diffText.length + ' YAML-Zeichen',
+                        ].join(', ');
+                    }
 
-                renderChipList(
-                    root.querySelector('[data-unknown-services]'),
-                    unknownServices,
-                    'warning',
-                    'Keine unbekannten Services'
-                );
+                    renderChipList(root.querySelector('[data-baseline-products]'), baselineProducts, 'info', 'Keine Produkte erkannt');
+                    renderChipList(
+                        root.querySelector('[data-baseline-containers]'),
+                        sortByTitle(Array.from(baselineContainerIds), containerMap).map(function(containerId) {
+                            return containerMap[containerId] ? containerMap[containerId].title : containerId;
+                        }),
+                        'muted',
+                        'Keine Container erkannt'
+                    );
+                    renderChipList(root.querySelector('[data-selected-products]'), selectedProductSummaries, 'success', 'Noch nichts zusaetzlich ausgewaehlt');
+                    renderChipList(
+                        root.querySelector('[data-added-containers]'),
+                        addedContainerIds.map(function(containerId) {
+                            return containerMap[containerId] ? containerMap[containerId].title : containerId;
+                        }),
+                        'success',
+                        'Keine neuen Container'
+                    );
+                    renderChipList(root.querySelector('[data-unknown-services]'), unknownServices, 'warning', 'Keine unbekannten Services');
+                    root.querySelector('[data-unknown-services-group]').hidden = unknownServices.length === 0;
 
-                root.querySelector('[data-unknown-services-group]').hidden = unknownServices.length === 0;
+                    diffOutput.value = diffText;
+                    diffCopyButton.setAttribute('data-copy-value', diffText);
+                    diffCopyButton.disabled = diffText.trim() === '';
+                }
 
-                diffOutput.value = diffText;
-                diffCopyButton.setAttribute('data-copy-value', diffText);
-                diffCopyButton.disabled = diffText.trim() === '';
-            }
+                function analyzeCompose() {
+                    baselineContainerIds = new Set();
+                    unknownServices = [];
 
-            function analyzeCompose() {
-                var parsedServices = parseComposeServices(composeInput.value);
+                    parseComposeServices(composeInput.value).forEach(function(serviceTitle) {
+                        var matchedContainer = containerTitleMap[normalizeKey(serviceTitle)];
+                        if (matchedContainer) {
+                            baselineContainerIds.add(matchedContainer.id);
+                        } else {
+                            unknownServices.push(serviceTitle);
+                        }
+                    });
 
-                baselineContainerIds = new Set();
-                unknownServices = [];
+                    updateSummaries();
+                }
 
-                parsedServices.forEach(function(serviceTitle) {
-                    var matchedContainer = containerTitleMap[normalizeKey(serviceTitle)];
+                root.addEventListener('input', function(event) {
+                    if (event.target.matches('[data-product-search]')) {
+                        filterPicker(productSearch, '[data-product-item]');
+                    }
 
-                    if (matchedContainer) {
-                        baselineContainerIds.add(matchedContainer.id);
-                    } else {
-                        unknownServices.push(serviceTitle);
+                    if (event.target.matches('[data-container-search]')) {
+                        filterPicker(containerSearch, '[data-container-item]');
+                    }
+
+                    if (event.target.matches('[data-compose-input]')) {
+                        window.clearTimeout(analyzeTimer);
+                        analyzeTimer = window.setTimeout(analyzeCompose, 250);
                     }
                 });
 
-                updateSummaries();
-            }
+                root.addEventListener('change', function(event) {
+                    if (event.target.matches('[data-product-checkbox]')) {
+                        updateSummaries();
+                        return;
+                    }
 
-            function filterPicker(searchInput, selector) {
-                var query = normalizeKey(searchInput.value);
-
-                root.querySelectorAll(selector).forEach(function(item) {
-                    var haystack = normalizeKey(item.getAttribute('data-search'));
-                    item.style.display = query !== '' && haystack.indexOf(query) === -1 ? 'none' : '';
-                });
-            }
-
-            function copyText(value) {
-                if (navigator.clipboard && window.isSecureContext) {
-                    return navigator.clipboard.writeText(value);
-                }
-
-                return new Promise(function(resolve, reject) {
-                    var textarea = document.createElement('textarea');
-                    textarea.value = value;
-                    textarea.setAttribute('readonly', 'readonly');
-                    textarea.style.position = 'absolute';
-                    textarea.style.left = '-9999px';
-                    document.body.appendChild(textarea);
-                    textarea.select();
-
-                    try {
-                        document.execCommand('copy');
-                        document.body.removeChild(textarea);
-                        resolve();
-                    } catch (error) {
-                        document.body.removeChild(textarea);
-                        reject(error);
+                    if (event.target.matches('[data-container-checkbox]')) {
+                        var containerId = normalizeId(event.target.value || event.target.getAttribute('data-container-checkbox'));
+                        if (event.target.checked) {
+                            selectedContainerIds.add(containerId);
+                        } else {
+                            selectedContainerIds.delete(containerId);
+                        }
+                        updateSummaries();
                     }
                 });
-            }
 
-            function flashCopyState(button) {
-                button.classList.add('is-copied', 'show-copy-tooltip');
-                window.setTimeout(function() {
-                    button.classList.remove('is-copied', 'show-copy-tooltip');
-                }, 1200);
-            }
+                root.addEventListener('click', function(event) {
+                    var containerItem = event.target.closest('[data-container-item]');
+                    if (containerItem) {
+                        event.preventDefault();
+                        var containerId = normalizeId(containerItem.getAttribute('data-container-toggle'));
+                        if (selectedContainerIds.has(containerId)) {
+                            selectedContainerIds.delete(containerId);
+                        } else {
+                            selectedContainerIds.add(containerId);
+                        }
+                        updateSummaries();
+                        return;
+                    }
 
-            root.addEventListener('input', function(event) {
-                var target = event.target;
+                    var trigger = event.target.closest('[data-compose-analyze], [data-compose-reset], [data-compose-clear], [data-compose-diff-copy]');
+                    if (!trigger) {
+                        return;
+                    }
 
-                if (target.matches('[data-product-search]')) {
-                    filterPicker(productSearch, '[data-product-item]');
-                }
-
-                if (target.matches('[data-container-search]')) {
-                    filterPicker(containerSearch, '[data-container-item]');
-                }
-
-                if (target.matches('[data-compose-input]')) {
-                    window.clearTimeout(analyzeTimer);
-                    analyzeTimer = window.setTimeout(function() {
+                    if (trigger.matches('[data-compose-analyze]')) {
                         analyzeCompose();
-                    }, 250);
-                }
-            });
+                        return;
+                    }
 
-            root.addEventListener('click', function(event) {
-                var productItem = event.target.closest('[data-product-toggle]');
-                if (productItem) {
-                    event.preventDefault();
-                    var productId = productItem.getAttribute('data-product-toggle');
-                    var productDefinition = getProductDefinitionFromItem(productItem);
+                    if (trigger.matches('[data-compose-reset]')) {
+                        composeInput.value = data.saved_compose_raw || '';
+                        analyzeCompose();
+                        return;
+                    }
 
-                    if (productDefinition) {
-                        var fallbackContainerIds = Array.from(productContainerIdsFromContainers[productId] || []);
-                        productMap[productId] = Object.assign({}, productMap[productId] || {}, productDefinition, {
-                            container_ids: uniqueValues((productDefinition.container_ids || []).concat(fallbackContainerIds)),
+                    if (trigger.matches('[data-compose-clear]')) {
+                        composeInput.value = '';
+                        analyzeCompose();
+                        return;
+                    }
+
+                    if (trigger.matches('[data-compose-diff-copy]') && diffOutput.value.trim() !== '') {
+                        copyText(diffOutput.value).then(function() {
+                            flashCopyState(diffCopyButton);
                         });
                     }
+                });
 
-                    if (selectedProductIds.has(productId)) {
-                        selectedProductIds.delete(productId);
-                    } else {
-                        selectedProductIds.add(productId);
-                    }
-
-                    updateSummaries();
-                    return;
-                }
-
-                var containerItem = event.target.closest('[data-container-toggle]');
-                if (containerItem) {
-                    event.preventDefault();
-                    var containerId = containerItem.getAttribute('data-container-toggle');
-                    if (selectedContainerIds.has(containerId)) {
-                        selectedContainerIds.delete(containerId);
-                    } else {
-                        selectedContainerIds.add(containerId);
-                    }
-
-                    updateSummaries();
-                    return;
-                }
-
-                var trigger = event.target.closest('[data-compose-analyze], [data-compose-reset], [data-compose-clear], [data-compose-diff-copy]');
-                if (!trigger) {
-                    return;
-                }
-
-                if (trigger.matches('[data-compose-analyze]')) {
-                    analyzeCompose();
-                    return;
-                }
-
-                if (trigger.matches('[data-compose-reset]')) {
-                    composeInput.value = data.saved_compose_raw || '';
-                    analyzeCompose();
-                    return;
-                }
-
-                if (trigger.matches('[data-compose-clear]')) {
-                    composeInput.value = '';
-                    analyzeCompose();
-                    return;
-                }
-
-                if (trigger.matches('[data-compose-diff-copy]')) {
-                    if ((diffOutput.value || '').trim() === '') {
-                        return;
-                    }
-
-                    copyText(diffOutput.value).then(function() {
-                        flashCopyState(diffCopyButton);
-                    });
-                }
-            });
-
-            composeInput.addEventListener('input', function() {
-                window.clearTimeout(analyzeTimer);
-                analyzeTimer = window.setTimeout(function() {
-                    analyzeCompose();
-                }, 250);
-            });
-
-            analyzeCompose();
+                analyzeCompose();
             }
 
             if (document.readyState === 'loading') {

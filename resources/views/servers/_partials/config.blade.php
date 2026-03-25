@@ -67,23 +67,28 @@
 
                     <div class="server-compose-picker" data-product-list>
                         @foreach($composeWorkspaceData['products'] as $product)
-                            <button
-                                type="button"
-                                class="server-compose-picker__item"
+                            <label
+                                class="server-compose-picker__item server-compose-picker__item--product"
                                 data-product-item
                                 data-product-toggle="{{ $product['id'] }}"
-                                data-product-label="{{ $product['label'] }}"
+                                data-product-label="{{ $product['display_label'] }}"
                                 data-product-category="{{ $product['category'] }}"
                                 data-product-function="{{ $product['function'] }}"
                                 data-product-containers="{{ implode(',', $product['container_ids']) }}"
                                 data-search="{{ $product['search'] }}"
                             >
+                                <input
+                                    type="checkbox"
+                                    class="server-compose-picker__checkbox"
+                                    data-product-checkbox="{{ $product['id'] }}"
+                                    value="{{ $product['id'] }}"
+                                >
                                 <span class="server-compose-picker__body">
-                                    <strong>{{ $product['label'] }}</strong>
+                                    <strong>{{ $product['display_label'] !== '' ? $product['display_label'] : $product['id'] }}</strong>
                                     <small>{{ $product['category'] }} / {{ $product['function'] }}</small>
                                     <small data-product-meta="{{ $product['id'] }}">{{ count($product['container_ids']) }} Container</small>
                                 </span>
-                            </button>
+                            </label>
                         @endforeach
                     </div>
                 </section>

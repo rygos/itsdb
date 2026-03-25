@@ -1669,6 +1669,16 @@ td.date {
     text-align: left;
 }
 
+.server-compose-picker__item--product {
+    cursor: pointer;
+}
+
+.server-compose-picker__checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .server-compose-picker__body {
     display: block;
     padding: 10px 12px;
